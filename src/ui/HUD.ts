@@ -1,6 +1,7 @@
+import { themeForCity } from "../game/campaign";
 import { sectionForState, activeBounds, isUnlocked } from "../game/sections";
 import type { GameState } from "../game/GameState";
-import { growthForPoints } from "../game/progression";
+import { growthForPoints, growthPoints } from "../game/progression";
 export class HUD {
   root: HTMLElement;
   private lastUpdate = 0;
@@ -11,8 +12,9 @@ export class HUD {
     onPause: () => void,
     onRestart: () => void,
     onSelfPlay: () => void,
+    onNextCity: () => void,
   ) {
-    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track"><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
+    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><small id="city-theme"></small><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track"><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><small id="boost-status"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
     container
       .querySelector("#phone-preview")!
       .addEventListener("click", (event) => {
@@ -30,7 +32,7 @@ export class HUD {
     container
       .querySelector("#overlay-action")!
       .addEventListener("click", () =>
-        this.root.dataset.status === "won" ? onRestart() : onPause(),
+        this.root.dataset.status === "won" ? onNextCity() : onPause(),
       );
   }
   update(s: GameState, selfPlay = false) {
@@ -46,8 +48,18 @@ export class HUD {
     const selfButton = this.root.querySelector("#self-play")!;
     selfButton.setAttribute("aria-pressed", String(selfPlay));
     selfButton.textContent = selfPlay ? "Self play: on" : "Self play: off";
-    const growth = growthForPoints(s.score.points),
+    const growth = growthForPoints(growthPoints(s)),
       seconds = Math.floor(s.elapsedSeconds);
+    text(
+      "city-theme",
+      `City ${s.cityIndex + 1} · ${themeForCity(s.cityIndex).name}`,
+    );
+    text(
+      "boost-status",
+      s.boosts.speedUntil > s.elapsedSeconds
+        ? `⚡ Speed · ${Math.ceil(s.boosts.speedUntil - s.elapsedSeconds)}s`
+        : "",
+    );
     text("score", s.score.points.toLocaleString());
     text("radius", `${s.hole.radius.toFixed(2)} m`);
     text(
@@ -60,15 +72,15 @@ export class HUD {
     text(
       "hint",
       s.areaStage < 3
-        ? `${sectionForState(s).name} · Eat a fence to unlock ${s.areaStage === 1 ? "the block" : "the city"}`
-        : `${(growth.nextThreshold - s.score.points).toLocaleString()} points to grow`,
+        ? `${sectionForState(s).name} · Eat the glowing border to unlock ${s.areaStage === 1 ? "the block" : "the city"}`
+        : `${(growth.nextThreshold - growthPoints(s)).toLocaleString()} points to grow`,
     );
     text(
       "remaining",
-      `Section ${sectionForState(s).index}/3 · ${s.score.remainingObjects.toLocaleString()} left`,
+      `${s.world.phase === "city" ? `Section ${sectionForState(s).index}/3` : s.world.phase === "metropolis" ? "Expanded city" : s.world.phase === "country" ? "Country map" : "World map"} · ${s.score.remainingObjects.toLocaleString()} left`,
     );
     (this.root.querySelector("#progress") as HTMLElement).style.width =
-      `${Math.min(100, ((s.score.points - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100)}%`;
+      `${Math.min(100, ((growthPoints(s) - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100)}%`;
     const toast = this.root.querySelector("#level-toast") as HTMLElement;
     if (s.hole.level > this.previousLevel) {
       toast.textContent = "LEVEL UP";
@@ -81,14 +93,19 @@ export class HUD {
     overlay.hidden = s.status === "playing";
     text("pause", s.status === "paused" ? "Resume" : "Pause");
     if (s.status !== "playing") {
-      text("overlay-title", s.status === "won" ? "City cleared!" : "Paused");
+      text("overlay-title", s.status === "won" ? "World cleared!" : "Paused");
       text(
         "overlay-text",
         s.status === "won"
           ? `${s.score.points.toLocaleString()} points. Every object swallowed.`
           : "Ready when you are.",
       );
-      text("overlay-action", s.status === "won" ? "Play again" : "Resume");
+      text(
+        "overlay-action",
+        s.status === "won"
+          ? `Next city → ${themeForCity(s.cityIndex + 1).name}`
+          : "Resume",
+      );
     }
     if ((this.root.querySelector(".map-details") as HTMLDetailsElement).open)
       this.drawMap(s);
@@ -117,7 +134,7 @@ export class HUD {
     }
     c.strokeStyle = "#526481";
     c.lineWidth = Math.max(1, 5 * scale);
-    for (let n = -s.level.bounds; n <= s.level.bounds; n += 20) {
+    if (!s.level.landscape) for (let n = -s.level.bounds; n <= s.level.bounds; n += 20) {
       c.beginPath();
       c.moveTo(p(n), 0);
       c.lineTo(p(n), 140);
@@ -125,7 +142,7 @@ export class HUD {
       c.lineTo(140, p(n));
       c.stroke();
     }
-    if (s.hole.radius < 8)
+    if (s.hole.radius < 8 || s.level.landscape)
       for (const o of s.level.objects) {
         if (!isUnlocked(s, o) || o.state !== "idle") continue;
         const building = [
@@ -137,7 +154,7 @@ export class HUD {
         ].includes(o.type);
         const edible = o.radius <= s.hole.radius * 0.85;
         if (
-          s.hole.radius >= 0.3 &&
+          !s.level.landscape && s.hole.radius >= 0.3 &&
           !building &&
           (!edible || o.radius < s.hole.radius * 0.12)
         )

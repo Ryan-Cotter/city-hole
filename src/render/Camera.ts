@@ -14,6 +14,7 @@ export function resizeCamera(
 ) {
   const aspect = width / height;
   const halfH = Math.max(viewSize, viewSize / aspect);
+  camera.far = Math.max(250, viewSize * 15);
   camera.left = -halfH * aspect;
   camera.right = halfH * aspect;
   camera.top = halfH;

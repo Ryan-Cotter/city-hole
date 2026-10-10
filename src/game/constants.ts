@@ -182,10 +182,46 @@ export const categories = {
     scoreValue: 317811,
     label: "skyscrapers",
   },
+  cityBlock: {
+    radius: 10,
+    height: 6,
+    mass: 514229,
+    scoreValue: 514229,
+    label: "city blocks",
+  },
+  river: {
+    radius: 18,
+    height: 0.4,
+    mass: 832040,
+    scoreValue: 832040,
+    label: "river sections",
+  },
+  mountain: {
+    radius: 30,
+    height: 38,
+    mass: 1346269,
+    scoreValue: 1346269,
+    label: "mountains",
+  },
+  wholeCity: {
+    radius: 50,
+    height: 25,
+    mass: 2178309,
+    scoreValue: 2178309,
+    label: "whole cities",
+  },
+  country: {
+    radius: 90,
+    height: 5,
+    mass: 3524578,
+    scoreValue: 3524578,
+    label: "countries",
+  },
 };
 export const progressionConfig = {
-  baseLevelCost: 8,
-  postCityCost: categories.skyscraper.scoreValue * (1000 / 610),
+  baseLevelCost: 16,
+  objectsPerTier: 3,
+  postCityCost: categories.country.scoreValue * (1000 / 610),
   extraRadiusStep: 0.7,
 };
 // Every incremental growth cost is logarithmic in its level index, with base 2.
@@ -193,7 +229,13 @@ const thresholds = [0];
 for (let i = 1; i < Object.keys(categories).length; i++)
   thresholds.push(
     thresholds[i - 1] +
-      Math.ceil(progressionConfig.baseLevelCost * Math.log2(i + 1)),
+      Math.ceil(
+        Math.max(
+          progressionConfig.baseLevelCost * Math.log2(i + 1),
+          Object.values(categories)[i - 1].scoreValue *
+            progressionConfig.objectsPerTier,
+        ),
+      ),
   );
 export const stages = (
   Object.keys(categories) as (keyof typeof categories)[]
@@ -204,11 +246,22 @@ export const stages = (
   radius:
     index === 0
       ? config.baseRadius
-      : categories[type].radius / config.swallowFactor + 0.08,
+      : categories[type].radius / config.swallowFactor +
+        Math.min(0.08, Math.max(0.012, categories[type].radius * 0.1)),
   points: thresholds[index],
 }));
 
 export const objectDesigns = {
+  cityBlock: ["residential block", "market block", "tower block", "park block"],
+  river: ["river bend", "river reach", "delta", "lake"],
+  mountain: ["snow peak", "rocky ridge", "volcano", "green foothill"],
+  wholeCity: ["capital", "port city", "inland city", "industrial city"],
+  country: [
+    "coastal country",
+    "island country",
+    "forest country",
+    "desert country",
+  ],
   bottlecap: ["soda cap", "water cap", "beer cap", "juice cap"],
   dice: [
     "white die",

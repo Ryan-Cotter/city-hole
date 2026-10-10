@@ -1,3 +1,5 @@
+import { themeForCity } from "../game/campaign";
+import { isBuildingType } from "../render/occlusion";
 import { objectDesigns } from "../game/constants";
 import {
   BoxGeometry,
@@ -7,12 +9,42 @@ import {
   IcosahedronGeometry,
   Group,
   Mesh,
+  MeshBasicMaterial,
+  Shape,
+  ShapeGeometry,
+  DoubleSide,
   PlaneGeometry,
   BufferGeometry,
   Float32BufferAttribute,
 } from "three";
 import type { SwallowableObject } from "../game/GameState";
 import { material } from "../render/Materials";
+const pickupMaterials = {
+  speed: new MeshBasicMaterial({ color: "#fff13b", side: DoubleSide }),
+  size: new MeshBasicMaterial({ color: "#51ff75", side: DoubleSide }),
+};
+const boltShape = new Shape();
+boltShape.moveTo(0.15, 1);
+boltShape.lineTo(-0.6, -0.1);
+boltShape.lineTo(-0.05, -0.1);
+boltShape.lineTo(-0.3, -1);
+boltShape.lineTo(0.65, 0.25);
+boltShape.lineTo(0.1, 0.25);
+boltShape.closePath();
+const boltGeometry = new ShapeGeometry(boltShape);
+const borderMaterials = [
+  new MeshBasicMaterial({ color: "#43f4ec" }),
+  new MeshBasicMaterial({ color: "#ffb94b" }),
+];
+const borderHalos = borderMaterials.map(
+  (m) =>
+    new MeshBasicMaterial({
+      color: m.color,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+    }),
+);
 const box = new BoxGeometry(1, 1, 1),
   cylinder = new CylinderGeometry(1, 1, 1, 8),
   cone = new ConeGeometry(1, 1, 8),
@@ -55,7 +87,7 @@ export function createObjectVisual(o: SwallowableObject) {
     sy: number,
     sz: number,
   ) => {
-    const mesh = new Mesh(shape, material(color));
+    const mesh: Mesh = new Mesh(shape, material(color));
     mesh.position.set(x, y, z);
     mesh.scale.set(sx, sy, sz);
     g.add(mesh);
@@ -95,6 +127,354 @@ export function createObjectVisual(o: SwallowableObject) {
     m.renderOrder = name === "window" ? 2 : name === "door-glass" ? 3 : 2;
     return m;
   };
+  if (o.critter) {
+    const r = o.radius,
+      color =
+        o.design === "ladybug"
+          ? "#d84c38"
+          : o.design === "beetle"
+            ? "#518268"
+            : "#493c30";
+    add(sphere, color, 0, r * 0.5, 0, r * 0.65, r * 0.45, r * 0.9);
+    add(sphere, "#332c29", 0, r * 0.45, r * 0.7, r * 0.35, r * 0.3, r * 0.35);
+    for (const side of [-1, 1])
+      for (const z of [-0.5, 0, 0.5]) {
+        const leg = add(
+          box,
+          "#473c32",
+          side * r * 0.6,
+          r * 0.2,
+          z * r,
+          r * 0.65,
+          r * 0.1,
+          r * 0.12,
+        );
+        leg.userData.walkSide = side * (z === 0 ? -1 : 1);
+      }
+    if (o.design === "ladybug")
+      for (const side of [-1, 1])
+        add(
+          sphere,
+          "#292d2d",
+          side * r * 0.27,
+          r * 0.85,
+          0,
+          r * 0.15,
+          r * 0.06,
+          r * 0.2,
+        );
+    return g;
+  }
+  if (["rice grain", "pea", "berry", "cookie crumb"].includes(o.design)) {
+    const r = o.radius,
+      color =
+        o.design === "pea"
+          ? "#8fbd59"
+          : o.design === "berry"
+            ? "#b84957"
+            : o.design === "rice grain"
+              ? "#efe2b7"
+              : "#bd8a4d";
+    add(
+      o.design === "cookie crumb" ? cylinder : sphere,
+      color,
+      0,
+      r * 0.5,
+      0,
+      r * (o.design === "rice grain" ? 0.35 : 0.8),
+      r * (o.design === "rice grain" ? 0.2 : 0.6),
+      r * 0.85,
+    );
+    if (o.design === "berry")
+      add(cone, "#638545", 0, r * 1.1, 0, r * 0.25, r * 0.2, r * 0.25);
+    return g;
+  }
+  if (o.pickup) {
+    const r = o.radius;
+    const mat = pickupMaterials[o.pickup];
+    if (o.pickup === "speed") {
+      const bolt = new Mesh(boltGeometry, mat);
+      bolt.scale.setScalar(r * 1.5);
+      bolt.position.y = r * 1.9;
+      g.add(bolt);
+    } else
+      for (const x of [-0.7, 0, 0.7]) {
+        const shaft = add(
+          box,
+          "#51ff75",
+          x * r,
+          r * 1.4,
+          0,
+          r * 0.22,
+          r * 1.35,
+          r * 0.22,
+        );
+        shaft.material = mat;
+        const tip = add(
+          cone,
+          "#51ff75",
+          x * r,
+          r * 2.3,
+          0,
+          r * 0.42,
+          r * 0.8,
+          r * 0.42,
+        );
+        tip.material = mat;
+      }
+    const halo = add(cylinder, "#8cff9a", 0, 0.008, 0, r * 1.3, 0.005, r * 1.3);
+    halo.material = o.pickup === "speed" ? borderHalos[1] : borderHalos[0];
+    return g;
+  }
+  if (["breadcrumb", "seed", "button", "glass bead"].includes(o.design)) {
+    const colors: Record<string, string> = {
+      breadcrumb: "#dec395",
+      seed: "#817043",
+      button: "#cda476",
+      "glass bead": "#77c7cb",
+    };
+    add(
+      o.design === "button" ? cylinder : sphere,
+      colors[o.design],
+      0,
+      o.radius * 0.35,
+      0,
+      o.radius * 0.85,
+      o.radius * 0.45,
+      o.radius * 0.85,
+    );
+    return g;
+  }
+  if (
+    ["cityBlock", "wholeCity", "river", "mountain", "country"].includes(o.type)
+  ) {
+    const r = o.radius;
+    if (o.type === "mountain") {
+      add(cone, "#777d77", 0, o.height / 2, 0, r, o.height, r * 0.85);
+      add(
+        cone,
+        "#e1e9e5",
+        0,
+        o.height * 0.84,
+        0,
+        r * 0.33,
+        o.height * 0.34,
+        r * 0.28,
+      );
+    } else if (o.type === "river") {
+      if (o.design === "grassland")
+        add(
+          cylinder,
+          ["#76a65c", "#a2af69", "#779f58", "#bca36d"][o.variant % 4],
+          0,
+          0.4,
+          0,
+          r,
+          0.8,
+          r,
+        );
+      else {
+        add(box, "#458aa4", 0, 0.2, 0, r * 2, 0.4, r * 0.75);
+        add(box, "#75bfd0", 0, 0.42, 0, r * 1.8, 0.02, r * 0.1);
+      }
+    } else if (o.type === "country") {
+      add(
+        cylinder,
+        ["#82aa61", "#c5b67c", "#679a68", "#a8aa66"][o.variant % 4],
+        0,
+        1.5,
+        0,
+        r,
+        3,
+        r * 0.84,
+      );
+      for (const x of [-0.35, 0.1, 0.4])
+        add(
+          cone,
+          "#89918a",
+          x * r,
+          r * 0.12,
+          -r * 0.25,
+          r * 0.18,
+          r * 0.24,
+          r * 0.18,
+        );
+      add(box, "#539aaa", 0, 3.1, r * 0.25, r * 1.5, 0.2, r * 0.08);
+    } else {
+      add(box, "#87998c", 0, 0.4, 0, r * 1.75, 0.8, r * 1.75);
+      for (let z = -1; z <= 1; z++)
+        for (let x = -1; x <= 1; x++) {
+          const h = (2 + ((x + z + o.variant + 8) % 4)) * r * 0.16;
+          add(
+            box,
+            themeForCity(o.cityIndex ?? 0).facade,
+            x * r * 0.5,
+            h / 2 + 0.8,
+            z * r * 0.5,
+            r * 0.28,
+            h,
+            r * 0.28,
+          );
+        }
+    }
+    return g;
+  }
+  const era = o.cityIndex ?? 2,
+    theme = themeForCity(era);
+  if (o.design === "boundary fence") {
+    const r = o.radius;
+    const glow = add(
+      box,
+      o.unlockStage === 2 ? "#43f4ec" : "#ffb94b",
+      0,
+      0.035,
+      0,
+      r * 1.65,
+      0.05,
+      r * 0.18,
+    );
+    glow.name = "glowing-border";
+    const index = o.unlockStage === 2 ? 0 : 1;
+    glow.material = borderMaterials[index];
+    const halo = add(box, "#43f4ec", 0, 0.015, 0, r * 1.85, 0.025, r * 0.55);
+    halo.material = borderHalos[index];
+    return g;
+  }
+  if (era !== 2 && isBuildingType(o.type)) {
+    const w = Math.min(3.2, o.radius * Math.SQRT2 * 0.94),
+      h = o.height;
+    const body = add(box, theme.facade, 0, h * 0.43, 0, w, h * 0.86, w);
+    body.name = "themed-building";
+    if (era === 0) {
+      const roof = add(
+        cone,
+        theme.roof,
+        0,
+        h * 0.92,
+        0,
+        w * 0.8,
+        h * 0.3,
+        w * 0.8,
+      );
+      roof.rotation.y = Math.PI / 4;
+      for (const side of [-1, 1]) {
+        add(
+          box,
+          "#503d2f",
+          side * w * 0.35,
+          h * 0.43,
+          w * 0.505,
+          w * 0.06,
+          h * 0.84,
+          0.05,
+        );
+        add(box, "#503d2f", 0, h * 0.48, side * w * 0.505, w, 0.1, 0.05);
+      }
+      if (o.type === "skyscraper" || o.type === "largeBuilding")
+        for (const x of [-1, 1])
+          for (const z of [-1, 1]) {
+            add(
+              cylinder,
+              "#a99d86",
+              x * w * 0.42,
+              h * 0.47,
+              z * w * 0.42,
+              w * 0.2,
+              h * 0.94,
+              w * 0.2,
+            );
+            add(
+              cone,
+              theme.roof,
+              x * w * 0.42,
+              h * 1.01,
+              z * w * 0.42,
+              w * 0.26,
+              h * 0.2,
+              w * 0.26,
+            );
+          }
+    } else if (era === 1) {
+      add(box, theme.roof, 0, h * 0.9, 0, w * 1.05, 0.16, w * 1.05);
+      add(
+        cylinder,
+        "#733f32",
+        w * 0.28,
+        h * 0.9,
+        -w * 0.25,
+        w * 0.12,
+        h * 0.55,
+        w * 0.12,
+      );
+      for (let y = 0.3; y < h * 0.8; y += 0.5)
+        add(box, "#d4a67f", 0, y, w * 0.505, w, 0.035, 0.035);
+    } else {
+      add(box, "#234558", 0, h * 0.47, w * 0.505, w * 0.72, h * 0.74, 0.04);
+      for (let y = 0.3; y < h; y += 0.65)
+        add(box, theme.roof, 0, y, 0, w * 1.08, 0.035, w * 1.08);
+      add(cone, "#62cde6", 0, h, 0, w * 0.28, h * 0.3, w * 0.28);
+    }
+    if (era < 2)
+      for (const side of [-1, 1])
+        for (let y = 0.5; y < h * 0.8; y += 0.8)
+          for (const x of [-0.25, 0.25])
+            add(
+              box,
+              "#384a50",
+              x * w,
+              y,
+              side * w * 0.51,
+              w * 0.19,
+              0.3,
+              0.045,
+            );
+    return g;
+  }
+  if (era !== 2 && (o.type === "car" || o.type === "van")) {
+    const r = o.radius;
+    add(
+      box,
+      era === 0 ? "#916539" : era === 1 ? "#525c58" : "#91d2dd",
+      0,
+      r * 0.4,
+      0,
+      r * 1.5,
+      r * 0.35,
+      r,
+    );
+    if (era < 2)
+      for (const x of [-0.5, 0.5])
+        for (const z of [-0.55, 0.55]) {
+          const wheel = add(
+            cylinder,
+            "#3e3630",
+            x * r,
+            r * 0.23,
+            z * r,
+            r * 0.25,
+            r * 0.1,
+            r * 0.25,
+          );
+          wheel.rotation.x = Math.PI / 2;
+        }
+    if (era === 0) {
+      for (const z of [-0.48, 0.48])
+        add(box, "#c29a67", 0, r * 0.65, z * r, r * 1.5, r * 0.4, r * 0.08);
+    } else {
+      add(box, "#233d50", -r * 0.15, r * 0.75, 0, r * 0.65, r * 0.4, r * 0.8);
+      add(
+        box,
+        era === 1 ? "#dec779" : "#56fff0",
+        r * 0.65,
+        r * 0.45,
+        0,
+        0.05,
+        r * 0.1,
+        r * 0.8,
+      );
+    }
+    return g;
+  }
   const facades = {
     house: ["#c2aa88", "#a57e64", "#d4c8ac", "#a4ada6", "#a56c53", "#bbb6a7"],
     shop: ["#b98a68", "#b9b0a0", "#ab755a", "#c7b696", "#a09c90", "#c4bba8"],
@@ -463,23 +843,6 @@ export function createObjectVisual(o: SwallowableObject) {
     add(box, kind % 2 ? "#c5b696" : "#b56549", 0, 2.3, 0, 2.6, 0.14, 1.9);
     for (let stripe = -2; stripe <= 2; stripe++)
       add(box, "#e1d6bc", stripe * 0.45, 2.38, 0, 0.2, 0.025, 1.9);
-    return g;
-  }
-  if (o.design === "boundary fence") {
-    const r = o.radius;
-    for (const side of [-1, 1])
-      add(
-        box,
-        "#e5d3ae",
-        side * r * 0.9,
-        r * 0.75,
-        0,
-        r * 0.14,
-        r * 1.5,
-        r * 0.18,
-      );
-    for (const y of [0.45, 1.15])
-      add(box, "#b58a58", 0, r * y, 0, r * 2, r * 0.16, r * 0.12);
     return g;
   }
   if (o.type === "barrier") {

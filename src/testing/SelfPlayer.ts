@@ -14,6 +14,7 @@ export interface Obstacle {
   x: number;
   z: number;
   half: number;
+  round?: boolean;
 }
 // A* on an eight-neighbor grid. No diagonal cuts through occupied corners.
 export function findPath(
@@ -40,8 +41,10 @@ export function findPath(
         const wx = x * cell - bounds,
           wz = z * cell - bounds;
         if (
-          Math.abs(wx - o.x) <= o.half + cell * 0.35 &&
-          Math.abs(wz - o.z) <= o.half + cell * 0.35
+          o.round
+            ? Math.hypot(wx - o.x, wz - o.z) <= o.half + cell * 0.35
+            : Math.abs(wx - o.x) <= o.half + cell * 0.35 &&
+              Math.abs(wz - o.z) <= o.half + cell * 0.35
         )
           blocked.add(key(x, z));
       }
@@ -179,6 +182,24 @@ export function segmentIntersectsBox(
   b: Vector3,
   obstacle: Obstacle,
 ) {
+  if (obstacle.round) {
+    const dx = b.x - a.x,
+      dz = b.z - a.z;
+    const lengthSquared = dx * dx + dz * dz;
+    const t = lengthSquared
+      ? Math.max(
+          0,
+          Math.min(
+            1,
+            ((obstacle.x - a.x) * dx + (obstacle.z - a.z) * dz) / lengthSquared,
+          ),
+        )
+      : 0;
+    return (
+      Math.hypot(a.x + t * dx - obstacle.x, a.z + t * dz - obstacle.z) <
+      obstacle.half
+    );
+  }
   let entry = 0,
     exit = 1;
   for (const axis of ["x", "z"] as const) {
@@ -266,6 +287,7 @@ export class SelfPlayer {
           x: o.position.x,
           z: o.position.z,
           half: obstacleRadius(o) + state.hole.radius * 0.45,
+          round: true,
         }));
       const limit = movementLimit(state.hole.radius, activeBounds(state));
       this.path = [];
@@ -301,7 +323,7 @@ export class SelfPlayer {
                 limit,
                 obstacles,
                 Math.min(
-                  selfPlayConfig.cellSize,
+                  Math.max(selfPlayConfig.cellSize, state.hole.radius * 0.1),
                   Math.max(0.06, state.hole.radius),
                 ),
               );
@@ -334,7 +356,8 @@ export class SelfPlayer {
     }
     while (
       this.path.length > 1 &&
-      this.path[0].distanceTo(state.hole.position) < 0.22
+      this.path[0].distanceTo(state.hole.position) <
+        Math.min(0.22, Math.max(0.02, state.hole.radius * 0.15))
     )
       this.path.shift();
     if (this.path.length === 1 && this.goal) {

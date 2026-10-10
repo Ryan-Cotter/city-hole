@@ -150,7 +150,9 @@ describe("city gameplay", () => {
   });
   it("populates every size tier with four distinct designs at the same score and footprint", () => {
     const city = generateCity();
-    for (const [type, spec] of Object.entries(categories)) {
+    for (const [type, spec] of Object.entries(categories).filter(
+      ([, spec]) => spec.radius < 10,
+    )) {
       const objects = city.objects.filter((o) => o.type === type);
       expect(new Set(objects.map((o) => o.design)).size).toBeGreaterThanOrEqual(
         4,
@@ -409,7 +411,9 @@ describe("city gameplay", () => {
     expect(a.objects.map((o) => o.position.toArray())).toEqual(
       b.objects.map((o) => o.position.toArray()),
     );
-    for (const type of Object.keys(categories))
+    for (const type of Object.keys(categories).filter(
+      (type) => categories[type as keyof typeof categories].radius < 10,
+    ))
       expect(a.objects.some((o) => o.type === type)).toBe(true);
   });
   it("places trees only in parks and cars only on streets or curb parking", () => {

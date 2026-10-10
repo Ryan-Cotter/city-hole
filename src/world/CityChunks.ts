@@ -31,7 +31,7 @@ export class CityChunks {
         this.chunks.set(key, chunk);
       }
       chunk.objects.push(object);
-      this.membership.set(object,chunk);
+      this.membership.set(object, chunk);
     }
   }
   remove(object: SwallowableObject) {

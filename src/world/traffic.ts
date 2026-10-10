@@ -11,7 +11,7 @@ export function signalFor(axis: "x" | "z", time: number): Signal {
 }
 export function advancePedestrian(o: SwallowableObject, dt: number) {
   if (
-    !["person", "mouse", "cat", "dog"].includes(o.type) ||
+    (!o.critter && !["person", "mouse", "cat", "dog"].includes(o.type)) ||
     o.state !== "idle" ||
     !o.motion
   )
@@ -106,7 +106,26 @@ export function updateTraffic(
   const walkers = new Map<string, SwallowableObject[]>();
   for (const o of objects) {
     if (o.state !== "idle") continue;
-    const animal = ["mouse", "cat", "dog"].includes(o.type);
+    if (o.critter && o.motion) {
+      const m = o.motion;
+      m.laneCenter ??= o.position.z;
+      const phase = time * 2.5 + Number(o.id.split("-").at(-1)) * 1.37;
+      const targetX = (m.min + m.max) / 2 + Math.sin(phase * 0.63) * 0.42;
+      const targetZ = m.laneCenter + Math.sin(phase * 1.07) * 0.28;
+      const dx = targetX - o.position.x,
+        dz = targetZ - o.position.z,
+        distance = Math.hypot(dx, dz);
+      const speed =
+        0.13 * (hole && o.position.distanceTo(hole.position) < 0.5 ? 1.25 : 1);
+      if (distance > 0.001) {
+        const step = Math.min(distance, speed * dt);
+        o.position.x += (dx / distance) * step;
+        o.position.z += (dz / distance) * step;
+        o.orientation = Math.atan2(dx, dz);
+      }
+      continue;
+    }
+    const animal = o.critter || ["mouse", "cat", "dog"].includes(o.type);
     const threatened =
       !!hole &&
       o.position.distanceTo(hole.position) < Math.max(2, hole.radius * 2) &&
@@ -197,6 +216,7 @@ export function updateTraffic(
             : Math.PI;
     }
   }
+  separateAnimals(objects);
   for (const lane of lanes.values()) {
     const m = lane[0].motion!;
     lane.sort(
@@ -226,4 +246,44 @@ export function updateTraffic(
 // Single-object adapter retained for focused motion tests.
 export function advanceTraffic(o: SwallowableObject, dt: number, time = 1) {
   updateTraffic([o], dt, time);
+}
+
+// Nearby animals on different walking lanes must still avoid each other.
+export function separateAnimals(objects: SwallowableObject[]) {
+  const bins = new Map<string, SwallowableObject[]>(),
+    cell = 1.2;
+  for (const o of objects) {
+    if (o.state !== "idle" || !["mouse", "cat", "dog"].includes(o.type))
+      continue;
+    const x = Math.floor(o.position.x / cell),
+      z = Math.floor(o.position.z / cell);
+    for (let dz = -1; dz <= 1; dz++)
+      for (let dx = -1; dx <= 1; dx++)
+        for (const other of bins.get(`${x + dx}:${z + dz}`) ?? []) {
+          let vx = o.position.x - other.position.x,
+            vz = o.position.z - other.position.z;
+          const distance = Math.hypot(vx, vz),
+            minimum = (o.radius + other.radius) * 0.9 + 0.025;
+          if (distance >= minimum) continue;
+          // Side-step close head-on meetings instead of flipping heading every frame.
+          if (
+            Math.abs(vz) < 0.02 &&
+            o.motion?.axis === "x" &&
+            other.motion?.axis === "x"
+          ) {
+            vx = 0;
+            vz = 1;
+          }
+          const length = Math.hypot(vx, vz) || 1,
+            push = (minimum - distance) / 2;
+          o.position.x += (vx / length) * push;
+          o.position.z += (vz / length) * push;
+          other.position.x -= (vx / length) * push;
+          other.position.z -= (vz / length) * push;
+        }
+    const key = `${x}:${z}`;
+    const list = bins.get(key) ?? [];
+    list.push(o);
+    bins.set(key, list);
+  }
 }

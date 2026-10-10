@@ -7,7 +7,7 @@ import {
   obstacleRadius,
 } from "../physics/collisions";
 import { freshState } from "../game/Game";
-import { updateTraffic } from "../world/traffic";
+import { updateTraffic, separateAnimals } from "../world/traffic";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -61,10 +61,30 @@ describe("background simulation and solid objects", () => {
     resolveOversizedCollisions(s.hole, before, [object]);
     expect(s.hole.position.x).toBeCloseTo(0);
   });
+  it("separates cats even when their walking lanes differ", () => {
+    const s = freshState(),
+      cats = s.level.objects.filter((o) => o.type === "cat").slice(0, 3);
+    cats.forEach((o, i) => {
+      o.position.set(i * 0.03, 0, i * 0.02);
+      o.motion = {
+        axis: "x",
+        direction: i % 2 ? 1 : -1,
+        speed: 0.6,
+        min: -2,
+        max: 2,
+      };
+    });
+    for (let step = 0; step < 20; step++) separateAnimals(cats);
+    for (let i = 0; i < cats.length; i++)
+      for (let j = i + 1; j < cats.length; j++)
+        expect(cats[i].position.distanceTo(cats[j].position)).toBeGreaterThan(
+          (cats[i].radius + cats[j].radius) * 0.85,
+        );
+  });
   it("lets unthreatened people and animals wander", () => {
     const s = freshState();
-    const actors = ["person", "mouse", "cat", "dog"].map((type) =>
-      s.level.objects.find((o) => o.type === type)!,
+    const actors = ["person", "mouse", "cat", "dog"].map(
+      (type) => s.level.objects.find((o) => o.type === type)!,
     );
     actors.forEach((o) => (o.motion = null));
     const positions = actors.map((o) => o.position.clone());

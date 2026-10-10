@@ -1,16 +1,20 @@
 import type { GameState, SwallowableObject } from "./GameState";
 import { categories } from "./constants";
 export const areaConfig = [
-  { index: 1, bounds: 3, name: "Fenced yard" },
+  { index: 1, bounds: 3, name: "Starter yard" },
   { index: 2, bounds: 10, name: "City block" },
   { index: 3, bounds: 60, name: "Whole city" },
 ] as const;
 export const sectionForState = (state: GameState) =>
   areaConfig[state.areaStage - 1];
 export const activeBounds = (state: GameState) =>
-  Math.min(state.level.bounds, sectionForState(state).bounds);
+  state.areaStage === 3
+    ? state.level.bounds
+    : Math.min(state.level.bounds, sectionForState(state).bounds);
 export const isUnlocked = (state: GameState, o: SwallowableObject) => {
   const bounds = activeBounds(state);
+  if (o.members && (state.areaStage < 3 || o.radius > state.hole.radius * 0.85))
+    return false;
   return (
     Math.abs(o.position.x) <= bounds &&
     Math.abs(o.position.z) <= bounds &&

@@ -53,6 +53,10 @@ export class CanvasRenderer {
     private surface: HTMLCanvasElement,
     private bounds: number,
   ) {}
+  setSurface(surface: HTMLCanvasElement, bounds: number) {
+    this.surface = surface;
+    this.bounds = bounds;
+  }
   setSize(w: number, h: number) {
     this.width = w;
     this.height = h;
@@ -186,7 +190,13 @@ export class CanvasRenderer {
     for (const group of scene.children) {
       const o = group.userData.object as SwallowableObject | undefined;
       if (!o || !group.visible) continue;
-      if (o.motion || o.state === "falling" || !group.userData.baked) {
+      if (
+        o.motion ||
+        o.pickup ||
+        o.type === "tree" ||
+        o.state === "falling" ||
+        !group.userData.baked
+      ) {
         group.updateMatrixWorld();
         group.userData.baked = true;
       }
@@ -201,7 +211,13 @@ export class CanvasRenderer {
           mat = child.material as MeshStandardMaterial;
         const base = mat.color;
         let triangles = this.triangles.get(child);
-        if (!triangles || o.motion || o.type === "tree" || o.state === "falling") {
+        if (
+          !triangles ||
+          o.motion ||
+          o.type === "tree" ||
+          o.pickup ||
+          o.state === "falling"
+        ) {
           triangles = [];
           const count = index ? index.count : position.count;
           for (let i = 0; i < count; i += 3) {
@@ -247,7 +263,9 @@ export class CanvasRenderer {
           )
             continue;
           const shade =
-            (0.48 + 0.48 * Math.max(0, normal.dot(light))) *
+            (0.42 +
+              0.52 * Math.max(0, normal.dot(light)) +
+              0.08 * Math.max(0, normal.x)) *
             (0.98 +
               0.04 *
                 Math.abs(
@@ -274,7 +292,7 @@ export class CanvasRenderer {
         a.depth - b.depth,
     );
     const fade = this.fadeCanvas.getContext("2d")!;
-    for (let i = 0; i < faces.length;) {
+    for (let i = 0; i < faces.length; ) {
       let end = i + 1;
       while (end < faces.length && faces[end].objectId === faces[i].objectId)
         end++;

@@ -10,6 +10,7 @@ import type {
 export function generateCity(
   seed = 814,
   smallItemMultiplier = cityConfig.smallItemMultiplier,
+  cityIndex = 2,
 ): Level {
   let value = seed >>> 0;
   const random = () => {
@@ -33,6 +34,7 @@ export function generateCity(
     const variant = (index % count) + Math.floor(random() * 2) * count;
     objects.push({
       id: `${type}-${objects.length}`,
+      cityIndex,
       type,
       position: new Vector3(x, 0, z),
       ...spec,
@@ -362,27 +364,98 @@ export function generateCity(
       add("manhole", position, street + 0.5);
       add("barrier", position + 3, street);
     }
-  // Mixed, separated items occupy the entire plaza instead of overlapping rows.
-  const starterTypes = [
-    "bottlecap",
-    "dice",
-    "pebble",
-    "coin",
-    "toy",
-    "snack",
-    "mouse",
-  ] as const;
-  const cells = Array.from({ length: 224 }, (_, i) => i);
-  for (let i = cells.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [cells[i], cells[j]] = [cells[j], cells[i]];
+  // Small still-life scenes make edible size steps readable: food, play, and garden edges.
+  const pockets = [
+    [-1.8, -1.65],
+    [0, -1.95],
+    [1.8, -1.65],
+    [-2, 0],
+    [2, 0],
+    [-1.8, 1.65],
+    [0, 2.05],
+    [1.8, 1.65],
+  ];
+  for (let p = 0; p < pockets.length; p++) {
+    const [x, z] = pockets[p],
+      food = p % 4 === 0;
+    add(
+      food ? "snack" : p % 4 === 1 ? "dice" : p % 4 === 3 ? "toy" : "pebble",
+      x,
+      z,
+      random() * 6,
+    );
+    for (let i = 0; i < 48; i++) {
+      const angle = i * 2.39996323 + p,
+        spread = 0.22 + Math.sqrt(i) * 0.055;
+      const type = food
+        ? i < 32
+          ? "bottlecap"
+          : i < 44
+            ? "pebble"
+            : "snack"
+        : p % 4 === 1
+          ? i < 20
+            ? "bottlecap"
+            : i < 35
+              ? "dice"
+              : "coin"
+          : p % 4 === 2
+            ? i < 24
+              ? "bottlecap"
+              : "pebble"
+            : i < 28
+              ? "bottlecap"
+              : i < 42
+                ? "dice"
+                : "toy";
+      add(
+        type,
+        x + Math.cos(angle) * spread,
+        z + Math.sin(angle) * spread,
+        random() * 6,
+      );
+      if (type === "bottlecap" || (food && type === "pebble"))
+        objects[objects.length - 1].design = food
+          ? "breadcrumb"
+          : p % 4 === 2
+            ? "seed"
+            : "button";
+    }
+    add("mouse", x * 0.8, z * 0.8, random() * 6);
   }
-  for (let i = 0; i < cells.length; i++) {
-    const cell = cells[i],
-      x = ((cell % 16) - 7.5) * 0.34 + (random() - 0.5) * 0.03,
-      z = (Math.floor(cell / 16) - 6.5) * 0.38 + (random() - 0.5) * 0.03;
-    if (Math.hypot(x, z) < 0.85) continue;
-    add(starterTypes[i % starterTypes.length], x, z, random() * Math.PI * 2);
+  for (const [p, [x, z]] of pockets.entries()) {
+    if (p % 4 === 0)
+      for (let i = 0; i < 32; i++) {
+        const angle = i * 2.39996323,
+          distance = 0.26 + Math.sqrt(i) * 0.045;
+        add(
+          i % 3 ? "bottlecap" : "dice",
+          x + Math.cos(angle) * distance,
+          z + Math.sin(angle) * distance,
+          random() * 6,
+        );
+        objects[objects.length - 1].design = [
+          "rice grain",
+          "pea",
+          "berry",
+          "cookie crumb",
+        ][i % 4];
+      }
+    for (let i = 0; i < 6; i++) {
+      const bx = x + (i - 2.5) * 0.1,
+        bz = z + 0.65;
+      add("bottlecap", bx, bz, 0, {
+        axis: "x",
+        direction: i % 2 ? 1 : -1,
+        speed: 0.045,
+        min: x - 0.5,
+        max: x + 0.5,
+      });
+      Object.assign(objects[objects.length - 1], {
+        critter: true,
+        design: ["ant", "beetle", "ladybug"][i % 3],
+      });
+    }
   }
   // A loose spiral provides the first level without covering the starting hole.
   for (let i = 0; i < 16; i++) {
@@ -398,10 +471,18 @@ export function generateCity(
       0.8 + Math.floor(i / 6) * 0.36,
       random() * 6,
     );
+  for (let i = 0; i < 12; i++) {
+    const distance = i < 3 ? 1.5 : 5 + i * 3,
+      angle = i * 2.4;
+    add("bottlecap", Math.cos(angle) * distance, Math.sin(angle) * distance);
+    const pickup = objects[objects.length - 1];
+    pickup.pickup = i % 3 === 2 ? "size" : "speed";
+    pickup.design = `${pickup.pickup} boost`;
+  }
   // Physical, independently swallowable boundary panels unlock the next area.
   for (const [bounds, count, radius, unlockStage] of [
     [2.85, 20, 0.14, 2],
-    [9.5, 12, 0.82, 3],
+    [9.5, 24, 0.42, 3],
   ] as const) {
     for (let side = 0; side < 4; side++)
       for (let i = 0; i < count; i++) {
@@ -417,14 +498,15 @@ export function generateCity(
           radius,
           height: radius * 1.5,
           unlockStage,
-          mass: unlockStage === 2 ? 21 : 4181,
-          scoreValue: unlockStage === 2 ? 21 : 4181,
+          mass: unlockStage === 2 ? 21 : 377,
+          scoreValue: unlockStage === 2 ? 21 : 377,
           design: "boundary fence",
         });
       }
   }
   return {
     seed,
+    cityIndex,
     bounds: cityConfig.bounds,
     objects,
     objectSlots: new Map(objects.map((o, i) => [o.id, i])),

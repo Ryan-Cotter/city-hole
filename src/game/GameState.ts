@@ -4,6 +4,7 @@ export type ObjectType = keyof typeof categories;
 export interface Hole {
   position: Vector3;
   velocity: Vector3;
+  speedMultiplier?: number;
   radius: number;
   mass: number;
   level: number;
@@ -28,6 +29,11 @@ export interface SwallowableObject {
   mass: number;
   scoreValue: number;
   orientation: number;
+  critter?: boolean;
+  pickup?: "speed" | "size";
+  members?: SwallowableObject[];
+  aggregateId?: string;
+  cityIndex?: number;
   unlockStage?: 2 | 3;
   supportId?: string;
   signalAxis?: "x" | "z";
@@ -38,7 +44,11 @@ export interface SwallowableObject {
   fall: null | { elapsed: number; start: Vector3; capture: Vector3 };
 }
 export type District =
-  "residential" | "commercial" | "downtown" | "industrial" | "park";
+  | "residential"
+  | "commercial"
+  | "downtown"
+  | "industrial"
+  | "park";
 export interface Block {
   district: District;
   x: number;
@@ -46,6 +56,8 @@ export interface Block {
   park: boolean;
 }
 export interface Level {
+  landscape?: boolean;
+  cityIndex?: number;
   seed: number;
   bounds: number;
   objects: SwallowableObject[];
@@ -55,6 +67,15 @@ export interface Level {
   totalScore: number;
 }
 export interface GameState {
+  world: {
+    phase: "city" | "metropolis" | "country" | "planet";
+    initialCount: number;
+  };
+  growthOffset: number;
+  cityIndex: number;
+  boosts: {
+    speedUntil: number;
+  };
   areaStage: 1 | 2 | 3;
   status: "playing" | "paused" | "won";
   elapsedSeconds: number;

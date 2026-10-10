@@ -1,6 +1,6 @@
 # City object catalog
 
-The 27 ascending tiers cover tiny loose items through skyscrapers. Each tier has at least four designs. Colors and cardinal/random orientations vary independently; generation is seeded.
+The 32 ascending tiers cover tiny loose items through whole countries. Geographic tiers appear after the expanded city. Each tier has at least four designs. Colors and cardinal/random orientations vary independently; generation is seeded.
 
 | Size tier | Footprint radius | Points | Implemented designs |
 | --- | ---: | ---: | --- |
@@ -31,6 +31,13 @@ The 27 ascending tiers cover tiny loose items through skyscrapers. Each tier has
 | apartment buildings | 2.85 | 121,393 | apartment, stepped office, hotel, school |
 | large buildings | 3.5 | 196,418 | civic building, terraced mall, warehouse, hospital |
 | skyscrapers | 4.4 | 317,811 | glass tower, stepped tower, spire tower, observation tower |
+| city blocks | 10 | 514,229 | residential block, market block, tower block, park block |
+| river sections | 18 | 832,040 | river bend, river reach, delta, lake |
+| mountains | 30 | 1,346,269 | snow peak, rocky ridge, volcano, green foothill |
+| whole cities | 50 | 2,178,309 | capital, port city, inland city, industrial city |
+| countries | 90 | 3,524,578 | coastal country, island country, forest country, desert country |
+
+Starter pockets also contain rice grains, peas, berries, cookie crumbs, seeds, buttons, ants, beetles and ladybugs, using the smallest size tiers.
 
 Food on restaurant tables is counted separately. Dumpster designs belong to the sidewalk-furniture tier. Manholes and center dividers sit on streets; animals and crowds are persistent. Emergency vehicles use ordinary traffic rules rather than emergency right-of-way. Building districts vary the mix of houses, shops, offices, warehouses and towers.
 

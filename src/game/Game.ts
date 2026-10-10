@@ -1,3 +1,6 @@
+import { ensureFoodBudget } from "./foodBudget";
+import { attachCityBlocks, advanceWorld } from "../world/WorldProgression";
+import { activateBoost, updateBoosts } from "./boosts";
 import { resolveOversizedCollisions } from "../physics/collisions";
 import { activeBounds, isUnlocked, lowestDetailTier, tierOf } from "./sections";
 import { createBlockVisual, disposeBlockVisual } from "../render/BlockVisual";
@@ -16,11 +19,18 @@ import { Renderer } from "../render/Renderer";
 import { InputManager } from "../input/InputManager";
 import { HUD } from "../ui/HUD";
 import { startLoop } from "./loop";
-export function freshState(): GameState {
-  const level = generateCity();
+export function freshState(cityIndex = 0): GameState {
+  const level = generateCity(814 + cityIndex * 997, undefined, cityIndex);
+  attachCityBlocks(level);
   return {
+    world: { phase: "city", initialCount: level.objects.length },
+    growthOffset: 0,
     status: "playing",
     areaStage: 1,
+    cityIndex,
+    boosts: {
+      speedUntil: 0,
+    },
     elapsedSeconds: 0,
     hole: createHole(),
     level,
@@ -50,6 +60,7 @@ export class Game {
     (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
   );
   private supported = this.state.level.objects.filter((o) => o.supportId);
+  private budgetKey = "";
   private falling = new Set<SwallowableObject>();
   renderer: Renderer;
   input: InputManager;
@@ -64,6 +75,7 @@ export class Game {
         this.selfPlayer.reset();
         this.input.clear();
       },
+      () => this.nextCity(),
     );
     this.renderer = new Renderer(
       root.querySelector("#viewport")!,
@@ -102,6 +114,11 @@ export class Game {
           this.state.hole.radius,
           this.state.hole.velocity.lengthSq() > 0.01 &&
             this.state.status === "playing",
+          this.state.world.phase === "country"
+            ? 180
+            : this.state.world.phase === "planet"
+              ? 400
+              : 0,
         );
         this.refreshTargets();
         this.hud.update(this.state, this.selfPlayer.enabled);
@@ -111,7 +128,14 @@ export class Game {
     );
   }
   populate() {
-    this.chunks = new CityChunks(this.state.level.objects);
+    this.chunks = new CityChunks(
+      this.state.level.objects,
+      this.state.world.phase === "planet"
+        ? 200
+        : this.state.world.phase === "country"
+          ? 80
+          : 20,
+    );
     this.actors = this.state.level.objects.filter(
       (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
     );
@@ -120,7 +144,19 @@ export class Game {
     );
     this.supported = this.state.level.objects.filter((o) => o.supportId);
     this.falling.clear();
+    for (const o of this.state.level.objects)
+      if (o.state === "falling") {
+        this.falling.add(o);
+        this.loadVisual(o);
+      }
     this.refreshTargets();
+  }
+  private representedByBlock(o: SwallowableObject) {
+    if (!o.aggregateId || o.state !== "idle") return false;
+    const index = this.state.level.objectSlots.get(o.aggregateId);
+    if (index === undefined) return false;
+    const block = this.state.level.objects[index];
+    return isUnlocked(this.state, block) && block.state !== "swallowed";
   }
   private loadVisual(o: SwallowableObject) {
     let visual = this.visuals.get(o.id);
@@ -137,6 +173,7 @@ export class Game {
     for (const chunk of this.chunks.chunks.values()) {
       if (this.renderer.chunkVisible(chunk.x, chunk.z, this.chunks.size)) {
         const coarse =
+          this.state.world.phase === "city" &&
           this.state.hole.radius >= 8 &&
           Math.hypot(
             chunk.x - this.state.hole.position.x,
@@ -160,7 +197,10 @@ export class Game {
             this.renderer.scene.add(cached.visual);
           }
           active.push(...chunk.objects.filter((o) => o.state === "falling"));
-        } else active.push(...chunk.objects);
+        } else
+          active.push(
+            ...chunk.objects.filter((o) => !this.representedByBlock(o)),
+          );
       }
     }
     for (const [key, cached] of this.blockVisuals)
@@ -194,7 +234,7 @@ export class Game {
     for (const o of detailed)
       if (o.state !== "swallowed") {
         const visual = this.loadVisual(o);
-        if (o.state === "idle") {
+        if (o.state === "idle" && !o.motion && !o.pickup) {
           visual.position.copy(o.position);
           visual.rotation.y = o.orientation;
         }
@@ -207,7 +247,11 @@ export class Game {
       this.state.level.objects.length,
     );
   }
-  restart() {
+  nextCity() {
+    if (this.state.status === "won" && this.state.world.phase === "planet")
+      this.restart(this.state.cityIndex + 1);
+  }
+  restart(cityIndex = this.state.cityIndex) {
     for (const visual of this.visuals.values())
       this.renderer.scene.remove(visual);
     this.visuals.clear();
@@ -216,7 +260,9 @@ export class Game {
       disposeBlockVisual(cached.visual);
     }
     this.blockVisuals.clear();
-    this.state = freshState();
+    this.state = freshState(cityIndex);
+    this.budgetKey = "";
+    this.renderer.setCity(this.state.level);
     this.selfPlayer.reset();
     this.input.clear();
     this.populate();
@@ -246,6 +292,7 @@ export class Game {
     );
   }
   private removeCompleted(o: SwallowableObject) {
+    for (const member of o.members ?? []) this.removeCompleted(member);
     const visual = this.visuals.get(o.id);
     if (visual) this.renderer.scene.remove(visual);
     this.visuals.delete(o.id);
@@ -261,6 +308,12 @@ export class Game {
     const s = this.state;
     if (s.status !== "playing") return;
     s.elapsedSeconds += dt;
+    updateBoosts(s);
+    const budgetKey = `${s.cityIndex}:${s.world.phase}:${s.areaStage}:${s.hole.level}`;
+    if (budgetKey !== this.budgetKey) {
+      this.budgetKey = budgetKey;
+      if (ensureFoodBudget(s).length) this.populate();
+    }
     this.input.refreshTarget();
     const beforeMove = s.hole.position.clone();
     if (this.selfPlayer.enabled)
@@ -302,6 +355,11 @@ export class Game {
     for (const [id, model] of this.visuals) {
       const o = model.userData.object as SwallowableObject;
       if (!model.visible) continue;
+      if (o.pickup && o.state === "idle") {
+        model.rotation.y = s.elapsedSeconds * 1.8;
+        model.position.y =
+          o.position.y + 0.012 + Math.sin(s.elapsedSeconds * 3) * 0.008;
+      }
       if (o.type === "tree" && o.state === "idle") {
         model.rotation.z =
           Math.sin(s.elapsedSeconds * 1.3 + o.variant * 1.7) * 0.025;
@@ -322,11 +380,15 @@ export class Game {
         const visual = this.visuals.get(o.id);
         if (visual) {
           visual.position.copy(o.position);
-          visual.rotation.y = o.orientation;
-          if (["person", "mouse", "cat", "dog"].includes(o.type)) {
+          const turn = o.orientation - visual.rotation.y;
+          visual.rotation.y +=
+            Math.atan2(Math.sin(turn), Math.cos(turn)) *
+            (1 - Math.exp(-10 * dt));
+          if (o.critter || ["person", "mouse", "cat", "dog"].includes(o.type)) {
             const phase = s.elapsedSeconds * (o.motion ? 7 : 2.5) + o.variant;
             visual.position.y =
-              Math.abs(Math.sin(phase)) * (o.motion ? 0.035 : 0.015);
+              o.position.y +
+              Math.abs(Math.sin(phase)) * Math.min(0.015, o.height * 0.025);
             for (const limb of visual.children) {
               const side = limb.userData.walkSide;
               if (side)
@@ -364,6 +426,19 @@ export class Game {
       visual.scale.setScalar(f.scale);
       visual.rotation.set(0, o.orientation + f.u * 0.25, 0);
       if (f.u >= 1 && complete(s, o)) this.removeCompleted(o);
+    }
+    if (advanceWorld(s)) {
+      for (const visual of this.visuals.values())
+        this.renderer.scene.remove(visual);
+      this.visuals.clear();
+      for (const cached of this.blockVisuals.values()) {
+        this.renderer.scene.remove(cached.visual);
+        disposeBlockVisual(cached.visual);
+      }
+      this.blockVisuals.clear();
+      this.renderer.setCity(s.level);
+      this.selfPlayer.reset();
+      this.populate();
     }
     clampHole(s.hole, activeBounds(s));
   }

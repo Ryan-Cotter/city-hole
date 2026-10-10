@@ -71,10 +71,14 @@ export class Renderer {
     const sun = new DirectionalLight("#fff0d6", 2.6);
     sun.position.set(-15, 30, 10);
     this.scene.add(sun);
+    const fill = new DirectionalLight("#8ab7ef", 0.55);
+    fill.position.set(18, 12, -22);
+    this.scene.add(fill);
     const ground = new Mesh(
       new PlaneGeometry(level.bounds * 2, level.bounds * 2),
       new MeshBasicMaterial({ map: new CanvasTexture(surface) }),
     );
+    ground.name = "city-ground";
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.025;
     this.scene.add(ground);
@@ -100,18 +104,35 @@ export class Renderer {
     window.addEventListener("resize", () => this.resize());
     this.resize();
   }
-  follow(position: Vector3, radius = 1, moving = false) {
+  follow(position: Vector3, radius = 1, moving = false, minimumView = 0) {
     const now = performance.now(),
       dt = Math.min(0.1, (now - this.lastZoom) / 1000);
     this.lastZoom = now;
     this.viewSize +=
-      (cameraViewSize(radius, moving) - this.viewSize) *
+      (Math.max(minimumView, cameraViewSize(radius, moving)) - this.viewSize) *
       (1 - Math.exp(-cameraConfig.smoothing * dt));
     const rect = this.webgl.domElement.parentElement!.getBoundingClientRect();
     resizeCamera(this.camera, rect.width, rect.height, this.viewSize);
-    this.camera.position.set(position.x + 35, 44, position.z + 35);
+    const distanceScale = Math.max(1, this.viewSize / 30);
+    this.camera.position.set(
+      position.x + 35 * distanceScale,
+      44 * distanceScale,
+      position.z + 35 * distanceScale,
+    );
     this.camera.lookAt(position.x, 0, position.z);
     this.camera.updateMatrixWorld();
+  }
+  setCity(level: Level) {
+    const surface = createCitySurface(level);
+    if (this.webgl instanceof CanvasRenderer)
+      this.webgl.setSurface(surface, level.bounds);
+    const ground = this.scene.getObjectByName("city-ground") as Mesh;
+    ground.geometry.dispose();
+    ground.geometry = new PlaneGeometry(level.bounds * 2, level.bounds * 2);
+    const material = ground.material as MeshBasicMaterial;
+    material.map?.dispose();
+    material.map = new CanvasTexture(surface);
+    material.needsUpdate = true;
   }
   setHoleLevel(level: number) {
     const color = rimColorForLevel(level);

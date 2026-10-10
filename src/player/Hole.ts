@@ -43,7 +43,12 @@ export function moveToward(
       h.velocity
         .copy(delta)
         .normalize()
-        .multiplyScalar(Math.min(speedForRadius(h.radius), distance / dt));
+        .multiplyScalar(
+          Math.min(
+            speedForRadius(h.radius) * (h.speedMultiplier ?? 1),
+            distance / dt,
+          ),
+        );
   }
   h.position.addScaledVector(h.velocity, dt);
   clampHole(h, bounds);

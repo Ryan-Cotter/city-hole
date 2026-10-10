@@ -1,7 +1,8 @@
+import { updateBoosts, activateBoost } from "../game/boosts";
 import type { GameState, Hole, SwallowableObject } from "../game/GameState";
 import { lowestDetailTier, tierOf } from "../game/sections";
 import { config, stages } from "../game/constants";
-import { growthForPoints } from "../game/progression";
+import { growthForPoints, growthPoints } from "../game/progression";
 export function canSwallow(o: SwallowableObject, h: Hole) {
   const dx = o.position.x - h.position.x,
     dz = o.position.z - h.position.z;
@@ -23,6 +24,11 @@ export function capture(o: SwallowableObject, h: Hole) {
 }
 export function complete(s: GameState, o: SwallowableObject) {
   if (o.state !== "falling") return false;
+  for (const member of o.members ?? []) {
+    if (member.state === "swallowed") continue;
+    member.state = "falling";
+    complete(s, member);
+  }
   o.state = "swallowed";
   if (o.unlockStage && o.unlockStage === s.areaStage + 1)
     s.areaStage = o.unlockStage;
@@ -42,9 +48,11 @@ export function complete(s: GameState, o: SwallowableObject) {
   s.score.byType[o.type]++;
   s.score.swallowedObjects++;
   s.score.remainingObjects--;
-  const growth = growthForPoints(s.score.points);
+  const growth = growthForPoints(growthPoints(s));
   s.hole.level = growth.level;
   s.hole.radius = growth.radius;
+  updateBoosts(s);
+  if (o.pickup) activateBoost(s, o.pickup);
   if (s.score.remainingObjects === 0) s.status = "won";
   return true;
 }

@@ -1,3 +1,4 @@
+import { themeForCity } from "../game/campaign";
 import { BoxGeometry, Group, Mesh } from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import type { CityChunk } from "../world/CityChunks";
@@ -25,7 +26,13 @@ export function createBlockVisual(
   if (!parts.length) return group;
   const geometry = mergeGeometries(parts);
   for (const part of parts) part.dispose();
-  if (geometry) group.add(new Mesh(geometry, material("#9ea7a5")));
+  if (geometry)
+    group.add(
+      new Mesh(
+        geometry,
+        material(themeForCity(objects[0]?.cityIndex ?? 2).facade),
+      ),
+    );
   group.userData.object = {
     id: `block-${chunk.key}`,
     type: "building",

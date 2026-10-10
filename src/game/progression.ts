@@ -1,5 +1,5 @@
 import { stages, progressionConfig } from "./constants";
-// After skyscrapers, incremental costs rise logarithmically without a size cap.
+// After countries, incremental costs rise logarithmically without a size cap.
 export const extraLevelCost = (extraIndex: number) =>
   Math.ceil(progressionConfig.postCityCost * (1 + Math.log2(extraIndex + 2)));
 export function growthForPoints(points: number) {
@@ -26,3 +26,6 @@ export function growthForPoints(points: number) {
   };
 }
 export const levelForPoints = (points: number) => growthForPoints(points).level;
+
+export const growthPoints = (s: import("./GameState").GameState) =>
+  s.score.points - s.growthOffset;
