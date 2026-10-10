@@ -170,6 +170,8 @@ export function updateTraffic(
     }
     if (!o.motion) continue;
     if (o.type === "person" || animal) {
+      if (threatened && !o.wasThreatened) o.alertedUntil = time + 0.22;
+      o.wasThreatened = threatened;
       o.motion.baseSpeed ??= o.motion.speed;
       o.motion.speed = o.motion.baseSpeed * (threatened ? 2 : 1);
       if (threatened) {

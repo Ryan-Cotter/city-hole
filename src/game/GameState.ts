@@ -29,7 +29,13 @@ export interface SwallowableObject {
   mass: number;
   scoreValue: number;
   orientation: number;
+  groupId?: string;
   critter?: boolean;
+  worldRing?: 1 | 2 | 3;
+  reactionUntil?: number;
+  alertedUntil?: number;
+  wasThreatened?: boolean;
+  spill?: { origin: Vector3; target: Vector3; elapsed: number };
   collisionOnly?: boolean;
   pickup?: "speed" | "size";
   members?: SwallowableObject[];
@@ -42,7 +48,12 @@ export interface SwallowableObject {
   design: string;
   motion: Motion | null;
   state: "idle" | "falling" | "swallowed" | "discarded";
-  fall: null | { elapsed: number; start: Vector3; capture: Vector3 };
+  fall: null | {
+    elapsed: number;
+    start: Vector3;
+    capture: Vector3;
+    toCenter?: boolean;
+  };
 }
 export type District =
   | "residential"
@@ -58,6 +69,13 @@ export interface Block {
 }
 export interface Level {
   landscape?: boolean;
+  finalBounds?: number;
+  densityPlan?: {
+    type: ObjectType;
+    count: number;
+    requiredPoints: number;
+    area: number;
+  }[];
   cityIndex?: number;
   seed: number;
   bounds: number;
@@ -69,9 +87,26 @@ export interface Level {
 }
 export interface GameState {
   pacing?: { points: number };
+  neighborhoods?: Record<
+    string,
+    { remaining: number; total: number; label: string }
+  >;
+  performance?: { strained: boolean; slowSeconds: number };
+  feedback?: {
+    points: number;
+    count: number;
+    until: number;
+    bumpUntil: number;
+    cleared: number;
+    goal?: string;
+    goalUntil?: number;
+  };
   world: {
     phase: "city" | "metropolis" | "country" | "planet";
     initialCount: number;
+    ringCount?: number;
+    remainingByRing?: Record<number, number>;
+    reveal?: { from: number; to: number; started: number };
   };
   growthOffset: number;
   cityIndex: number;

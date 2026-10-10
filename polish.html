@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>City Hole · Art direction preview</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: #101c28;
+        color: #e9eef3;
+        font: 15px system-ui;
+      }
+      header {
+        padding: 26px 32px 16px;
+        max-width: 1200px;
+        margin: auto;
+      }
+      small {
+        color: #79cfbb;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+      h1 {
+        font-size: 30px;
+        margin: 8px 0;
+      }
+      p {
+        color: #a6b8c7;
+        line-height: 1.5;
+        max-width: 800px;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 18px 0;
+      }
+      button,
+      a {
+        border: 1px solid #455567;
+        background: #243547;
+        color: #e9eef3;
+        border-radius: 9px;
+        padding: 10px 16px;
+        font: inherit;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button[aria-pressed="true"] {
+        background: #83d6bd;
+        color: #112b25;
+        border-color: #83d6bd;
+      }
+      main {
+        max-width: 1200px;
+        margin: auto;
+        padding: 0 32px 24px;
+      }
+      #stage {
+        height: 440px;
+        background: #ccd6d6;
+        border-radius: 18px;
+        overflow: hidden;
+        position: relative;
+        touch-action: none;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+      #label {
+        position: absolute;
+        bottom: 18px;
+        left: 22px;
+        color: #203346;
+        background: #ffffffe0;
+        padding: 10px 15px;
+        border-radius: 10px;
+        pointer-events: none;
+      }
+      .notes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-top: 16px;
+      }
+      .notes div {
+        background: #1a2b3b;
+        padding: 16px;
+        border-radius: 12px;
+      }
+      .notes b {
+        display: block;
+        margin-bottom: 6px;
+      }
+      .notes span {
+        color: #a6b8c7;
+      }
+      footer {
+        margin-top: 18px;
+        color: #91a7ba;
+      }
+      @media (max-width: 600px) {
+        header,
+        main {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        .notes {
+          grid-template-columns: 1fr;
+        }
+        #stage {
+          height: 380px;
+        }
+        h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <small>City Hole / Proposed art pass</small>
+      <h1>Small details. Clear silhouettes.</h1>
+      <p>
+        Original 3D art gallery. Approved car and building variants are used in
+        modern cities with WebGL; street props remain reference prototypes. Drag
+        to orbit · scroll to zoom · compare the base model with the polished
+        finish.
+      </p>
+      <nav id="choices">
+        <button data-model="car" aria-pressed="true">01 · Compact car</button
+        ><button data-model="building" aria-pressed="false">
+          02 · Corner building</button
+        ><button data-model="props" aria-pressed="false">
+          03 · Street props
+        </button>
+      </nav>
+      <nav>
+        <button id="compare" aria-pressed="false">Compare base model</button
+        ><button id="rotate" aria-pressed="false">Auto rotate</button
+        ><button id="reset">Reset view</button><a href="./">Back to game</a>
+      </nav>
+    </header>
+    <main>
+      <div id="stage"><div id="label">Proposed · compact car</div></div>
+      <div class="notes">
+        <div>
+          <b>Surface character</b
+          ><span
+            >Quiet plaster grain, brick courses and painted metal. Glass stays
+            smooth and dark.</span
+          >
+        </div>
+        <div>
+          <b>Readable geometry</b
+          ><span
+            >Chamfered silhouettes, raised window trim and separated lights.
+            Details survive the game camera.</span
+          >
+        </div>
+        <div>
+          <b>Controlled lighting</b
+          ><span
+            >Warm key light, cool fill and soft contact shadows. No bloom or
+            expensive full-screen effects.</span
+          >
+        </div>
+      </div>
+      <div
+        id="swatches"
+        style="display: flex; gap: 24px; margin-top: 20px; align-items: center"
+        aria-label="Proposed texture swatches"
+      ></div>
+      <footer id="status">
+        Preview only · awaiting your art direction feedback
+      </footer>
+    </main>
+    <script type="module" src="/src/testing/PolishPreview.ts"></script>
+  </body>
+</html>

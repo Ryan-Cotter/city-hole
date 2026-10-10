@@ -74,12 +74,12 @@ export function createBuildingExpansion(s: GameState) {
   const blocks: Level["blocks"] = [];
   for (let z = -1; z <= 1; z++)
     for (let x = -1; x <= 1; x++) {
-      if (Math.abs(x) + Math.abs(z) !== 1) continue;
+      if (x === 0 && z === 0) continue;
       for (const o of tile.objects.filter((o) => isBuildingType(o.type)))
         additions.push({
           ...o,
           id: `expansion-${x}-${z}-${o.id}`,
-          position: o.position.clone().add(new Vector3(x * 120, 0, z * 120)),
+          position: o.position.clone().add(new Vector3(x * 360, 0, z * 360)),
           state: "idle",
           fall: null,
           motion: null,
@@ -87,8 +87,8 @@ export function createBuildingExpansion(s: GameState) {
       blocks.push(
         ...tile.blocks.map((b) => ({
           ...b,
-          x: b.x + x * 120,
-          z: b.z + z * 120,
+          x: b.x + x * 360,
+          z: b.z + z * 360,
         })),
       );
     }
@@ -98,7 +98,7 @@ export function createBuildingExpansion(s: GameState) {
 }
 export function createLandscape(s: GameState, planet = false): Level {
   const objects: SwallowableObject[] = [],
-    bounds = planet ? 300 : 200;
+    bounds = planet ? 3400 : 200;
   let index = 0;
   const add = (type: ObjectType, x: number, z: number) => {
     const o = make(
@@ -113,13 +113,28 @@ export function createLandscape(s: GameState, planet = false): Level {
     return o;
   };
   if (planet) {
-    for (let z = -1; z <= 0; z++)
-      for (let x = -1; x <= 0; x++)
-        add("country", x * 240 + 120, z * 240 + 120);
-    for (let i = 0; i < 6; i++) {
-      const a = (i * Math.PI) / 3;
-      add("wholeCity", Math.cos(a) * 110, Math.sin(a) * 110);
-    }
+    // One continuous outer region, with progressively larger silhouettes.
+    // Leave the original city and its building suburbs in the same coordinates.
+    for (let z = -6; z <= 6; z++)
+      for (let x = -6; x <= 6; x++) {
+        if (Math.max(Math.abs(x), Math.abs(z)) <= 1) continue;
+        const ring = Math.max(Math.abs(x), Math.abs(z));
+        const type: ObjectType =
+          ring <= 2
+            ? "river"
+            : ring <= 3
+              ? index % 3
+                ? "river"
+                : "mountain"
+              : ring <= 4
+                ? index % 2
+                  ? "mountain"
+                  : "wholeCity"
+                : index % 3
+                  ? "wholeCity"
+                  : "country";
+        add(type, x * 500, z * 500);
+      }
   } else {
     for (let z = -3; z <= 3; z++)
       for (let x = -3; x <= 3; x++) {
@@ -153,46 +168,53 @@ export function createLandscape(s: GameState, planet = false): Level {
   indexLevel(level);
   return level;
 }
+// Build the complete world before the first frame. Expansion reveals existing
+// objects; it never changes a run's initial food population or moves the player.
+export function prepareWorld(s: GameState) {
+  for (const o of s.level.objects) o.worldRing = 1;
+  const expansion = createBuildingExpansion(s);
+  for (const o of expansion.objects) o.worldRing = 2;
+  const landscape = createLandscape(s, true);
+  for (const o of landscape.objects) o.worldRing = 3;
+  s.level.objects.push(...expansion.objects, ...landscape.objects);
+  s.level.blocks.push(...expansion.blocks);
+  s.level.finalBounds = 3400;
+  s.world.remainingByRing = { 1: 0, 2: 0, 3: 0 };
+  for (const o of s.level.objects)
+    if (!o.collisionOnly) s.world.remainingByRing[o.worldRing ?? 1]++;
+  indexLevel(s.level);
+  s.score.remainingObjects = s.level.objects.filter(
+    (o) => !o.collisionOnly,
+  ).length;
+}
 export function advanceWorld(s: GameState): boolean {
+  const ring =
+    s.world.phase === "city" ? 1 : s.world.phase === "metropolis" ? 2 : 3;
+  if (ring === 3) return false;
+  const remaining =
+    s.world.remainingByRing?.[ring] ??
+    s.level.objects.filter(
+      (o) =>
+        (o.worldRing ?? 1) === ring &&
+        !o.collisionOnly &&
+        o.state !== "swallowed" &&
+        o.state !== "discarded",
+    ).length;
+  const initial =
+    ring === 1 ? s.world.initialCount : (s.world.ringCount ?? remaining);
   if (
-    s.world.phase === "city" &&
-    s.areaStage === 3 &&
-    s.score.swallowedObjects >= s.world.initialCount * 0.8
-  ) {
-    const expansion = createBuildingExpansion(s);
-    s.level.objects.push(...expansion.objects);
-    s.level.blocks.push(...expansion.blocks);
-    s.level.bounds = 180;
-    s.world.phase = "metropolis";
-    s.score.remainingObjects += expansion.objects.length;
-    const totalMass = s.level.totalMass,
-      totalScore = s.level.totalScore;
-    indexLevel(s.level);
-    s.level.totalMass = totalMass + expansion.totalMass;
-    s.level.totalScore = totalScore + expansion.totalScore;
-    s.status = "playing";
-    return true;
-  }
-  if (
-    s.score.remainingObjects !== 0 ||
-    s.world.phase === "city" ||
-    s.world.phase === "planet"
+    s.areaStage !== 3 ||
+    (remaining > initial * 0.2 && remaining !== 0) ||
+    (ring === 1 && s.hole.radius < 20)
   )
     return false;
-  const planet = s.world.phase === "country";
-  s.level = createLandscape(s, planet);
-  s.world.phase = planet ? "planet" : "country";
-  s.world.initialCount = s.level.objects.length;
-  s.score.remainingObjects = s.level.objects.length;
-  // A change of map scale uses local growth thresholds while retaining total score.
-  const start = stages.find(
-    (stage) => stage.type === (planet ? "wholeCity" : "river"),
-  )!;
-  s.growthOffset = s.score.points - start.points;
-  if (s.pacing) s.pacing.points = start.points;
-  s.hole.level = stages.indexOf(start) + 1;
-  s.hole.position.set(planet ? 0 : -180, 0, planet ? 0 : -180);
-  s.hole.velocity.set(0, 0, 0);
+  const from = s.level.bounds;
+  s.level.bounds = ring === 1 ? 540 : 3400;
+  s.world.phase = ring === 1 ? "metropolis" : "planet";
+  s.world.ringCount = s.level.objects.filter(
+    (o) => o.worldRing === ring + 1 && !o.collisionOnly,
+  ).length;
+  s.world.reveal = { from, to: s.level.bounds, started: s.elapsedSeconds };
   s.status = "playing";
   updateBoosts(s);
   return true;
@@ -219,6 +241,7 @@ export function discardSmallScenery(s: GameState): SwallowableObject[] {
   const ids = new Set(removed.map((o) => o.id));
   for (const o of removed) {
     o.state = "discarded";
+    if (s.world.remainingByRing) s.world.remainingByRing[o.worldRing ?? 1]--;
     o.fall = null;
     s.level.totalMass -= o.mass;
     s.level.totalScore -= o.scoreValue;

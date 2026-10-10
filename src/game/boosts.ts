@@ -8,9 +8,9 @@ export function updateBoosts(s: GameState) {
     (s.world.phase === "country"
       ? 20
       : s.world.phase === "planet"
-        ? 40
+        ? 320
         : s.world.phase === "metropolis"
-          ? 8
+          ? 32
           : 1);
   const growth = growthForPoints(growthPoints(s));
   s.hole.radius = growth.radius;

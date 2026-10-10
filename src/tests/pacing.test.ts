@@ -51,15 +51,19 @@ describe("earned growth pacing", () => {
     expect(s.hole.level).toBe(level);
     expect(s.score.byType[pickup.type]).toBe(1);
   });
-  it("rebases earned progress when changing map scale", () => {
+  it("preserves earned growth across the continuous world reveal", () => {
     const s = freshState();
     enablePacing(s);
+    s.areaStage = 3;
     s.world.phase = "metropolis";
-    s.score.remainingObjects = 0;
+    s.level.objects = s.level.objects.filter((o) => o.worldRing !== 2);
+    s.world.remainingByRing![2] = 0;
+    const points = growthPoints(s),
+      offset = s.growthOffset,
+      pos = s.hole.position.clone();
     expect(advanceWorld(s)).toBe(true);
-    expect(growthPoints(s)).toBe(
-      stages.find((x) => x.type === "river")!.points,
-    );
-    expect(s.hole.level).toBe(stages.findIndex((x) => x.type === "river") + 1);
+    expect(growthPoints(s)).toBe(points);
+    expect(s.growthOffset).toBe(offset);
+    expect(s.hole.position).toEqual(pos);
   });
 });

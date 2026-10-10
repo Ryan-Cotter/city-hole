@@ -182,10 +182,37 @@ export class CanvasRenderer {
         1,
         ((hole.scale.x * this.width) /
           Math.max(1, camera.right - camera.left)) *
-          0.045,
+          0.045 *
+          (1 + (hole.userData.pulse ?? 0) * 0.3),
       );
       ctx.strokeStyle = hole.userData.rimColor ?? "#f44747";
       ctx.stroke();
+    }
+    for (const hole of portals) {
+      const reveal = hole.userData.reveal;
+      if (!reveal) continue;
+      const alpha = Math.max(0, 1 - (hole.userData.time - reveal.started) / 2);
+      if (!alpha) continue;
+      const b = reveal.from;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = "#8ff7e4";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([9, 7]);
+      ctx.beginPath();
+      [
+        [-b, -b],
+        [b, -b],
+        [b, b],
+        [-b, b],
+      ].forEach(([x, z], i) => {
+        const p = project(new Vector3(x, 0, z));
+        if (i) ctx.lineTo(p.x, p.y);
+        else ctx.moveTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
     }
     const faces: Face[] = [];
     const light = new Vector3(-0.4, 0.85, 0.3).normalize();

@@ -1,14 +1,25 @@
 name: Validate City Hole
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+      - name: Test mechanics and static generation
+        run: npm test
+      - name: Verify four full-world pacing trials
+        run: npm run test:pacing
+      - name: Build production game
+        run: npm run build

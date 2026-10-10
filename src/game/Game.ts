@@ -1,8 +1,11 @@
+import { polishedGameModel } from "../art/GameModels";
+import { reactToHole, animateSpill } from "./interactions";
 import { enablePacing, advanceGrowth } from "./pacing";
 import { CrowdScheduler } from "../world/CrowdScheduler";
-import { ensureFoodBudget } from "./foodBudget";
+import { seedFoodBudget } from "./foodBudget";
 import {
   attachCityBlocks,
+  prepareWorld,
   advanceWorld,
   discardSmallScenery,
 } from "../world/WorldProgression";
@@ -18,14 +21,19 @@ import {
 import { createBlockVisual, disposeBlockVisual } from "../render/BlockVisual";
 import { CityChunks } from "../world/CityChunks";
 import { SelfPlayer } from "../testing/SelfPlayer";
-import { categories } from "./constants";
+import { categories, adaptiveSwallowConfig } from "./constants";
 import { signalFor } from "../world/traffic";
 import type { Group } from "three";
 import type { SwallowableObject, GameState } from "./GameState";
 import { generateCity } from "../world/CityGenerator";
 import { createObjectVisual } from "../world/SwallowableObject";
 import { createHole, moveHole, clampHole, moveToward } from "../player/Hole";
-import { capture, complete, consumeObsolete } from "../physics/swallowing";
+import {
+  capture,
+  complete,
+  consumeObsolete,
+  consumeAtEdge,
+} from "../physics/swallowing";
 import { advanceFall } from "../physics/falling";
 import { Renderer } from "../render/Renderer";
 import { InputManager } from "../input/InputManager";
@@ -34,11 +42,13 @@ import { startLoop } from "./loop";
 export function freshState(cityIndex = 0): GameState {
   const level = generateCity(814 + cityIndex * 997, undefined, cityIndex);
   attachCityBlocks(level);
-  return {
+  const state: GameState = {
     world: {
       phase: "city",
       initialCount: level.objects.filter((o) => !o.collisionOnly).length,
     },
+    performance: { strained: false, slowSeconds: 0 },
+    feedback: { points: 0, count: 0, until: 0, bumpUntil: 0, cleared: 0 },
     growthOffset: 0,
     status: "playing",
     areaStage: 1,
@@ -58,6 +68,9 @@ export function freshState(cityIndex = 0): GameState {
       ) as GameState["score"]["byType"],
     },
   };
+  seedFoodBudget(state);
+  prepareWorld(state);
+  return state;
 }
 export class Game {
   state = freshState();
@@ -76,8 +89,7 @@ export class Game {
   );
   private supported = this.state.level.objects.filter((o) => o.supportId);
   private crowds = new CrowdScheduler();
-  private nextBudgetCheck = 0;
-  private budgetKey = "";
+
   private falling = new Set<SwallowableObject>();
   renderer: Renderer;
   input: InputManager;
@@ -123,9 +135,30 @@ export class Game {
       )
         this.pause();
     });
+    let previousFrame = performance.now();
     startLoop(
       (dt) => this.update(dt),
       () => {
+        const now = performance.now(),
+          gap = (now - previousFrame) / 1000;
+        previousFrame = now;
+        const perf = this.state.performance!;
+        if (!document.hidden && this.state.status === "playing") {
+          perf.slowSeconds = Math.max(
+            0,
+            Math.min(
+              2,
+              perf.slowSeconds +
+                (gap > adaptiveSwallowConfig.slowFrameSeconds
+                  ? gap
+                  : -gap * 0.5),
+            ),
+          );
+          if (perf.slowSeconds > adaptiveSwallowConfig.enterStrainSeconds)
+            perf.strained = true;
+          if (perf.slowSeconds < adaptiveSwallowConfig.recoverSeconds)
+            perf.strained = false;
+        }
         this.syncHole();
         this.renderer.follow(
           this.state.hole.position,
@@ -180,7 +213,10 @@ export class Game {
   private loadVisual(o: SwallowableObject) {
     let visual = this.visuals.get(o.id);
     if (!visual) {
-      visual = createObjectVisual(o);
+      visual =
+        (!this.renderer.software && typeof document !== "undefined"
+          ? polishedGameModel(o)
+          : null) ?? createObjectVisual(o);
       this.visuals.set(o.id, visual);
       this.renderer.scene.add(visual);
     }
@@ -281,7 +317,6 @@ export class Game {
     this.blockVisuals.clear();
     this.state = freshState(cityIndex);
     enablePacing(this.state);
-    this.budgetKey = "";
     this.renderer.setCity(this.state.level);
     this.selfPlayer.reset();
     this.input.clear();
@@ -330,15 +365,6 @@ export class Game {
     s.elapsedSeconds += dt;
     advanceGrowth(s, dt);
     updateBoosts(s);
-    const budgetKey = `${s.cityIndex}:${s.world.phase}:${s.areaStage}:${s.hole.level}`;
-    if (
-      budgetKey !== this.budgetKey ||
-      s.elapsedSeconds >= this.nextBudgetCheck
-    ) {
-      this.nextBudgetCheck = s.elapsedSeconds + 5;
-      this.budgetKey = budgetKey;
-      if (ensureFoodBudget(s).length) this.populate();
-    }
     for (const removed of discardSmallScenery(s)) this.removeCompleted(removed);
     this.input.refreshTarget(s.hole.position);
     const beforeMove = s.hole.position.clone();
@@ -357,20 +383,54 @@ export class Game {
         ...this.actors,
       ].filter((o) => isUnlocked(s, o)),
     );
+    reactToHole(
+      s,
+      this.chunks.nearby(
+        s.hole.position.x,
+        s.hole.position.z,
+        s.hole.radius * 4,
+      ),
+    );
     const minimumTier = lowestDetailTier(s);
     this.crowds.step(this.movers, s, dt);
-    for (const o of this.supported)
+    for (const o of this.supported) {
+      const spilling = !!o.spill;
+      animateSpill(o, dt);
+      if (spilling) {
+        this.chunks.relocate(o);
+        const visual = this.visuals.get(o.id);
+        if (visual) {
+          visual.position.copy(o.position);
+          visual.userData.poseVersion = (visual.userData.poseVersion ?? 0) + 1;
+        }
+      }
       if (o.supportId && o.position.y > 0) {
         const parentIndex = s.level.objectSlots.get(o.supportId);
         if (
           parentIndex === undefined ||
           s.level.objects[parentIndex].state !== "idle"
         )
-          o.position.y = Math.max(0, o.position.y - 2 * dt);
+          if (!o.spill) o.position.y = Math.max(0, o.position.y - 2 * dt);
       }
+    }
     for (const [id, model] of this.visuals) {
       const o = model.userData.object as SwallowableObject;
       if (!model.visible) continue;
+      if (o.state === "idle" && o.supportId) {
+        model.position.copy(o.position);
+        model.userData.poseVersion = (model.userData.poseVersion ?? 0) + 1;
+      }
+      if (o.state === "idle" && o.reactionUntil) {
+        const remaining = Math.max(0, o.reactionUntil - s.elapsedSeconds);
+        const strength = Math.sin((1 - remaining / 0.35) * Math.PI) * 0.07;
+        const dx = s.hole.position.x - o.position.x,
+          dz = s.hole.position.z - o.position.z;
+        const length = Math.hypot(dx, dz) || 1;
+        model.rotation.x = (dz / length) * strength;
+        model.rotation.z = (-dx / length) * strength;
+        model.userData.poseVersion = (model.userData.poseVersion ?? 0) + 1;
+        if (!remaining) o.reactionUntil = undefined;
+      }
       if (o.pickup && o.state === "idle") {
         model.rotation.y = s.elapsedSeconds * 1.8;
         model.position.y =
@@ -406,6 +466,7 @@ export class Game {
             const phase = s.elapsedSeconds * (o.motion ? 7 : 2.5) + o.variant;
             visual.position.y =
               o.position.y +
+              ((o.alertedUntil ?? 0) > s.elapsedSeconds ? o.height * 0.08 : 0) +
               Math.abs(Math.sin(phase)) * Math.min(0.015, o.height * 0.025);
             for (const limb of visual.children) {
               const side = limb.userData.walkSide;
@@ -421,16 +482,18 @@ export class Game {
       ...this.chunks.nearby(
         s.hole.position.x,
         s.hole.position.z,
-        s.hole.radius,
+        s.hole.radius * 1.25,
       ),
       ...this.actors,
     ]) {
       if (
         isUnlocked(s, o) &&
-        Math.abs(o.position.x - s.hole.position.x) <= s.hole.radius &&
-        Math.abs(o.position.z - s.hole.position.z) <= s.hole.radius
+        Math.abs(o.position.x - s.hole.position.x) <=
+          s.hole.radius + o.radius &&
+        Math.abs(o.position.z - s.hole.position.z) <= s.hole.radius + o.radius
       )
-        if (consumeObsolete(s, o)) this.removeCompleted(o);
+        if (consumeAtEdge(s, o) || consumeObsolete(s, o))
+          this.removeCompleted(o);
         else if (capture(o, s.hole)) {
           this.falling.add(o);
           this.loadVisual(o);
@@ -442,7 +505,12 @@ export class Game {
       const visual = this.visuals.get(o.id)!;
       visual.position.set(f.x, f.y, f.z);
       visual.scale.setScalar(f.scale);
-      visual.rotation.set(0, o.orientation + f.u * 0.25, 0);
+      const direction = o.fall!.capture.clone().sub(o.fall!.start).normalize();
+      visual.rotation.set(
+        direction.z * f.tilt,
+        o.orientation + f.u * 0.25,
+        -direction.x * f.tilt,
+      );
       if (f.u >= 1 && complete(s, o)) this.removeCompleted(o);
     }
     if (advanceWorld(s)) {

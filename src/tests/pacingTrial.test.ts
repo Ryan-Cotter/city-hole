@@ -12,6 +12,7 @@ it.skipIf(!process.env.RUN_PACING)(
           city,
           Number(process.env.TRIAL_LIMIT ?? 900),
           Number(process.env.TRIAL_DT ?? 1 / 60),
+          process.env.TRIAL_STRAIN === "1",
         );
         console.log(JSON.stringify(result));
         return result;
@@ -29,6 +30,7 @@ it.skipIf(!process.env.RUN_PACING)(
         expect(result.seconds).toBeGreaterThanOrEqual(180);
         expect(result.seconds).toBeLessThanOrEqual(300);
         expect(result.remaining).toBe(0);
+        expect(result.generatedDuringPlay).toBe(0);
         expect(Math.max(...result.rows.map((row) => row.seconds))).toBeLessThan(
           15,
         );

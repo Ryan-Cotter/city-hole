@@ -9,8 +9,13 @@ import { InputManager } from "../input/InputManager";
 import { stages } from "../game/constants";
 
 // Exercise the real Game.update loop, including crowds, collisions, boosts,
-// falling completion, reserves and world transitions, with drawing disabled.
-export function pacingTrial(cityIndex = 0, limit = 900, dt = 1 / 30) {
+// falling completion, fixed food layouts and world reveals, with drawing disabled.
+export function pacingTrial(
+  cityIndex = 0,
+  limit = 900,
+  dt = 1 / 30,
+  strained = false,
+) {
   const game = Object.create(Game.prototype) as Game;
   const pilot = new SelfPlayer();
   pilot.enabled = true;
@@ -20,8 +25,6 @@ export function pacingTrial(cityIndex = 0, limit = 900, dt = 1 / 30) {
     visuals: new Map(),
     blockVisuals: new Map(),
     falling: new Set(),
-    nextBudgetCheck: 0,
-    budgetKey: "",
     input: {
       refreshTarget() {},
       clear() {},
@@ -37,6 +40,7 @@ export function pacingTrial(cityIndex = 0, limit = 900, dt = 1 / 30) {
       webgl: { domElement: { dataset: {} } },
     },
   });
+  game.state.performance!.strained = strained;
   enablePacing(game.state);
   game.populate();
   const rows: {
@@ -72,12 +76,18 @@ export function pacingTrial(cityIndex = 0, limit = 900, dt = 1 / 30) {
     }
   };
   record();
+  const initialPopulation = game.state.level.objects.length;
+  let largestPopulation = initialPopulation;
   for (
     let frame = 0;
     frame < limit / dt && game.state.status !== "won";
     frame++
   ) {
     game.update(dt);
+    largestPopulation = Math.max(
+      largestPopulation,
+      game.state.level.objects.length,
+    );
     record();
   }
   const s = game.state;
@@ -85,6 +95,10 @@ export function pacingTrial(cityIndex = 0, limit = 900, dt = 1 / 30) {
   rows.at(-1)!.seconds = s.elapsedSeconds - started;
   return {
     cityIndex,
+    initialPopulation,
+    strained,
+    generatedDuringPlay: largestPopulation - initialPopulation,
+    densityPlan: s.level.densityPlan,
     completed: s.status === "won",
     seconds: s.elapsedSeconds,
     phase: s.world.phase,

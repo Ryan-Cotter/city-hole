@@ -4,7 +4,7 @@ export const config = {
   moveSpeed: 3.2,
   velocityResponse: 8,
   mouseStopDistance: 0.2,
-  fallDurationSeconds: 1.15,
+  fallDurationSeconds: 0.7,
   fixedStepSeconds: 1 / 60,
   maxFrameDeltaSeconds: 0.25,
   maxSimulationStepsPerFrame: 15,
@@ -250,28 +250,28 @@ export const categories = {
     label: "city blocks",
   },
   river: {
-    radius: 18,
+    radius: 80,
     height: 0.4,
     mass: 9227465,
     scoreValue: 9227465,
     label: "river sections",
   },
   mountain: {
-    radius: 30,
+    radius: 115,
     height: 38,
     mass: 14930352,
     scoreValue: 14930352,
     label: "mountains",
   },
   wholeCity: {
-    radius: 50,
+    radius: 170,
     height: 25,
     mass: 24157817,
     scoreValue: 24157817,
     label: "whole cities",
   },
   country: {
-    radius: 90,
+    radius: 250,
     height: 5,
     mass: 39088169,
     scoreValue: 39088169,
@@ -288,7 +288,7 @@ categories.cityBlock.scoreValue = Math.round(
 export const progressionConfig = {
   baseLevelCost: 16,
   objectsPerTier: 3,
-  postCityCost: categories.country.scoreValue * (1000 / 610),
+  postCityCost: categories.country.scoreValue * 5,
   extraRadiusStep: 4,
 };
 // Measured per-size pacing weights; points retain their Fibonacci values.
@@ -298,15 +298,15 @@ export const pacingWeights: Partial<Record<keyof typeof categories, number>> = {
   dust: 0.8,
   pollen: 1.6,
   sand: 2.4,
-  bottlecap: 7,
-  dice: 7,
+  bottlecap: 3.5,
+  dice: 4,
   pebble: 3,
   coin: 3,
   toy: 2.5,
   snack: 1.6,
   mouse: 3.5,
   litter: 2.5,
-  cat: 6,
+  cat: 3,
   manhole: 1.2,
   dog: 2,
   hydrant: 0.5,
@@ -321,9 +321,9 @@ export const pacingWeights: Partial<Record<keyof typeof categories, number>> = {
   patio: 0.4,
   kiosk: 0.4,
   house: 0.4,
-  shop: 1.2,
+  shop: 0.6,
   building: 0.7,
-  largeBuilding: 1,
+  largeBuilding: 0.8,
   skyscraper: 1,
   cityBlock: 1.5,
 };
@@ -364,6 +364,12 @@ export const stages = (
         ),
   points: thresholds[index],
 }));
+// Macro stages always increase in size, including the eight-block transition.
+for (let i = 0; i < stages.length; i++) {
+  if (stages[i].type === "cityBlock") stages[i].radius = 80;
+  if (i && i >= stages.findIndex((s) => s.type === "cityBlock"))
+    stages[i].radius = Math.max(stages[i].radius, stages[i - 1].radius * 1.2);
+}
 
 export const objectDesigns = {
   bacterium: [
@@ -522,4 +528,12 @@ export const crowdConfig = {
   distantInterval: 0.25,
   nearbyBudget: 128,
   distantBudget: 48,
+};
+
+// Screen pressure only changes tiny-item presentation, never their reward.
+export const adaptiveSwallowConfig = {
+  smallFraction: 0.22,
+  slowFrameSeconds: 0.032,
+  enterStrainSeconds: 0.6,
+  recoverSeconds: 0.1,
 };

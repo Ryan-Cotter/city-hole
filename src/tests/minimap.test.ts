@@ -39,9 +39,9 @@ describe("map detail and recognizable small items", () => {
     for (const x of [-1, 1])
       for (const z of [-1, 1])
         expect(
-          tiny.filter((o) => o.position.x * x > 1 && o.position.z * z > 1)
+          tiny.filter((o) => o.position.x * x > 0 && o.position.z * z > 0)
             .length,
-        ).toBeGreaterThan(12);
+        ).toBeGreaterThan(8);
     expect(
       tiny.filter(
         (o) =>

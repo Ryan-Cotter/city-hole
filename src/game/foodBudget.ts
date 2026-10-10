@@ -1,129 +1,146 @@
-import { isSolidObstacle, obstacleRadius } from "../physics/collisions";
-import { segmentIntersectsBox } from "../physics/pathGeometry";
 import { Vector3 } from "three";
-import { categories, objectDesigns } from "./constants";
-import type { GameState, ObjectType, SwallowableObject } from "./GameState";
-import { growthForPoints, growthPoints } from "./progression";
-import { activeBounds, isUnlocked, blockScaleRadius } from "./sections";
-import { isBuildingType } from "../render/occlusion";
-let reserveSerial = 0;
+import { categories, objectDesigns, stages } from "./constants";
+import type {
+  GameState,
+  Level,
+  ObjectType,
+  SwallowableObject,
+} from "./GameState";
+import { isUnlocked } from "./sections";
 export const foodBudgetFactor = 1.5;
-export const availableFoodPoints = (s: GameState, local = false) =>
+export const availableFoodPoints = (s: GameState) =>
   s.level.objects.reduce(
     (sum, o) =>
       sum +
       (o.state === "idle" &&
       isUnlocked(s, o) &&
-      !o.members &&
       !o.collisionOnly &&
-      (!local ||
-        o.position.distanceTo(s.hole.position) <=
-          Math.max(0.03, s.hole.radius * 6)) &&
-      !o.motion &&
-      !["person", "mouse", "cat", "dog"].includes(o.type) &&
+      !o.members &&
       o.radius <= s.hole.radius * 0.85
         ? o.scoreValue
         : 0),
     0,
   );
-export function ensureFoodBudget(s: GameState): SwallowableObject[] {
-  if (s.status !== "playing") return [];
-  const goalRadius =
-    s.world.phase === "planet"
-      ? categories.country.radius
-      : s.world.phase === "country"
-        ? categories.wholeCity.radius
-        : blockScaleRadius * 0.85;
-  // Once everything in this map is edible, finish it instead of spawning forever.
-  if (s.hole.radius * 0.85 >= goalRadius) return [];
-  const growth = growthForPoints(growthPoints(s));
-  let deficit =
-    Math.ceil(foodBudgetFactor * (growth.nextThreshold - growth.threshold)) -
-    availableFoodPoints(s, true);
-  if (deficit <= 0) return [];
-  const types = (Object.keys(categories) as ObjectType[]).filter((type) => {
-    if (["barrier", "person", "mouse", "cat", "dog"].includes(type))
-      return false;
-    if (categories[type].radius > s.hole.radius * 0.85) return false;
-    if (s.world.phase === "metropolis") return isBuildingType(type);
-    if (s.world.phase === "country" || s.world.phase === "planet")
-      return ["river", "mountain", "wholeCity", "country"].includes(type);
-    return (
-      categories[type].radius < 10 &&
-      (s.areaStage > 1 || categories[type].radius <= categories.mouse.radius)
-    );
-  });
-  const type = types.at(-1);
-  if (!type) return [];
-  const spec = categories[type],
-    added: SwallowableObject[] = [],
-    bound = activeBounds(s) - spec.radius;
-  const solids = s.level.objects.filter(
-    (o) => isUnlocked(s, o) && isSolidObstacle(o, s.hole),
+// Estimate density from the amount swept in a six-second size interval:
+// density = objects needed / (2 * radius * movement speed * target seconds).
+// The seed guarantees 150% of the points independently for every step, rather
+// than counting the same leftover food toward several future levels.
+export function seedFoodBudget(s: GameState) {
+  if (s.level.densityPlan) return;
+  s.neighborhoods = {};
+  const rows: NonNullable<Level["densityPlan"]> = [];
+  const living = ["person", "mouse", "cat", "dog"];
+  // Dedicated playable starter block. Keep boundaries; remove intersecting
+  // original traffic and props at generation, before laying out the food ladder.
+  s.level.objects = s.level.objects.filter(
+    (o) =>
+      o.collisionOnly ||
+      o.members ||
+      Math.hypot(o.position.x, o.position.z) > 36,
   );
-  while (deficit > 0) {
-    const index = added.length,
-      variant = (index + s.hole.level) % objectDesigns[type].length;
-    let position = s.hole.position.clone();
-    for (let attempt = 0; attempt < 128; attempt++) {
-      const angle = (index + attempt) * 2.39996323,
-        distance =
-          s.hole.radius +
-          spec.radius * 2 +
-          ((attempt % 12) / 11) *
-            Math.max(
-              0,
-              Math.max(0.03, s.hole.radius * 6) -
-                s.hole.radius -
-                spec.radius * 3,
-            );
-      position = new Vector3(
-        Math.max(
-          -bound,
-          Math.min(bound, s.hole.position.x + Math.cos(angle) * distance),
-        ),
-        0,
-        Math.max(
-          -bound,
-          Math.min(bound, s.hole.position.z + Math.sin(angle) * distance),
-        ),
+  let previousOuter = 0;
+  for (let i = 0; i < stages.length - 1; i++) {
+    const stage = stages[i];
+    if (stage.type === "cityBlock") break;
+    const types = (Object.keys(categories) as ObjectType[]).filter(
+      (t) =>
+        t !== "barrier" &&
+        !living.includes(t) &&
+        categories[t].radius <= stage.radius * 0.85 &&
+        categories[t].radius < 10,
+    );
+    const type = types.at(-1)!;
+    if (!type) continue;
+    const spec = categories[type],
+      requiredPoints = Math.ceil(
+        (stages[i + 1].points - stage.points) * foodBudgetFactor,
       );
-      if (
-        !solids.some(
-          (o) =>
-            o.position.distanceTo(position) < obstacleRadius(o) + spec.radius ||
-            segmentIntersectsBox(s.hole.position, position, {
-              x: o.position.x,
-              z: o.position.z,
-              half: obstacleRadius(o) + s.hole.radius * 0.45,
-              round: true,
-            }),
-        ) &&
-        !added.some((o) => o.position.distanceTo(position) < spec.radius * 2)
-      )
-        break;
-    }
-    const o: SwallowableObject = {
-      id: `reserve-${s.cityIndex}-${s.world.phase}-${s.hole.level}-${reserveSerial++}`,
-      type,
-      ...spec,
-      position,
-      variant,
-      cityIndex: s.cityIndex,
-      design: objectDesigns[type][variant],
-      orientation: index * 2.4,
-      motion: null,
-      state: "idle",
-      fall: null,
+    const count = Math.ceil(requiredPoints / spec.scoreValue);
+    // Successive clusters sit in concentric bands. A larger collider never covers
+    // the previous tier's food, and all small tiers remain in their unlocked area.
+    const distance = Math.max(
+      previousOuter + spec.radius * 1.05 + stage.radius * 0.15,
+      ((count * spec.radius) / Math.PI) * 1.12,
+    );
+    previousOuter = distance + spec.radius;
+    const area =
+      Math.PI *
+      ((distance + spec.radius) ** 2 -
+        Math.max(0, distance - spec.radius) ** 2);
+    rows.push({ type: stage.type, count, requiredPoints, area });
+    const groupId = `patch-${i}`;
+    s.neighborhoods[groupId] = {
+      remaining: count,
+      total: count,
+      label: `${stage.name} patch cleared`,
     };
-    s.level.objectSlots.set(o.id, s.level.objects.length);
-    s.level.objects.push(o);
-    added.push(o);
-    deficit -= o.scoreValue;
-    s.level.totalMass += o.mass;
-    s.level.totalScore += o.scoreValue;
-    s.score.remainingObjects++;
-    if (s.world.phase === "city") s.world.initialCount++;
+    for (let n = 0; n < count; n++) {
+      const angle = (n / count) * Math.PI * 2 + i * 0.7;
+      const position = new Vector3(
+        Math.cos(angle) * distance,
+        0,
+        Math.sin(angle) * distance,
+      );
+      const variant = (n + i) % objectDesigns[type].length;
+      s.level.objects.push({
+        id: `seed-food-${i}-${n}`,
+        type,
+        ...spec,
+        position,
+        variant,
+        groupId,
+        cityIndex: s.cityIndex,
+        design: objectDesigns[type][variant],
+        orientation: angle,
+        motion: null,
+        state: "idle",
+        fall: null,
+      });
+    }
   }
-  return added;
+  // A few pre-budgeted food specks are bugs; the rest stay still for reliable food.
+  for (const o of s.level.objects
+    .filter((o) => o.id.startsWith("seed-food-5-"))
+    .slice(-3)) {
+    o.critter = true;
+    o.design = "ant";
+    o.motion = {
+      axis: "x",
+      direction: 1,
+      speed: 0.045,
+      min: o.position.x - 0.15,
+      max: o.position.x + 0.15,
+    };
+  }
+  s.level.densityPlan = rows;
+  s.level.objectSlots = new Map(s.level.objects.map((o, i) => [o.id, i]));
+  // Removed original members must not return as ghost food in aggregate blocks.
+  const ids = new Set(s.level.objects.map((o) => o.id));
+  for (const o of s.level.objects)
+    if (o.members) o.members = o.members.filter((m) => ids.has(m.id));
+  s.score.remainingObjects = s.level.objects.filter(
+    (o) => !o.collisionOnly,
+  ).length;
+  s.world.initialCount = s.score.remainingObjects;
+  // Fill existing containers with pre-authored nearby contents only.
+  for (const container of s.level.objects.filter(
+    (o) => o.design === "dumpster" || o.design === "small crate",
+  )) {
+    const contents = s.level.objects
+      .filter(
+        (o) =>
+          !o.motion &&
+          !o.supportId &&
+          !o.pickup &&
+          ["snack", "litter", "bottlecap"].includes(o.type) &&
+          o.position.distanceTo(container.position) < 2,
+      )
+      .slice(0, 3);
+    contents.forEach((o, i) => {
+      o.supportId = container.id;
+      o.position.copy(container.position);
+      o.position.x += (i - 1) * o.radius * 2;
+      o.position.y = container.height;
+    });
+  }
 }

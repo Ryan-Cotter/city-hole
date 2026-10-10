@@ -1,10 +1,21 @@
+import { MealAudio } from "./MealAudio";
 import { stages } from "../game/constants";
 import { themeForCity } from "../game/campaign";
 import { sectionForState, activeBounds, isUnlocked } from "../game/sections";
 import type { GameState } from "../game/GameState";
 import { growthForPoints, growthPoints } from "../game/progression";
+const compactPoints = (n: number) =>
+  n >= 1000000
+    ? new Intl.NumberFormat("en", {
+        notation: "compact",
+        maximumFractionDigits: 2,
+      }).format(n)
+    : n.toLocaleString();
 export class HUD {
   root: HTMLElement;
+  private audio = new MealAudio();
+  private seenPoints = 0;
+  private seenBump = 0;
   private lastUpdate = 0;
   private previousLevel = 1;
   private toastUntil = 0;
@@ -15,7 +26,7 @@ export class HUD {
     onSelfPlay: () => void,
     onNextCity: () => void,
   ) {
-    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><small id="city-theme"></small><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track"><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><small id="boost-status"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
+    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><small id="city-theme"></small><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track" title="Light bar: earned growth. Solid bar: current size progress."><i id="earned-progress"></i><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><small id="boost-status"></small><div id="meal-toast" role="status"></div><small id="district-goal"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="sound" aria-pressed="false">Sound: off</button><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
     container
       .querySelector("#phone-preview")!
       .addEventListener("click", (event) => {
@@ -27,6 +38,12 @@ export class HUD {
     container
       .querySelector("#self-play")!
       .addEventListener("click", onSelfPlay);
+    container.querySelector("#sound")!.addEventListener("click", () => {
+      const on = this.audio.toggle();
+      const button = container.querySelector("#sound")!;
+      button.textContent = on ? "Sound: on" : "Sound: off";
+      button.setAttribute("aria-pressed", String(on));
+    });
     this.root = container;
     container.querySelector("#pause")!.addEventListener("click", onPause);
     container.querySelector("#restart")!.addEventListener("click", onRestart);
@@ -46,6 +63,26 @@ export class HUD {
       if (el.textContent !== value) el.textContent = value;
     };
     this.root.dataset.status = s.status;
+    if (s.feedback) {
+      text(
+        "meal-toast",
+        s.feedback.until > s.elapsedSeconds
+          ? `+${compactPoints(s.feedback.points)} · ${s.feedback.count} swallowed`
+          : "",
+      );
+      text(
+        "district-goal",
+        (s.feedback.goalUntil ?? 0) > s.elapsedSeconds
+          ? s.feedback.goal!
+          : s.feedback.cleared
+            ? `${s.feedback.cleared} blocks cleared`
+            : "",
+      );
+      if (s.score.points > this.seenPoints) this.audio.play(s.feedback.count);
+      if (s.feedback.bumpUntil > this.seenBump) this.audio.play(0, true);
+      this.seenPoints = s.score.points;
+      this.seenBump = s.feedback.bumpUntil;
+    }
     const selfButton = this.root.querySelector("#self-play")!;
     selfButton.setAttribute("aria-pressed", String(selfPlay));
     selfButton.textContent = selfPlay ? "Self play: on" : "Self play: off";
@@ -61,7 +98,10 @@ export class HUD {
         ? `⚡ Speed · ${Math.ceil(s.boosts.speedUntil - s.elapsedSeconds)}s`
         : "",
     );
-    text("score", s.score.points.toLocaleString());
+    text("score", compactPoints(s.score.points));
+    this.root
+      .querySelector("#score")!
+      .setAttribute("title", s.score.points.toLocaleString());
     text(
       "radius",
       s.hole.radius < 0.01
@@ -91,6 +131,8 @@ export class HUD {
     );
     (this.root.querySelector("#progress") as HTMLElement).style.width =
       `${Math.min(100, ((growthPoints(s) - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100)}%`;
+    (this.root.querySelector("#earned-progress") as HTMLElement).style.width =
+      `${Math.max(0, Math.min(100, ((s.score.points - s.growthOffset - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100))}%`;
     const toast = this.root.querySelector("#level-toast") as HTMLElement;
     if (s.hole.level > this.previousLevel) {
       toast.textContent = "LEVEL UP";

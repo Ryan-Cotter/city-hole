@@ -41,6 +41,11 @@ export class Renderer {
     new LineBasicMaterial({ color: "#c1a26c" }),
   );
   private boundaryBounds = 0;
+  private fadingBoundary = new LineLoop(
+    new BufferGeometry(),
+    new LineBasicMaterial({ color: "#8ff7e4", transparent: true, opacity: 0 }),
+  );
+  private revealStarted = -1;
   private frames = 0;
   private lastFps = performance.now();
   private viewSize = 3.425;
@@ -82,7 +87,7 @@ export class Renderer {
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.0001;
     this.scene.add(ground);
-    this.scene.add(this.boundary);
+    this.scene.add(this.boundary, this.fadingBoundary);
     const disk = new Mesh(
       new CircleGeometry(1, 48),
       new MeshBasicMaterial({ color: "#10122b" }),
@@ -200,6 +205,30 @@ export class Renderer {
     visuals: Map<string, Group>,
     objects = state.level.objects,
   ) {
+    const reveal = state.world.reveal;
+    if (reveal && this.revealStarted !== reveal.started) {
+      this.revealStarted = reveal.started;
+      this.fadingBoundary.geometry.dispose();
+      const b = reveal.from;
+      this.fadingBoundary.geometry = new BufferGeometry().setFromPoints([
+        new Vector3(-b, 0.03, -b),
+        new Vector3(b, 0.03, -b),
+        new Vector3(b, 0.03, b),
+        new Vector3(-b, 0.03, b),
+      ]);
+    }
+    (this.fadingBoundary.material as LineBasicMaterial).opacity = reveal
+      ? Math.max(0, 1 - (state.elapsedSeconds - reveal.started) / 2)
+      : 0;
+    this.hole.userData.reveal = reveal;
+    this.hole.userData.time = state.elapsedSeconds;
+    const feedback = state.feedback;
+    const rim = this.hole.getObjectByName("rim");
+    const pulse = feedback
+      ? Math.max(0, (feedback.until - state.elapsedSeconds) / 0.6)
+      : 0;
+    this.hole.userData.pulse = pulse;
+    rim?.scale.setScalar(1 + Math.sin(pulse * Math.PI) * 0.025);
     this.frustum.setFromProjectionMatrix(
       this.matrix.multiplyMatrices(
         this.camera.projectionMatrix,

@@ -20,6 +20,15 @@ export const activeBounds = (state: GameState) =>
       );
 export const isUnlocked = (state: GameState, o: SwallowableObject) => {
   if (o.unlockStage && o.unlockStage <= state.areaStage) return false;
+  if (
+    (o.worldRing ?? 1) >
+    (state.world.phase === "city"
+      ? 1
+      : state.world.phase === "metropolis"
+        ? 2
+        : 3)
+  )
+    return false;
   const bounds = activeBounds(state);
   if (
     o.members &&

@@ -34,6 +34,25 @@ export class CityChunks {
       this.membership.set(object, chunk);
     }
   }
+  relocate(object: SwallowableObject) {
+    const ix = Math.floor(object.position.x / this.size),
+      iz = Math.floor(object.position.z / this.size),
+      key = `${ix}:${iz}`;
+    if (this.membership.get(object)?.key === key) return;
+    this.remove(object);
+    let chunk = this.chunks.get(key);
+    if (!chunk) {
+      chunk = {
+        key,
+        x: (ix + 0.5) * this.size,
+        z: (iz + 0.5) * this.size,
+        objects: [],
+      };
+      this.chunks.set(key, chunk);
+    }
+    chunk.objects.push(object);
+    this.membership.set(object, chunk);
+  }
   remove(object: SwallowableObject) {
     const chunk = this.membership.get(object);
     if (!chunk) return;

@@ -6,7 +6,7 @@ import { freshState } from "../game/Game";
 import { blockScaleRadius, isUnlocked } from "../game/sections";
 import { discardSmallScenery } from "../world/WorldProgression";
 import { canSwallow, complete } from "../physics/swallowing";
-import { ensureFoodBudget, availableFoodPoints } from "../game/foodBudget";
+import { seedFoodBudget, availableFoodPoints } from "../game/foodBudget";
 import { growthForPoints, growthPoints } from "../game/progression";
 import { stages } from "../game/constants";
 import { updateBoosts } from "../game/boosts";
@@ -133,24 +133,17 @@ describe("precise steering and delayed block scale", () => {
     );
     expect(s.score.swallowedObjects).toBe(edible.length + 1);
   });
-  it("supplies building food until the delayed block transition", () => {
+  it("preauthors building food for the delayed block transition", () => {
     const s = freshState();
-    s.areaStage = 3;
-    s.world.phase = "metropolis";
-    s.growthOffset = -stages.find((stage) => stage.type === "wholeCity")!
-      .points;
-    updateBoosts(s);
-    s.level.objects = [];
-    s.level.objectSlots.clear();
-    const added = ensureFoodBudget(s);
-    const growth = growthForPoints(growthPoints(s));
-    expect(added.length).toBeGreaterThan(0);
-    expect(added.every((o) => o.type === "skyscraper")).toBe(true);
-    expect(availableFoodPoints(s)).toBeGreaterThanOrEqual(
-      (growth.nextThreshold - growth.threshold) * 1.5,
+    const row = s.level.densityPlan!.find((row) => row.type === "skyscraper")!;
+    expect(row.count).toBeGreaterThan(0);
+    const index = stages.findIndex((stage) => stage.type === "skyscraper");
+    const food = s.level.objects.filter((o) =>
+      o.id.startsWith(`seed-food-${index}-`),
     );
-    s.hole.radius = blockScaleRadius;
-    expect(ensureFoodBudget(s)).toHaveLength(0);
+    expect(food.reduce((n, o) => n + o.scoreValue, 0)).toBeGreaterThanOrEqual(
+      row.requiredPoints,
+    );
   });
   it("replaces modern street props in every medieval variant", () => {
     const s = freshState();

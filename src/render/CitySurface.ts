@@ -36,21 +36,28 @@ export function createCitySurface(level: Level) {
     for (const side of [-1, 1])
       rect(block.x + side * 4, block.z + 4, 3.4, 3.4, "#36a958");
   }
-  for (let street = -level.bounds; street <= level.bounds; street += 20) {
-    rect(0, street, level.bounds * 2, 5, theme.road);
-    rect(street, 0, 5, level.bounds * 2, theme.road);
+  const streetBounds = Math.min(540, level.bounds);
+  if (level.bounds > 540) {
+    for (let n = -3000; n <= 3000; n += 500) {
+      rect(n, 0, 2, level.bounds * 2, "#889f8c");
+      rect(0, n, level.bounds * 2, 2, "#889f8c");
+    }
+  }
+  for (let street = -streetBounds; street <= streetBounds; street += 20) {
+    rect(0, street, streetBounds * 2, 5, theme.road);
+    rect(street, 0, 5, streetBounds * 2, theme.road);
   }
   if ((level.cityIndex ?? 0) > 0)
-    for (let street = -level.bounds; street <= level.bounds; street += 20) {
-      for (let n = -level.bounds + 3; n < level.bounds; n += 4) {
+    for (let street = -streetBounds; street <= streetBounds; street += 20) {
+      for (let n = -streetBounds + 3; n < streetBounds; n += 4) {
         const nearest = Math.abs(n - Math.round(n / 20) * 20);
         if (nearest < 4) continue;
         rect(n, street, 1.8, 0.12, "#d3b84f");
         rect(street, n, 0.12, 1.8, "#d3b84f");
       }
       for (
-        let cross = -level.bounds + 20;
-        cross <= level.bounds - 20;
+        let cross = -streetBounds + 20;
+        cross <= streetBounds - 20;
         cross += 20
       ) {
         for (let i = -2; i <= 2; i++) {

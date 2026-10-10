@@ -89,7 +89,14 @@ export function createObjectVisual(o: SwallowableObject) {
   ) => {
     const mesh: Mesh = new Mesh(
       shape,
-      material(color, true, o.type !== "car" && o.type !== "van"),
+      material(
+        color,
+        true,
+        o.type !== "car" && o.type !== "van",
+        isBuildingType(o.type) && shape === box && sx > 1 && sy > 1
+          ? "masonry"
+          : "grain",
+      ),
     );
     mesh.position.set(x, y, z);
     mesh.scale.set(sx, sy, sz);

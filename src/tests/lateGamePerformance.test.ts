@@ -1,3 +1,4 @@
+import { advanceWorld } from "../world/WorldProgression";
 import { describe, it, expect } from "vitest";
 import { freshState } from "../game/Game";
 import { growthForPoints } from "../game/progression";
@@ -14,7 +15,6 @@ import { advancePedestrian } from "../world/traffic";
 import { capture, complete, consumeObsolete } from "../physics/swallowing";
 import { advanceFall } from "../physics/falling";
 import { updateBoosts } from "../game/boosts";
-import { ensureFoodBudget } from "../game/foodBudget";
 
 describe("late city growth and bounded crowd work", () => {
   it("does not jump in radius around 35 million or the block thresholds", () => {
@@ -62,7 +62,6 @@ describe("late city growth and bounded crowd work", () => {
       s.elapsedSeconds += 0.1;
       updateBoosts(s);
       if (budgetLevel !== s.hole.level) {
-        ensureFoodBudget(s);
         budgetLevel = s.hole.level;
       }
       const before = s.hole.position.clone();
@@ -80,6 +79,7 @@ describe("late city growth and bounded crowd work", () => {
         if (o.state === "falling" && advanceFall(o, 0.1)!.u >= 1)
           complete(s, o);
       }
+      if (advanceWorld(s)) pilot.reset();
       if (s.score.swallowedObjects > count) lastHarvest = frame;
       longestStall = Math.max(longestStall, frame - lastHarvest);
     }
