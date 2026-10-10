@@ -1,3 +1,4 @@
+import { CrowdScheduler } from "../world/CrowdScheduler";
 import { ensureFoodBudget } from "./foodBudget";
 import {
   attachCityBlocks,
@@ -17,7 +18,7 @@ import { createBlockVisual, disposeBlockVisual } from "../render/BlockVisual";
 import { CityChunks } from "../world/CityChunks";
 import { SelfPlayer } from "../testing/SelfPlayer";
 import { categories } from "./constants";
-import { updateTraffic, signalFor } from "../world/traffic";
+import { signalFor } from "../world/traffic";
 import type { Group } from "three";
 import type { SwallowableObject, GameState } from "./GameState";
 import { generateCity } from "../world/CityGenerator";
@@ -73,6 +74,7 @@ export class Game {
     (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
   );
   private supported = this.state.level.objects.filter((o) => o.supportId);
+  private crowds = new CrowdScheduler();
   private nextBudgetCheck = 0;
   private budgetKey = "";
   private falling = new Set<SwallowableObject>();
@@ -157,6 +159,7 @@ export class Game {
       (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
     );
     this.supported = this.state.level.objects.filter((o) => o.supportId);
+    this.crowds = new CrowdScheduler();
     this.falling.clear();
     for (const o of this.state.level.objects)
       if (o.state === "falling") {
@@ -351,18 +354,7 @@ export class Game {
       ].filter((o) => isUnlocked(s, o)),
     );
     const minimumTier = lowestDetailTier(s);
-    updateTraffic(
-      this.movers.filter(
-        (o) =>
-          isUnlocked(s, o) &&
-          (this.visuals.get(o.id)?.visible ||
-            o.position.distanceTo(s.hole.position) < s.hole.radius + 12),
-      ),
-      dt,
-      s.elapsedSeconds,
-      s.hole,
-      activeBounds(s),
-    );
+    this.crowds.step(this.movers, s, dt);
     for (const o of this.supported)
       if (o.supportId && o.position.y > 0) {
         const parentIndex = s.level.objectSlots.get(o.supportId);
@@ -395,10 +387,12 @@ export class Game {
       }
       if (
         (o.motion || ["person", "mouse", "cat", "dog"].includes(o.type)) &&
-        o.state === "idle"
+        o.state === "idle" &&
+        this.crowds.updated.has(o)
       ) {
         const visual = this.visuals.get(o.id);
         if (visual) {
+          visual.userData.poseVersion = (visual.userData.poseVersion ?? 0) + 1;
           visual.position.copy(o.position);
           const turn = o.orientation - visual.rotation.y;
           visual.rotation.y +=

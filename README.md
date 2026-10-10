@@ -102,3 +102,9 @@ Micro sizes are stylized for readability, not a scientifically accurate scale mo
 Hold the mouse button or touch to steer from the hole's current center toward the cursor. Cursor distance does not change speed; releasing stops manual movement. Desktop framing is 20% wider than the previous view, with phone framing unchanged. The software renderer now places the hole and its collision footprint on the same ground plane, including microscopic stages.
 
 Whole-block items activate when the hole's diameter reaches eight block widths (radius 80 for a 20-unit block). Until then, individual buildings remain visible and edible, and the 150% food reserve continues supplying building points. At that transition, obsolete non-building props five or more tiers below the current edible tier are deleted without score, mass, boost effects, or swallowed credit. Buildings remain block contents, using the existing reduced block rewards. Barriers retain their collision-only behavior.
+
+### Late-city performance and pacing
+
+Block point discounts no longer discount the growth requirements. Growth blends continuously from skyscraper size through block and river size, avoiding the abrupt late-city radius jumps around 35 million points; early discrete sizes and size pickups remain. Non-edible street barriers stop blocking movement when the hole is eight times their radius, so their collision margins cannot seal the city. Section gates still use their normal unlock rules.
+
+Crowd work is bounded: up to 128 nearby actors update at 20 Hz, with 48 distant actors taking coarse steps each quarter-second, prioritizing actors that have waited longest. Distant people remain persistent but move less frequently. Cached software-renderer geometry is reused until an actor's pose changes. Regression tests cover late-city autoplay, growth thresholds, a 1,000-person crowd, and degenerate patrol routes. These are workload checks, not a native-device FPS benchmark.

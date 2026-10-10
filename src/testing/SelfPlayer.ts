@@ -8,7 +8,7 @@ import { movementLimit, speedForRadius } from "../player/Hole";
 import { Vector3 } from "three";
 import type { GameState, SwallowableObject } from "../game/GameState";
 import { config, selfPlayConfig } from "../game/constants";
-import { obstacleRadius } from "../physics/collisions";
+import { obstacleRadius, isSolidObstacle } from "../physics/collisions";
 
 export interface Obstacle {
   x: number;
@@ -286,8 +286,7 @@ export class SelfPlayer {
           (o) =>
             o.state === "idle" &&
             isUnlocked(state, o) &&
-            (o.collisionOnly ||
-              o.radius > state.hole.radius * config.swallowFactor),
+            isSolidObstacle(o, state.hole),
         )
         .map((o) => ({
           x: o.position.x,

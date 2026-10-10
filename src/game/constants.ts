@@ -299,8 +299,10 @@ for (let i = 1; i < Object.keys(categories).length; i++)
       Math.ceil(
         Math.max(
           progressionConfig.baseLevelCost * Math.log2(i + 1),
-          Object.values(categories)[i - 1].scoreValue *
-            progressionConfig.objectsPerTier,
+          Math.max(
+            Object.values(categories)[i - 1].scoreValue,
+            Object.values(categories)[i - 1].mass,
+          ) * progressionConfig.objectsPerTier,
         ),
       ),
   );
@@ -474,4 +476,11 @@ export const cameraConfig = {
   radiusScale: 1.3,
   movingZoom: 1.25,
   smoothing: 4,
+};
+
+export const crowdConfig = {
+  interval: 1 / 20,
+  distantInterval: 0.25,
+  nearbyBudget: 128,
+  distantBudget: 48,
 };

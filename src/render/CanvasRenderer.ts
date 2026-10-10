@@ -192,15 +192,16 @@ export class CanvasRenderer {
     for (const group of scene.children) {
       const o = group.userData.object as SwallowableObject | undefined;
       if (!o || !group.visible) continue;
-      if (
-        o.motion ||
+      const poseChanged =
         o.pickup ||
         o.type === "tree" ||
         o.state === "falling" ||
-        !group.userData.baked
-      ) {
+        !group.userData.baked ||
+        group.userData.lastPoseVersion !== group.userData.poseVersion;
+      if (poseChanged) {
         group.updateMatrixWorld();
         group.userData.baked = true;
+        group.userData.lastPoseVersion = group.userData.poseVersion;
       }
       const groupDepth = group.position
         .clone()
@@ -213,13 +214,7 @@ export class CanvasRenderer {
           mat = child.material as MeshStandardMaterial;
         const base = mat.color;
         let triangles = this.triangles.get(child);
-        if (
-          !triangles ||
-          o.motion ||
-          o.type === "tree" ||
-          o.pickup ||
-          o.state === "falling"
-        ) {
+        if (!triangles || poseChanged) {
           triangles = [];
           const count = index ? index.count : position.count;
           // Keep planar box faces together: sorting their triangles separately creates
@@ -251,8 +246,7 @@ export class CanvasRenderer {
               .multiplyScalar(1 / points.length);
             triangles.push({ points, normal, center });
           }
-          if (!o.motion && o.state !== "falling")
-            this.triangles.set(child, triangles);
+          this.triangles.set(child, triangles);
         }
         for (const { points, normal, center } of triangles) {
           if (normal.dot(camera.position.clone().sub(center)) <= 0) continue;

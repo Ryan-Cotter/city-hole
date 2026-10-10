@@ -84,8 +84,10 @@ describe("self play and pacing", () => {
         Math.ceil(
           Math.max(
             progressionConfig.baseLevelCost * Math.log2(i + 1),
-            Object.values(categories)[i - 1].scoreValue *
-              progressionConfig.objectsPerTier,
+            Math.max(
+              Object.values(categories)[i - 1].scoreValue,
+              Object.values(categories)[i - 1].mass,
+            ) * progressionConfig.objectsPerTier,
           ),
         ),
       );

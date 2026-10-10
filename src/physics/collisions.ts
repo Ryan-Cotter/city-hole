@@ -4,17 +4,20 @@ import { config } from "../game/constants";
 import { isBuildingType } from "../render/occlusion";
 export const obstacleRadius = (o: SwallowableObject) =>
   isBuildingType(o.type) ? Math.min(2.25, o.radius * 0.75) : o.radius;
+// Street props must not grow into map-wide invisible walls. Obsolete barriers
+// remain non-edible scenery; section boundaries keep their explicit unlock rule.
+export const isSolidObstacle = (o: SwallowableObject, hole: Hole) =>
+  o.state === "idle" &&
+  (o.collisionOnly
+    ? !!o.unlockStage || hole.radius < o.radius * 8
+    : o.radius > hole.radius * config.swallowFactor);
 // Sweep short increments to prevent tunneling, then slide along solid footprints.
 export function resolveOversizedCollisions(
   hole: Hole,
   previous: Vector3,
   objects: SwallowableObject[],
 ) {
-  const solids = objects.filter(
-    (o) =>
-      o.state === "idle" &&
-      (o.collisionOnly || o.radius > hole.radius * config.swallowFactor),
-  );
+  const solids = objects.filter((o) => isSolidObstacle(o, hole));
   const delta = hole.position.clone().sub(previous);
   const steps = Math.max(
     1,

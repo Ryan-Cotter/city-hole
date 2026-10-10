@@ -18,15 +18,15 @@ export function advancePedestrian(o: SwallowableObject, dt: number) {
     return;
   const m = o.motion;
   let position = o.position[m.axis] + m.direction * m.speed * dt;
-  while (position > m.max || position < m.min) {
-    if (position > m.max) {
-      position = 2 * m.max - position;
-      m.direction = -1;
-    }
-    if (position < m.min) {
-      position = 2 * m.min - position;
-      m.direction = 1;
-    }
+  const span = m.max - m.min;
+  if (!(span > 0) || !Number.isFinite(position)) {
+    o.position[m.axis] = m.min;
+    return;
+  }
+  if (position > m.max || position < m.min) {
+    const phase = (((position - m.min) % (span * 2)) + span * 2) % (span * 2);
+    position = m.min + (phase <= span ? phase : span * 2 - phase);
+    m.direction *= phase <= span ? 1 : -1;
   }
   o.position[m.axis] = position;
   o.orientation =

@@ -5,13 +5,25 @@ export const extraLevelCost = (extraIndex: number) =>
 export function growthForPoints(points: number) {
   let level = 1;
   while (level < stages.length && points >= stages[level].points) level++;
-  if (level < stages.length)
+  if (level < stages.length) {
+    const current = stages[level - 1],
+      next = stages[level];
+    const fraction = Math.max(
+      0,
+      Math.min(1, (points - current.points) / (next.points - current.points)),
+    );
+    // Preserve distinct early sizes; blend large-scale steps without sudden jumps.
+    const radius =
+      current.type === "skyscraper" || current.type === "cityBlock"
+        ? current.radius * Math.pow(next.radius / current.radius, fraction)
+        : current.radius;
     return {
       level,
-      radius: stages[level - 1].radius,
+      radius,
       threshold: stages[level - 1].points,
       nextThreshold: stages[level].points,
     };
+  }
   let threshold = stages.at(-1)!.points,
     extra = 0;
   while (points >= threshold + extraLevelCost(extra)) {
