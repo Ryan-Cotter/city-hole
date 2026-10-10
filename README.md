@@ -73,7 +73,7 @@ Objects remain full scale while pulled into the hole, then visibly descend. Geom
 
 ## Validation
 
-26 tests cover Fibonacci ordering, swallow boundaries, exact-once rewards, mixed-object progression, uncapped logarithmic growth, deterministic city generation, multiple designs per tier, road/park placement, signal phases, stop lines and queue spacing, pedestrian persistence and separation, anchored walking limbs, vehicle windows, building features, full-city completion, fixed-speed hold-to-steer motion and sightline transparency, restart/victory, highlight removal, and progressive clipping. TypeScript checks and the production build pass.
+27 tests cover Fibonacci ordering, swallow boundaries, exact-once rewards, mixed-object progression, uncapped logarithmic growth, deterministic city generation, multiple designs per tier, road/park placement, signal phases, stop lines and queue spacing, pedestrian persistence and separation, anchored walking limbs, vehicle windows, building features, full-city completion, fixed-speed hold-to-steer motion and sightline transparency, restart/victory, highlight removal, and progressive clipping. TypeScript checks and the production build pass.
 
 Browser smoke checks cover the production city, stable roads, mouse swallowing, moving cars and pedestrians, compact left HUD, pause/resume, expandable map, and visible cursor. The final phone-preview raster smoke test sampled 37–38 FPS after static-geometry caching; comprehensive real-device benchmarking has not been performed. WebGL visual validation remains unperformed because the available verification browser disables WebGL.
 

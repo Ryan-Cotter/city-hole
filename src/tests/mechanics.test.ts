@@ -3,10 +3,10 @@ import {
   fadedMaterial,
   isBuildingType,
 } from "../render/occlusion";
-import { Vector3, Mesh, RingGeometry } from "three";
+import { Vector3, Mesh, RingGeometry, OrthographicCamera } from "three";
 import { clipAboveGround } from "../render/clipping";
 import { createObjectVisual } from "../world/SwallowableObject";
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { categories, config, stages } from "../game/constants";
 import { generateCity } from "../world/CityGenerator";
 import {
@@ -25,9 +25,33 @@ import { canSwallow, capture, complete } from "../physics/swallowing";
 import { advanceFall } from "../physics/falling";
 import { growthForPoints, extraLevelCost } from "../game/progression";
 import { freshState } from "../game/Game";
-import { PointerHold, type InputManager } from "../input/InputManager";
+import { PointerHold, InputManager } from "../input/InputManager";
 const litter = () => generateCity().objects.find((o) => o.type === "litter")!;
 describe("city gameplay", () => {
+  it("clears held steering on release outside the canvas and on HUD presses", () => {
+    const host = new EventTarget();
+    vi.stubGlobal("window",host);
+    const canvas = Object.assign(new EventTarget(), {
+      getBoundingClientRect:()=>({left:0,top:0,width:390,height:844}),
+      setPointerCapture:()=>{},
+    });
+    const event=(name:string,props:Record<string,unknown>)=>Object.assign(new Event(name),props);
+    try {
+      const camera=new OrthographicCamera(-10,10,10,-10,.1,100);
+      camera.position.set(35,44,35);camera.lookAt(0,0,0);camera.updateMatrixWorld();
+      const input=new InputManager(canvas as unknown as HTMLElement,camera,()=>{});
+      canvas.dispatchEvent(event("pointermove",{pointerId:1,pointerType:"mouse",buttons:0,clientX:300,clientY:600}));
+      expect(input.target).toBeNull();
+      canvas.dispatchEvent(event("pointerdown",{pointerId:1,isPrimary:true,button:0,buttons:1,clientX:300,clientY:600}));
+      expect(input.hold.active).toBe(1);
+      expect(input.target).not.toBeNull();
+      host.dispatchEvent(event("pointerup",{pointerId:1}));
+      expect(input.target).toBeNull();
+      canvas.dispatchEvent(event("pointerdown",{pointerId:2,isPrimary:true,button:0,clientX:300,clientY:600}));
+      host.dispatchEvent(event("pointerdown",{pointerId:2}));
+      expect(input.hold.active).toBeNull();
+    } finally { vi.unstubAllGlobals(); }
+  });
   it("triples small props and gives every small tier eight designs", () => {
     const baseline = generateCity(814, 1),
       dense = generateCity(814, 3);
