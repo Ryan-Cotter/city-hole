@@ -10,8 +10,15 @@ export const sectionForState = (state: GameState) =>
 export const activeBounds = (state: GameState) =>
   state.areaStage === 3
     ? state.level.bounds
-    : Math.min(state.level.bounds, sectionForState(state).bounds);
+    : Math.min(
+        state.level.bounds,
+        sectionForState(state).bounds,
+        state.areaStage === 1 && state.hole.radius < 0.04
+          ? Math.max(0.12, state.hole.radius * 45)
+          : Infinity,
+      );
 export const isUnlocked = (state: GameState, o: SwallowableObject) => {
+  if (o.unlockStage && o.unlockStage <= state.areaStage) return false;
   const bounds = activeBounds(state);
   if (o.members && (state.areaStage < 3 || o.radius > state.hole.radius * 0.85))
     return false;
@@ -35,3 +42,11 @@ const tierIndices = new Map(
   Object.keys(categories).map((type, index) => [type, index]),
 );
 export const tierOf = (o: SwallowableObject) => tierIndices.get(o.type)!;
+
+export function updateAreaUnlocks(state: GameState) {
+  const edibleRadius = state.hole.radius * 0.85;
+  if (state.areaStage === 1 && edibleRadius >= categories.mouse.radius)
+    state.areaStage = 2;
+  if (state.areaStage === 2 && edibleRadius >= categories.sign.radius)
+    state.areaStage = 3;
+}

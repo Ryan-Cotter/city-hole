@@ -1,3 +1,4 @@
+import { updateAreaUnlocks } from "../game/sections";
 import { describe, it, expect } from "vitest";
 import { freshState } from "../game/Game";
 import { capture, complete, consumeObsolete } from "../physics/swallowing";
@@ -28,20 +29,22 @@ describe("performance and scale mechanics", () => {
     expect(state.level.objects.length).toBe(total - 200);
     for (const [id, index] of state.level.objectSlots)
       expect(state.level.objects[index].id).toBe(id);
-    expect(state.score.remainingObjects).toBe(state.level.objects.length);
+    expect(state.score.remainingObjects).toBe(
+      state.level.objects.filter((o) => !o.collisionOnly).length,
+    );
   });
   it("instant-consumes obsolete objects only when the whole footprint fits", () => {
     const s = freshState(),
       o = s.level.objects.find((o) => o.type === "bottlecap")!;
-    s.hole.radius = stages[8].radius;
+    s.hole.radius = stages.find((stage) => stage.type === "manhole")!.radius;
     s.hole.level = 9;
     o.position.set(s.hole.radius - o.radius + 0.001, 0, 0);
     expect(consumeObsolete(s, o)).toBe(false);
     o.position.x -= 0.002;
     expect(consumeObsolete(s, o)).toBe(true);
-    expect(s.score.points).toBe(1);
+    expect(s.score.points).toBe(categories.bottlecap.scoreValue);
     expect(consumeObsolete(s, o)).toBe(false);
-    s.hole.radius = stages[8].radius;
+    s.hole.radius = stages.find((stage) => stage.type === "manhole")!.radius;
     s.hole.level = 9;
     const current = s.level.objects.find((o) => o.type === "litter")!;
     current.position.set(0, 0, 0);
@@ -50,22 +53,22 @@ describe("performance and scale mechanics", () => {
   });
   it("starts in a tiny section and expands in steps", () => {
     const s = freshState();
-    expect(activeBounds(s)).toBe(3);
+    expect(activeBounds(s)).toBe(0.12);
     expect(
       s.level.objects
         .filter((o) => isUnlocked(s, o))
         .every((o) => o.radius <= categories.mouse.radius),
     ).toBe(true);
     s.hole.level = 30;
+    s.hole.radius = 0.2;
     expect(activeBounds(s)).toBe(3);
     const gate = s.level.objects.find((o) => o.unlockStage === 2)!;
-    gate.state = "falling";
-    complete(s, gate);
+    expect(capture(gate, s.hole)).toBe(false);
+    updateAreaUnlocks(s);
     expect(activeBounds(s)).toBe(10);
-    expect(complete(s, gate)).toBe(false);
-    const cityGate = s.level.objects.find((o) => o.unlockStage === 3)!;
-    cityGate.state = "falling";
-    complete(s, cityGate);
+    expect(isUnlocked(s, gate)).toBe(false);
+    s.hole.radius = categories.sign.radius / 0.85 + 0.01;
+    updateAreaUnlocks(s);
     expect(activeBounds(s)).toBe(60);
   });
   it("allows corner access and keeps the rim softly bounded", () => {
@@ -99,23 +102,23 @@ describe("performance and scale mechanics", () => {
     expect(s.score.points).toBe(food.scoreValue);
     expect(s.level.objectSlots.has(food.supportId!)).toBe(true);
   });
-  it("animals flee 25% faster and oversized people keep their walking speed", () => {
+  it("people and animals flee at double their normal walking speed", () => {
     const s = freshState(),
       cat = s.level.objects.find((o) => o.type === "cat")!,
       person = s.level.objects.find((o) => o.type === "person" && o.motion)!;
     s.hole.position.copy(cat.position);
     const baseline = cat.motion!.speed;
     updateTraffic([cat], 0.01, 1, s.hole);
-    expect(cat.motion!.speed).toBeCloseTo(baseline * 1.25);
+    expect(cat.motion!.speed).toBeCloseTo(baseline * 2);
     s.hole.position.set(0, 0, 0);
     updateTraffic([cat], 0.01, 1, s.hole);
     expect(cat.motion!.speed).toBeCloseTo(baseline);
     s.hole.position.copy(person.position);
     const walking = person.motion!.speed;
     updateTraffic([person], 0.01, 1, s.hole);
-    expect(person.motion!.speed).toBe(walking);
+    expect(person.motion!.speed).toBe(walking * 2);
     s.hole.radius = 1;
     updateTraffic([person], 0.01, 1, s.hole);
-    expect(person.motion!.speed).toBeCloseTo(walking * 1.25);
+    expect(person.motion!.speed).toBeCloseTo(walking * 2);
   });
 });

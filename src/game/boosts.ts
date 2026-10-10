@@ -1,3 +1,4 @@
+import { updateAreaUnlocks } from "./sections";
 import type { GameState } from "./GameState";
 import { boostConfig } from "./campaign";
 import { growthForPoints, growthPoints } from "./progression";
@@ -14,6 +15,7 @@ export function updateBoosts(s: GameState) {
   const growth = growthForPoints(growthPoints(s));
   s.hole.radius = growth.radius;
   s.hole.level = growth.level;
+  updateAreaUnlocks(s);
 }
 export function activateBoost(s: GameState, kind: "speed" | "size") {
   if (s.status !== "playing") return false;

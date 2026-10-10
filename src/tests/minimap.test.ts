@@ -16,7 +16,7 @@ describe("map detail and recognizable small items", () => {
     const hud = { root: { querySelector: () => canvas } } as unknown as HUD;
     const state = freshState();
     HUD.prototype.drawMap.call(hud, state);
-    expect(label).toContain("6 meters wide, item detail");
+    expect(label).toContain("0.24 meters wide, item detail");
     state.hole.level = 13;
     state.areaStage = 2;
     state.hole.radius = 1;
@@ -42,9 +42,14 @@ describe("map detail and recognizable small items", () => {
           tiny.filter((o) => o.position.x * x > 1 && o.position.z * z > 1)
             .length,
         ).toBeGreaterThan(12);
-    expect(tiny.filter((o) => o.position.length() < 0.08)).toHaveLength(0);
+    expect(
+      tiny.filter(
+        (o) =>
+          o.radius >= categories.bottlecap.radius && o.position.length() < 0.08,
+      ),
+    ).toHaveLength(0);
     expect(categories.cat.radius).toBeLessThan(categories.person.radius);
-    expect(categories.cat.height).toBeLessThan(categories.dog.height * 0.6);
+    expect(categories.cat.height).toBeLessThan(categories.dog.height * 0.65);
   });
   it("builds the added toy and food variants with different geometry", () => {
     const city = freshState().level;

@@ -1,6 +1,6 @@
 # City Hole
 
-An original low-poly city swallowing game built with TypeScript, Vite, Three.js and custom physics. The seeded 120 × 120 map has 36 blocks across residential, commercial, industrial, downtown and park districts. Start with bottlecaps, work through 27 size tiers, and eventually swallow skyscrapers.
+An original low-poly city swallowing game built with TypeScript, Vite, Three.js and custom physics. The seeded 120 × 120 map has 36 blocks across residential, commercial, industrial, downtown and park districts. Start with magnified bacteria, spores, dust, pollen and sand before bugs and street objects; grow through buildings, city blocks and landscapes.
 
 ## Startup
 
@@ -26,15 +26,15 @@ Hold the primary mouse button or a touch to steer toward the pointer. Release to
 
 ## Progression and world
 
-The starting hole has radius 0.04 and is confined to a tiny 6-meter plaza. Three areas progress from a 6-meter starter yard to a 20-meter block-sized area, then the whole 120-meter city. Swallowing a glowing dashed border segment opens the next area after its fall finishes; gaining levels alone does not unlock it. The HUD identifies the section, and the minimap zooms to its boundaries. Item-level detail gives way to building and district detail as the hole grows.
+The starting hole has radius 0.0015 in a magnified micro patch. The camera, movement speed and accessible area scale up through five microscopic tiers into the 6-meter starter yard, then a 20-meter block-sized area and the full 120-meter city. Barriers are collision-only: they cannot be swallowed, award no points, and do not count toward completion. Glowing area borders deactivate automatically at the mouse and street-sign size thresholds. The minimap follows the unlocked area.
 
 Rewards follow ascending Fibonacci values starting 1, 2. Every item contributes independently, including food on tables. Early growth uses `max(ceil(16 × log2(level)), 3 × previous-tier reward)` incremental costs and tighter radius margins, so the first upgrade no longer unlocks several larger tiers at once. Beyond the largest geographic tier, growth remains uncapped with logarithmically increasing costs. All balance values live in `src/game/constants.ts`.
 
 Normal capture pulls an object toward the hole and animates it below the ground at full scale. Score and mass are awarded once after completion. Objects five or more tiers below current capacity keep their original models and nearby actors keep moving. Once their entire footprint is inside the circle, they disappear and award their rewards immediately. They remain visible until then. Completed records and models leave the active city, motion lists and spatial index. Victory waits for all objects to complete.
 
-The starter plaza uses separated mixed items across its full area, with a loose bottlecap trail near the hole. Toys include tops, dominoes, trains and stacking rings; food includes doughnuts, ice cream, hot dogs and pizza. Dice have face pips, coins raised rims, caps printed tops, and cats have coats and collars. Cats use a 0.27 footprint radius and 0.28 height, below people in the size ladder.
+The starter plaza uses separated mixed items across its full area, with a loose bottlecap trail near the hole. Toys include tops, dominoes, trains and stacking rings; food includes doughnuts, ice cream, hot dogs and pizza. Dice have face pips, coins raised rims, caps printed tops, and cats have coats and collars. Cats use a 0.17 footprint radius and 0.18 height; dogs use 0.23 and 0.30, compared with people at 0.32 and 1.25.
 
-Small piles cluster around medium fixtures and dumpsters. Each block has a small crowd, outdoor restaurant tables with separately scored food, patio covers and animals. Manhole covers and dividers sit on streets. People flee when swallowable; animals run 25% faster near the hole; cars swerve within their assigned lanes. Vehicles follow signals and queue spacing. Building façades use brick, concrete, stone and muted glass colors, with contrasting windows and roofs. Trees occupy parks; vehicles stay on streets or curb parking.
+Small piles cluster around medium fixtures and dumpsters. Each block has a small crowd, outdoor restaurant tables with separately scored food, patio covers and animals. Manhole covers and dividers sit on streets. People and animals flee directly away at twice their walking speed; cars swerve within their assigned lanes. Vehicles follow signals, queue spacing and yield to people/animals on crosswalk routes. Building façades use brick, concrete, stone and muted glass colors, with contrasting windows and roofs. Trees occupy parks; vehicles stay on streets or curb parking.
 
 The hole can overhang an edge by 30% of its radius to reach corner objects. Its outline smoothly compresses against section/map edges instead of staying rigidly circular.
 
@@ -69,9 +69,9 @@ Android and iOS Capacitor projects are generated and synced. Android SDK/Android
 
 Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, size-scaled hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, section unlocks, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, section minimap and visible small items.
 
-The local Git project is named `city-hole`. GitHub publication remains pending authenticated repository creation; no remote repository or public deployment has been claimed. See `docs/CITY_OBJECTS.md` for the object catalog and `docs/GAME_DESIGN.md` for implementation details.
+The project repository is [Ryan-Cotter/city-hole](https://github.com/Ryan-Cotter/city-hole). See `docs/CITY_OBJECTS.md` for the object catalog and `docs/GAME_DESIGN.md` for implementation details.
 
-Self-play keeps routes on the ground and within the unlocked section, retries another target after two seconds without movement or a swallow, and limits fruitless chases. Unreachable clusters are skipped in bounded batches rather than retried forever.
+Self-play keeps routes on the ground and within the unlocked section, retries another target after 0.75 seconds without movement or a swallow, and limits fruitless chases. It approaches reachable points inside swallowing range, uses scale-aware waypoint tolerances, skips targets outside unlocked areas and avoids chasing faster actors. Unreachable clusters are skipped in bounded batches.
 
 Oversized objects have solid footprints that the hole slides around; self-play plans around those footprints. People and animals wander without needing a threat, nearby traffic stays active at every size tier, and trees sway gently. The rim cycles red, orange, yellow, green, blue, indigo and violet each level, repeating every seven levels in both renderers.
 
@@ -89,4 +89,10 @@ At 80% of the original city consumed, a seeded ring expands the map to 360 meter
 
 The landscape is a stylized procedural representation, not real-world geography. Era theming currently changes architecture, vehicles and terrain; some small props retain modern designs. Automated tests cover all scale transitions, self-play through the early city stages, and completion of the country/world maps; browser checks verify the opening, pickup presentation and basic play. Native/mobile store signing remains a release step.
 
-Each required growth level has at least 150% of its full next-level points requirement available as edible, unlocked material. On entry to a level or section, missing points are supplied by suitably sized clusters; expanded maps receive buildings or landscape objects, never tiny filler. Reserves stop when all sizes on the current map are edible so completion remains possible. Ants, beetles and ladybugs continuously scurry in two dimensions around their food/garden pockets and move 25% faster near the hole. Cats use spatial separation and smooth turning to reduce overlap and flickering.
+Each required growth level has at least 150% of its full next-level points requirement available as stationary, edible, unlocked material. On entry to a level/section and at five-second checks, missing points are supplied by suitably sized clusters; expanded maps receive buildings or landscape objects, never tiny filler. Reserves stop when all sizes on the current map are edible so completion remains possible. Ants, beetles and ladybugs continuously scurry in two dimensions around their food/garden pockets and move twice as fast near the hole. Cats use spatial separation and smooth turning to reduce overlap and flickering.
+
+Whole blocks have roofs, rooftop equipment, window bands, sidewalks and planted edges. A block shell pays 15% of a skyscraper reward, and remaining contents swallowed with the block pay 10% of their individual rewards (rounded per object). Items eaten individually retain full rewards. This deliberate aggregate discount slows bulk growth while preserving exact-once completion.
+
+Open `/models.html` for the model review gallery. Public CC0 examples used for vehicle proportions and clean color separation: [Kenney Car Kit](https://kenney.nl/assets/car-kit) and [Quaternius Cars](https://quaternius.com/packs/cars.html). Models remain original procedural geometry; no downloaded model files are bundled. Vehicles use plain paint/glass materials. The software renderer keeps box faces together to avoid diagonal sorting artifacts.
+
+Micro sizes are stylized for readability, not a scientifically accurate scale model. Crosswalk walkers patrol curb to curb; traffic yielding is local and simplified rather than a full road-network simulation.

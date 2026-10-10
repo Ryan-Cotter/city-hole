@@ -23,7 +23,10 @@ export function freshState(cityIndex = 0): GameState {
   const level = generateCity(814 + cityIndex * 997, undefined, cityIndex);
   attachCityBlocks(level);
   return {
-    world: { phase: "city", initialCount: level.objects.length },
+    world: {
+      phase: "city",
+      initialCount: level.objects.filter((o) => !o.collisionOnly).length,
+    },
     growthOffset: 0,
     status: "playing",
     areaStage: 1,
@@ -37,7 +40,7 @@ export function freshState(cityIndex = 0): GameState {
     score: {
       points: 0,
       swallowedObjects: 0,
-      remainingObjects: level.objects.length,
+      remainingObjects: level.objects.filter((o) => !o.collisionOnly).length,
       byType: Object.fromEntries(
         Object.keys(categories).map((type) => [type, 0]),
       ) as GameState["score"]["byType"],
@@ -60,6 +63,7 @@ export class Game {
     (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
   );
   private supported = this.state.level.objects.filter((o) => o.supportId);
+  private nextBudgetCheck = 0;
   private budgetKey = "";
   private falling = new Set<SwallowableObject>();
   renderer: Renderer;
@@ -310,7 +314,11 @@ export class Game {
     s.elapsedSeconds += dt;
     updateBoosts(s);
     const budgetKey = `${s.cityIndex}:${s.world.phase}:${s.areaStage}:${s.hole.level}`;
-    if (budgetKey !== this.budgetKey) {
+    if (
+      budgetKey !== this.budgetKey ||
+      s.elapsedSeconds >= this.nextBudgetCheck
+    ) {
+      this.nextBudgetCheck = s.elapsedSeconds + 5;
       this.budgetKey = budgetKey;
       if (ensureFoodBudget(s).length) this.populate();
     }
@@ -342,6 +350,7 @@ export class Game {
       dt,
       s.elapsedSeconds,
       s.hole,
+      activeBounds(s),
     );
     for (const o of this.supported)
       if (o.supportId && o.position.y > 0) {

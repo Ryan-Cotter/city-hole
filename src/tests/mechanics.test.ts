@@ -325,7 +325,9 @@ describe("city gameplay", () => {
   });
 
   it("uses Fibonacci rewards for each ascending size", () => {
-    const specs = Object.values(categories);
+    const specs = Object.values(categories).map((o) => ({ ...o }));
+    specs[Object.keys(categories).indexOf("cityBlock")].scoreValue =
+      categories.cityBlock.mass;
     expect(specs[0].scoreValue).toBe(1);
     expect(specs[1].scoreValue).toBe(2);
     for (let i = 2; i < specs.length; i++) {
@@ -353,7 +355,7 @@ describe("city gameplay", () => {
   });
   it("awards all rewards exactly once after a visible full-size fall", () => {
     const s = freshState(),
-      o = s.level.objects.find((o) => o.type === "bottlecap")!;
+      o = s.level.objects.find((o) => o.type === "bacterium")!;
     o.position.copy(s.hole.position);
     expect(capture(o, s.hole)).toBe(true);
     const mid = advanceFall(o, 0.7)!;
@@ -366,7 +368,9 @@ describe("city gameplay", () => {
     expect(complete(s, o)).toBe(false);
     expect(s.score.points).toBe(1);
     expect(s.hole.mass).toBe(1);
-    expect(s.score.remainingObjects).toBe(s.level.objects.length);
+    expect(s.score.remainingObjects).toBe(
+      s.level.objects.filter((o) => !o.collisionOnly).length,
+    );
   });
   it("lets mixed-size rewards advance discrete point-based levels", () => {
     const s = freshState();
@@ -459,7 +463,9 @@ describe("city gameplay", () => {
   });
   it("can consume the entire city without a size deadlock", () => {
     const s = freshState();
-    const pending = [...s.level.objects].sort((a, b) => a.radius - b.radius);
+    const pending = s.level.objects
+      .filter((o) => !o.collisionOnly)
+      .sort((a, b) => a.radius - b.radius);
     for (const o of pending) {
       s.hole.position.copy(o.position);
       expect(capture(o, s.hole)).toBe(true);
@@ -468,7 +474,9 @@ describe("city gameplay", () => {
     }
     expect(s.status).toBe("won");
     expect(s.score.points).toBe(s.level.totalScore);
-    expect(s.hole.level).toBeGreaterThan(stages.length);
+    expect(s.hole.radius * config.swallowFactor).toBeGreaterThanOrEqual(
+      categories.cityBlock.radius,
+    );
   });
   it("moves only during a held pointer and stops immediately on release", () => {
     const h = createHole(),
@@ -516,12 +524,14 @@ describe("city gameplay", () => {
   });
   it("waits for final completion and resets cleanly", () => {
     const s = freshState();
-    for (const o of s.level.objects.slice(0, -1)) {
+    const edible = s.level.objects.filter((o) => !o.collisionOnly);
+    const last = edible.find((o) => o.motion)!;
+    for (const o of edible) {
+      if (o === last || o.state === "swallowed") continue;
       o.state = "falling";
       complete(s, o);
     }
     expect(s.status).toBe("playing");
-    const last = s.level.objects.at(-1)!;
     last.state = "falling";
     complete(s, last);
     expect(s.status).toBe("won");

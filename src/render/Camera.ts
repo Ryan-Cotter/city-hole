@@ -23,5 +23,6 @@ export function resizeCamera(
 }
 
 export const cameraViewSize = (radius: number, moving: boolean) =>
-  (cameraConfig.baseView + radius * cameraConfig.radiusScale) *
+  (cameraConfig.baseView * Math.min(1, radius / 0.04) +
+    radius * cameraConfig.radiusScale) *
   (moving ? cameraConfig.movingZoom : 1);

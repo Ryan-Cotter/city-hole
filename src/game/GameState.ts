@@ -30,6 +30,7 @@ export interface SwallowableObject {
   scoreValue: number;
   orientation: number;
   critter?: boolean;
+  collisionOnly?: boolean;
   pickup?: "speed" | "size";
   members?: SwallowableObject[];
   aggregateId?: string;

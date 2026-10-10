@@ -1,3 +1,4 @@
+import { stages } from "../game/constants";
 import { themeForCity } from "../game/campaign";
 import { sectionForState, activeBounds, isUnlocked } from "../game/sections";
 import type { GameState } from "../game/GameState";
@@ -61,7 +62,12 @@ export class HUD {
         : "",
     );
     text("score", s.score.points.toLocaleString());
-    text("radius", `${s.hole.radius.toFixed(2)} m`);
+    text(
+      "radius",
+      s.hole.radius < 0.01
+        ? `${(s.hole.radius * 1000).toFixed(1)} mm`
+        : `${s.hole.radius.toFixed(2)} m`,
+    );
     text(
       "timer",
       `${Math.floor(seconds / 60)
@@ -71,9 +77,11 @@ export class HUD {
     text("level", `LEVEL ${s.hole.level}`);
     text(
       "hint",
-      s.areaStage < 3
-        ? `${sectionForState(s).name} · Eat the glowing border to unlock ${s.areaStage === 1 ? "the block" : "the city"}`
-        : `${(growth.nextThreshold - growthPoints(s)).toLocaleString()} points to grow`,
+      s.hole.radius < 0.04
+        ? `Micro world · Eat ${stages[s.hole.level - 1].name}`
+        : s.areaStage < 3
+          ? `${sectionForState(s).name} · Grow to unlock ${s.areaStage === 1 ? "the block" : "the city"}`
+          : `${(growth.nextThreshold - growthPoints(s)).toLocaleString()} points to grow`,
     );
     text(
       "remaining",
@@ -134,14 +142,15 @@ export class HUD {
     }
     c.strokeStyle = "#526481";
     c.lineWidth = Math.max(1, 5 * scale);
-    if (!s.level.landscape) for (let n = -s.level.bounds; n <= s.level.bounds; n += 20) {
-      c.beginPath();
-      c.moveTo(p(n), 0);
-      c.lineTo(p(n), 140);
-      c.moveTo(0, p(n));
-      c.lineTo(140, p(n));
-      c.stroke();
-    }
+    if (!s.level.landscape)
+      for (let n = -s.level.bounds; n <= s.level.bounds; n += 20) {
+        c.beginPath();
+        c.moveTo(p(n), 0);
+        c.lineTo(p(n), 140);
+        c.moveTo(0, p(n));
+        c.lineTo(140, p(n));
+        c.stroke();
+      }
     if (s.hole.radius < 8 || s.level.landscape)
       for (const o of s.level.objects) {
         if (!isUnlocked(s, o) || o.state !== "idle") continue;
@@ -154,7 +163,8 @@ export class HUD {
         ].includes(o.type);
         const edible = o.radius <= s.hole.radius * 0.85;
         if (
-          !s.level.landscape && s.hole.radius >= 0.3 &&
+          !s.level.landscape &&
+          s.hole.radius >= 0.3 &&
           !building &&
           (!edible || o.radius < s.hole.radius * 0.12)
         )

@@ -13,6 +13,9 @@ export const availableFoodPoints = (s: GameState) =>
       (o.state === "idle" &&
       isUnlocked(s, o) &&
       !o.members &&
+      !o.collisionOnly &&
+      !o.motion &&
+      !["person", "mouse", "cat", "dog"].includes(o.type) &&
       o.radius <= s.hole.radius * 0.85
         ? o.scoreValue
         : 0),
@@ -34,6 +37,8 @@ export function ensureFoodBudget(s: GameState): SwallowableObject[] {
     availableFoodPoints(s);
   if (deficit <= 0) return [];
   const types = (Object.keys(categories) as ObjectType[]).filter((type) => {
+    if (["barrier", "person", "mouse", "cat", "dog"].includes(type))
+      return false;
     if (categories[type].radius > s.hole.radius * 0.85) return false;
     if (s.world.phase === "metropolis") return isBuildingType(type);
     if (s.world.phase === "country" || s.world.phase === "planet")

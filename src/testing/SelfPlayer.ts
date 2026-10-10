@@ -42,7 +42,7 @@ export function findPath(
           wz = z * cell - bounds;
         if (
           o.round
-            ? Math.hypot(wx - o.x, wz - o.z) <= o.half + cell * 0.35
+            ? Math.hypot(wx - o.x, wz - o.z) <= o.half
             : Math.abs(wx - o.x) <= o.half + cell * 0.35 &&
               Math.abs(wz - o.z) <= o.half + cell * 0.35
         )
@@ -142,6 +142,7 @@ export function edibleClusters(state: GameState) {
   >();
   for (const o of state.level.objects) {
     if (
+      o.collisionOnly ||
       o.state !== "idle" ||
       !isUnlocked(state, o) ||
       o.radius > state.hole.radius * config.swallowFactor
@@ -154,7 +155,7 @@ export function edibleClusters(state: GameState) {
       bins.set(key, group);
     }
     group.objects.push(o);
-    group.points += o.scoreValue;
+    group.points += o.scoreValue * (o.motion ? 0.15 : 1);
     group.center.add(o.position);
   }
   const minimum = lowestDetailTier(state);
@@ -248,14 +249,15 @@ export class SelfPlayer {
     this.countdown -= dt;
     this.elapsed += dt;
     const moved =
-      this.lastPosition.distanceToSquared(state.hole.position) > 0.000001;
+      this.lastPosition.distanceToSquared(state.hole.position) >
+      Math.pow(Math.min(0.001, state.hole.radius * 0.05), 2);
     const harvested = this.lastRemaining !== state.score.remainingObjects;
     this.stalledSeconds = moved || harvested ? 0 : this.stalledSeconds + dt;
     this.lastPosition.copy(state.hole.position);
     this.lastRemaining = state.score.remainingObjects;
     if (
       this.goal &&
-      (this.stalledSeconds >= 2 || this.elapsed >= this.goalDeadline)
+      (this.stalledSeconds >= 0.75 || this.elapsed >= this.goalDeadline)
     ) {
       this.retryAfter.set(this.goal.id, this.elapsed + 8);
       this.goal = null;
@@ -265,7 +267,10 @@ export class SelfPlayer {
     }
     for (const [id, until] of this.retryAfter)
       if (until <= this.elapsed) this.retryAfter.delete(id);
-    if (this.goal && this.goal.state !== "idle") {
+    if (
+      this.goal &&
+      (this.goal.state !== "idle" || !isUnlocked(state, this.goal))
+    ) {
       this.path = [];
       this.goal = null;
       this.countdown = 0;
@@ -281,7 +286,8 @@ export class SelfPlayer {
           (o) =>
             o.state === "idle" &&
             isUnlocked(state, o) &&
-            o.radius > state.hole.radius * config.swallowFactor,
+            (o.collisionOnly ||
+              o.radius > state.hole.radius * config.swallowFactor),
         )
         .map((o) => ({
           x: o.position.x,
@@ -301,32 +307,68 @@ export class SelfPlayer {
       ].slice(0, selfPlayConfig.candidateGroups);
       for (const group of candidates) {
         const targets = group.objects
-          .filter((o) => !this.retryAfter.has(o.id))
+          .filter(
+            (o) =>
+              !this.retryAfter.has(o.id) &&
+              (!o.motion ||
+                o.motion.speed <
+                  speedForRadius(state.hole.radius) *
+                    (state.hole.speedMultiplier ?? 1)),
+          )
           .sort(
             (a, b) =>
-              a.position.distanceToSquared(state.hole.position) -
-              b.position.distanceToSquared(state.hole.position),
+              a.position.distanceToSquared(state.hole.position) *
+                (a.motion ? 4 : 1) -
+              b.position.distanceToSquared(state.hole.position) *
+                (b.motion ? 4 : 1),
           );
         for (const target of targets.slice(0, 3)) {
-          const destination = target.position.clone();
-          destination.y = 0;
-          destination.x = Math.max(-limit, Math.min(limit, destination.x));
-          destination.z = Math.max(-limit, Math.min(limit, destination.z));
-          const clear = !obstacles.some((o) =>
-            segmentIntersectsBox(state.hole.position, destination, o),
-          );
-          const route = clear
-            ? [destination]
-            : findPath(
-                state.hole.position,
-                destination,
-                limit,
-                obstacles,
-                Math.min(
-                  Math.max(selfPlayConfig.cellSize, state.hole.radius * 0.1),
-                  Math.max(0.06, state.hole.radius),
+          const towardHole = state.hole.position.clone().sub(target.position);
+          towardHole.y = 0;
+          const reach = state.hole.radius * 0.6;
+          const heading = Math.atan2(towardHole.x, towardHole.z);
+          const destinations = [0, 0.8, -0.8, 1.6, -1.6, Math.PI]
+            .map((offset) => {
+              const p = target.position.clone();
+              p.y = 0;
+              p.x += Math.sin(heading + offset) * reach;
+              p.z += Math.cos(heading + offset) * reach;
+              p.x = Math.max(-limit, Math.min(limit, p.x));
+              p.z = Math.max(-limit, Math.min(limit, p.z));
+              return p;
+            })
+            .filter(
+              (p) =>
+                !obstacles.some(
+                  (o) => Math.hypot(p.x - o.x, p.z - o.z) < o.half,
                 ),
-              );
+            );
+          let route: Vector3[] = [];
+          for (const destination of destinations) {
+            if (
+              !obstacles.some((o) =>
+                segmentIntersectsBox(state.hole.position, destination, o),
+              )
+            ) {
+              route = [destination];
+              break;
+            }
+          }
+          if (!route.length && destinations.length)
+            route = findPath(
+              state.hole.position,
+              destinations[0],
+              limit,
+              obstacles,
+              Math.min(
+                Math.max(selfPlayConfig.cellSize, state.hole.radius * 0.1),
+                Math.max(
+                  0.002,
+                  activeBounds(state) / 100,
+                  state.hole.radius * 0.5,
+                ),
+              ),
+            );
           if (route.length) {
             this.goal = target;
             this.path = route;
@@ -342,10 +384,53 @@ export class SelfPlayer {
               8;
             break;
           }
+          // A blocked nearest item must not hide the rest of its cluster forever.
+          this.retryAfter.set(target.id, this.elapsed + 30);
         }
         if (this.goal) break;
       }
       this.groupOffset = this.goal ? 0 : start + selfPlayConfig.candidateGroups;
+      if (!this.goal && groups.length) {
+        // A collision can leave the hole tangent to a prop in a gap smaller than
+        // one grid cell. Step into open space before asking the grid for a route.
+        let escape: Vector3 | null = null,
+          clearance = -Infinity;
+        for (let i = 0; i < 16; i++) {
+          const angle = (i * Math.PI) / 8,
+            distance = Math.max(0.006, state.hole.radius * 2);
+          const point = state.hole.position
+            .clone()
+            .add(
+              new Vector3(
+                Math.cos(angle) * distance,
+                0,
+                Math.sin(angle) * distance,
+              ),
+            );
+          point.x = Math.max(-limit, Math.min(limit, point.x));
+          point.z = Math.max(-limit, Math.min(limit, point.z));
+          if (
+            point.distanceTo(state.hole.position) < distance * 0.5 ||
+            obstacles.some((o) =>
+              segmentIntersectsBox(state.hole.position, point, {
+                ...o,
+                half: o.half * 0.9999,
+              }),
+            )
+          )
+            continue;
+          const space = Math.min(
+            ...obstacles.map(
+              (o) => Math.hypot(point.x - o.x, point.z - o.z) - o.half,
+            ),
+          );
+          if (space > clearance) {
+            clearance = space;
+            escape = point;
+          }
+        }
+        if (escape) this.path = [escape];
+      }
     }
     const limit = movementLimit(state.hole.radius, activeBounds(state));
     // Grid cells can round beyond the playable edge; every waypoint must be reachable.
@@ -357,10 +442,10 @@ export class SelfPlayer {
     while (
       this.path.length > 1 &&
       this.path[0].distanceTo(state.hole.position) <
-        Math.min(0.22, Math.max(0.02, state.hole.radius * 0.15))
+        Math.min(0.25, Math.max(0.0006, state.hole.radius * 0.4))
     )
       this.path.shift();
-    if (this.path.length === 1 && this.goal) {
+    if (this.path.length === 1 && this.goal?.motion) {
       this.path[0].set(
         Math.max(-limit, Math.min(limit, this.goal.position.x)),
         0,

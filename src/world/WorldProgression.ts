@@ -32,8 +32,14 @@ const make = (
 });
 export function indexLevel(level: Level) {
   level.objectSlots = new Map(level.objects.map((o, i) => [o.id, i]));
-  level.totalMass = level.objects.reduce((sum, o) => sum + o.mass, 0);
-  level.totalScore = level.objects.reduce((sum, o) => sum + o.scoreValue, 0);
+  level.totalMass = level.objects.reduce(
+    (sum, o) => sum + (o.collisionOnly ? 0 : o.mass),
+    0,
+  );
+  level.totalScore = level.objects.reduce(
+    (sum, o) => sum + (o.collisionOnly ? 0 : o.scoreValue),
+    0,
+  );
 }
 export function attachCityBlocks(level: Level) {
   const blocks = level.blocks.map((b, i) => {
@@ -50,6 +56,7 @@ export function attachCityBlocks(level: Level) {
         !o.members &&
         !o.aggregateId &&
         !o.unlockStage &&
+        !o.collisionOnly &&
         !o.motion &&
         Math.abs(o.position.x - b.x) < 9.7 &&
         Math.abs(o.position.z - b.z) < 9.7,

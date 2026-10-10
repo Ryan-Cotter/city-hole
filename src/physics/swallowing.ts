@@ -1,12 +1,13 @@
 import { updateBoosts, activateBoost } from "../game/boosts";
 import type { GameState, Hole, SwallowableObject } from "../game/GameState";
 import { lowestDetailTier, tierOf } from "../game/sections";
-import { config, stages } from "../game/constants";
+import { config, stages, blockRewardConfig } from "../game/constants";
 import { growthForPoints, growthPoints } from "../game/progression";
 export function canSwallow(o: SwallowableObject, h: Hole) {
   const dx = o.position.x - h.position.x,
     dz = o.position.z - h.position.z;
   return (
+    !o.collisionOnly &&
     o.state === "idle" &&
     o.radius <= h.radius * config.swallowFactor &&
     dx * dx + dz * dz <= h.radius * h.radius
@@ -22,16 +23,22 @@ export function capture(o: SwallowableObject, h: Hole) {
   };
   return true;
 }
-export function complete(s: GameState, o: SwallowableObject) {
-  if (o.state !== "falling") return false;
+export function complete(
+  s: GameState,
+  o: SwallowableObject,
+  rewardMultiplier = 1,
+) {
+  if (o.collisionOnly || o.state !== "falling") return false;
   for (const member of o.members ?? []) {
     if (member.state === "swallowed") continue;
     member.state = "falling";
-    complete(s, member);
+    complete(
+      s,
+      member,
+      rewardMultiplier * blockRewardConfig.contentsMultiplier,
+    );
   }
   o.state = "swallowed";
-  if (o.unlockStage && o.unlockStage === s.areaStage + 1)
-    s.areaStage = o.unlockStage;
   // Swap-delete: no rescanning or shifting the remaining city on each reward.
   const index = s.level.objectSlots.get(o.id);
   if (index !== undefined) {
@@ -44,7 +51,9 @@ export function complete(s: GameState, o: SwallowableObject) {
   }
   o.fall = null;
   s.hole.mass += o.mass;
-  s.score.points += o.scoreValue;
+  const reward = Math.round(o.scoreValue * rewardMultiplier);
+  s.score.points += reward;
+  s.level.totalScore -= o.scoreValue - reward;
   s.score.byType[o.type]++;
   s.score.swallowedObjects++;
   s.score.remainingObjects--;

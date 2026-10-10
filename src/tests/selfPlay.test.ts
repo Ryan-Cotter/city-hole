@@ -1,3 +1,4 @@
+import { ensureFoodBudget } from "../game/foodBudget";
 import { describe, it, expect } from "vitest";
 import { Vector3 } from "three";
 import { SelfPlayer, findPath, edibleClusters } from "../testing/SelfPlayer";
@@ -12,7 +13,10 @@ import {
   cameraConfig,
   config,
 } from "../game/constants";
-import { resolveOversizedCollisions } from "../physics/collisions";
+import {
+  resolveOversizedCollisions,
+  obstacleRadius,
+} from "../physics/collisions";
 import { updateTraffic } from "../world/traffic";
 import { updateBoosts } from "../game/boosts";
 import { activeBounds, isUnlocked } from "../game/sections";
@@ -23,6 +27,7 @@ describe("self play and pacing", () => {
     const state = freshState(),
       player = new SelfPlayer();
     player.enabled = true;
+    state.hole.radius = 0.04;
     const goal = state.level.objects.find((o) => o.type === "bottlecap")!;
     player.target(state, 0.1);
     player.goal = goal;
@@ -85,7 +90,8 @@ describe("self play and pacing", () => {
         ),
       );
     expect(cameraViewSize(config.baseRadius, false)).toBeCloseTo(
-      cameraConfig.baseView + config.baseRadius * cameraConfig.radiusScale,
+      cameraConfig.baseView * (config.baseRadius / 0.04) +
+        config.baseRadius * cameraConfig.radiusScale,
     );
     expect(cameraViewSize(2, true) / cameraViewSize(2, false)).toBeCloseTo(
       1.25,
@@ -142,10 +148,15 @@ describe("self play and pacing", () => {
           g.objects.every((o) => o.radius <= state.hole.radius * 0.85),
         ),
       ).toBe(true);
-      let yardSeconds = 0;
+      let yardSeconds = 0,
+        budgetLevel = 0;
       for (let step = 0; step < 6000; step++) {
         state.elapsedSeconds += 0.1;
         updateBoosts(state);
+        if (budgetLevel !== state.hole.level || step % 50 === 0) {
+          ensureFoodBudget(state);
+          budgetLevel = state.hole.level;
+        }
         clampHole(state.hole, activeBounds(state));
         const before = state.hole.position.clone();
         moveToward(
@@ -185,7 +196,29 @@ describe("self play and pacing", () => {
       }
       expect(
         state.areaStage,
-        `city ${cityIndex}, level ${state.hole.level}, points ${state.score.points}`,
+        JSON.stringify({
+          city: cityIndex,
+          level: state.hole.level,
+          points: state.score.points,
+          position: state.hole.position,
+          goal: player.goal?.id,
+          path: player.path.length,
+          blockers: state.level.objects
+            .filter(
+              (o) =>
+                isUnlocked(state, o) &&
+                o.state === "idle" &&
+                (o.collisionOnly || o.radius > state.hole.radius * 0.85) &&
+                o.position.distanceTo(state.hole.position) <
+                  obstacleRadius(o) + state.hole.radius * 0.45 + 0.1,
+            )
+            .map((o) => ({
+              id: o.id,
+              clearance: obstacleRadius(o) + state.hole.radius * 0.45,
+              dist: o.position.distanceTo(state.hole.position),
+              pos: o.position,
+            })),
+        }),
       ).toBe(3);
       expect(yardSeconds).toBeGreaterThan(45);
       expect(yardSeconds).toBeLessThan(300);
@@ -193,7 +226,10 @@ describe("self play and pacing", () => {
       expect(state.score.points).toBeGreaterThanOrEqual(stages[8].points);
       expect(state.score.points).toBe(
         state.level.totalScore -
-          state.level.objects.reduce((sum, o) => sum + o.scoreValue, 0),
+          state.level.objects.reduce(
+            (sum, o) => sum + (o.collisionOnly ? 0 : o.scoreValue),
+            0,
+          ),
       );
       player.enabled = false;
       expect(player.target(state, 0.1)).toBeNull();

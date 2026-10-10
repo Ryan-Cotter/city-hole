@@ -11,7 +11,9 @@ export function resolveOversizedCollisions(
   objects: SwallowableObject[],
 ) {
   const solids = objects.filter(
-    (o) => o.state === "idle" && o.radius > hole.radius * config.swallowFactor,
+    (o) =>
+      o.state === "idle" &&
+      (o.collisionOnly || o.radius > hole.radius * config.swallowFactor),
   );
   const delta = hole.position.clone().sub(previous);
   const steps = Math.max(

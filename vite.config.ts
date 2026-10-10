@@ -3,6 +3,7 @@ export default defineConfig({
   base: "./",
   build: {
     rollupOptions: {
+      input: { game: "index.html", models: "models.html" },
       output: {
         manualChunks: {
           three: ["three"],

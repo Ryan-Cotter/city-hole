@@ -87,7 +87,10 @@ export function createObjectVisual(o: SwallowableObject) {
     sy: number,
     sz: number,
   ) => {
-    const mesh: Mesh = new Mesh(shape, material(color));
+    const mesh: Mesh = new Mesh(
+      shape,
+      material(color, true, o.type !== "car" && o.type !== "van"),
+    );
     mesh.position.set(x, y, z);
     mesh.scale.set(sx, sy, sz);
     g.add(mesh);
@@ -103,6 +106,12 @@ export function createObjectVisual(o: SwallowableObject) {
     rotation = 0,
     name = "window",
   ) => {
+    if (o.type === "car" || o.type === "van") {
+      const glass = add(box, color, x, y, z, w, h, 0.008);
+      glass.rotation.y = rotation;
+      glass.name = name;
+      return glass;
+    }
     const normalX = Math.sin(rotation),
       normalZ = Math.cos(rotation);
     if (name === "window") {
@@ -127,6 +136,66 @@ export function createObjectVisual(o: SwallowableObject) {
     m.renderOrder = name === "window" ? 2 : name === "door-glass" ? 3 : 2;
     return m;
   };
+  if (["bacterium", "spore", "dust", "pollen", "sand"].includes(o.type)) {
+    const r = o.radius,
+      v = o.variant % 4;
+    if (o.type === "bacterium") {
+      const color = ["#48ac92", "#66bdcf", "#9ab754", "#b18ace"][v];
+      const count = v === 2 ? 4 : v === 1 ? 2 : 1;
+      for (let i = 0; i < count; i++) {
+        const z = count === 1 ? 0 : (i / (count - 1) - 0.5) * r;
+        add(
+          sphere,
+          color,
+          v === 2 ? Math.sin(i * 2) * r * 0.2 : 0,
+          r * 0.45,
+          z,
+          r * 0.5,
+          r * 0.42,
+          r * (count === 1 && v === 0 ? 0.9 : 0.4),
+        );
+      }
+      add(sphere, "#245e67", 0, r * 0.83, 0, r * 0.18, r * 0.08, r * 0.22);
+    } else if (o.type === "pollen" || o.type === "spore") {
+      const color =
+        o.type === "pollen"
+          ? ["#d8a638", "#e5bd5b", "#9cad59", "#d38a4b"][v]
+          : ["#b495cc", "#839f69", "#c7ae84", "#d5b397"][v];
+      add(sphere, color, 0, r * 0.55, 0, r * 0.8, r * 0.65, r * 0.75);
+      for (let i = 0; i < 6; i++) {
+        const a = (i * Math.PI) / 3;
+        add(
+          sphere,
+          "#e4cb88",
+          Math.cos(a) * r * 0.6,
+          r * 0.85,
+          Math.sin(a) * r * 0.6,
+          r * 0.18,
+          r * 0.18,
+          r * 0.18,
+        );
+      }
+    } else {
+      const color =
+        o.type === "sand"
+          ? ["#d1c4a1", "#cb9e8f", "#c49b55", "#626269"][v]
+          : ["#aaa5bb", "#c5aa92", "#ccc6b0", "#70717c"][v];
+      const m = add(
+        sphere,
+        color,
+        0,
+        r * 0.3,
+        0,
+        r * 0.9,
+        r * (o.type === "dust" ? 0.18 : 0.6),
+        r * 0.72,
+      );
+      m.rotation.y = v * 0.7;
+      if (o.type === "dust" && v === 2)
+        add(box, "#e0d4b9", 0, r * 0.35, 0, r * 1.7, r * 0.12, r * 0.18);
+    }
+    return g;
+  }
   if (o.critter) {
     const r = o.radius,
       color =
@@ -301,21 +370,87 @@ export function createObjectVisual(o: SwallowableObject) {
         );
       add(box, "#539aaa", 0, 3.1, r * 0.25, r * 1.5, 0.2, r * 0.08);
     } else {
-      add(box, "#87998c", 0, 0.4, 0, r * 1.75, 0.8, r * 1.75);
+      const block = o.type === "cityBlock";
+      add(box, "#7b8380", 0, 0.25, 0, r * 1.8, 0.5, r * 1.8);
+      add(box, "#b7b2a2", 0, 0.53, 0, r * 1.65, 0.06, r * 1.65);
+      for (const side of [-1, 1]) {
+        add(box, "#444c52", side * r * 0.84, 0.56, 0, r * 0.08, 0.03, r * 1.8);
+        add(box, "#444c52", 0, 0.56, side * r * 0.84, r * 1.8, 0.03, r * 0.08);
+      }
       for (let z = -1; z <= 1; z++)
         for (let x = -1; x <= 1; x++) {
           const h = (2 + ((x + z + o.variant + 8) % 4)) * r * 0.16;
-          add(
-            box,
+          const bx = x * r * 0.5,
+            bz = z * r * 0.5,
+            w = r * 0.3;
+          const color = [
+            "#b7a28b",
+            "#a2a9ad",
+            "#b88e75",
             themeForCity(o.cityIndex ?? 0).facade,
-            x * r * 0.5,
-            h / 2 + 0.8,
-            z * r * 0.5,
-            r * 0.28,
-            h,
-            r * 0.28,
-          );
+          ][(x + z + 8) % 4];
+          add(box, color, bx, h / 2 + 0.56, bz, w, h, w);
+          add(box, "#58636b", bx, h + 0.6, bz, w * 1.06, r * 0.035, w * 1.06);
+          if (block) {
+            add(
+              box,
+              "#97a2a7",
+              bx + w * 0.2,
+              h + 0.85,
+              bz,
+              w * 0.3,
+              r * 0.05,
+              w * 0.35,
+            );
+            for (let floor = 1; floor <= 3; floor++)
+              for (const side of [-1, 1]) {
+                add(
+                  box,
+                  "#344d5c",
+                  bx,
+                  0.56 + (h * floor) / 4,
+                  bz + side * (w / 2 + 0.012),
+                  w * 0.76,
+                  r * 0.055,
+                  0.025,
+                );
+                add(
+                  box,
+                  "#49626a",
+                  bx + side * (w / 2 + 0.012),
+                  0.56 + (h * floor) / 4,
+                  bz,
+                  0.025,
+                  r * 0.055,
+                  w * 0.76,
+                );
+              }
+          }
         }
+      if (block)
+        for (const side of [-1, 1])
+          for (const z of [-0.65, 0, 0.65]) {
+            add(
+              cylinder,
+              "#756049",
+              side * r * 0.71,
+              r * 0.08 + 0.56,
+              z * r,
+              r * 0.018,
+              r * 0.16,
+              r * 0.018,
+            );
+            add(
+              sphere,
+              "#688651",
+              side * r * 0.71,
+              r * 0.22 + 0.56,
+              z * r,
+              r * 0.085,
+              r * 0.12,
+              r * 0.085,
+            );
+          }
     }
     return g;
   }
@@ -464,6 +599,16 @@ export function createObjectVisual(o: SwallowableObject) {
       add(box, "#233d50", -r * 0.15, r * 0.75, 0, r * 0.65, r * 0.4, r * 0.8);
       add(
         box,
+        era === 1 ? "#566962" : "#a2ccd4",
+        -r * 0.15,
+        r * 0.96,
+        0,
+        r * 0.69,
+        r * 0.05,
+        r * 0.84,
+      );
+      add(
+        box,
         era === 1 ? "#dec779" : "#56fff0",
         r * 0.65,
         r * 0.45,
@@ -473,6 +618,11 @@ export function createObjectVisual(o: SwallowableObject) {
         r * 0.8,
       );
     }
+    // Every vehicle model faces local +Z; historical bodies were built along +X.
+    const body = new Group();
+    body.add(...[...g.children]);
+    body.rotation.y = -Math.PI / 2;
+    g.add(body);
     return g;
   }
   const facades = {
@@ -1228,8 +1378,21 @@ export function createObjectVisual(o: SwallowableObject) {
         0.025,
       );
       for (const x of [-width / 2, width / 2])
-        for (const z of [-length * 0.32, length * 0.32])
-          add(box, "#192845", x, 0.16, z, 0.14, 0.28, 0.28);
+        for (const z of [-length * 0.32, length * 0.32]) {
+          const wheel = add(cylinder, "#253139", x, 0.16, z, 0.15, 0.14, 0.15);
+          wheel.rotation.z = Math.PI / 2;
+          const hub = add(
+            cylinder,
+            "#89949b",
+            x + Math.sign(x) * 0.075,
+            0.16,
+            z,
+            0.065,
+            0.012,
+            0.065,
+          );
+          hub.rotation.z = Math.PI / 2;
+        }
       add(box, "#fff5a1", 0, 0.28, length / 2 + 0.01, width * 0.7, 0.12, 0.025);
       if (!van && kind === 2) {
         add(box, "#ffe08a", 0, 0.87, -0.1, 0.28, 0.12, 0.15);

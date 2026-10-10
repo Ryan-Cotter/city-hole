@@ -24,7 +24,10 @@ describe("city to country progression", () => {
       block = s.level.objects.find((o) => o.members?.length)!;
     const expected =
       block.scoreValue +
-      block.members!.reduce((sum, o) => sum + o.scoreValue, 0);
+      block.members!.reduce(
+        (sum, o) => sum + Math.round(o.scoreValue * 0.1),
+        0,
+      );
     const count = block.members!.length + 1;
     eat(s, block);
     expect(s.score.points).toBe(expected);

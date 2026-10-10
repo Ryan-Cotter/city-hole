@@ -28,15 +28,15 @@ function surfaceTexture() {
   return grain;
 }
 const cache = new Map<string, MeshStandardMaterial>();
-export function material(color: string, clip = true) {
-  const key = color + clip;
+export function material(color: string, clip = true, textured = true) {
+  const key = color + clip + textured;
   if (!cache.has(key))
     cache.set(
       key,
       new MeshStandardMaterial({
         color: new Color(color).multiplyScalar(0.72),
         roughness: 0.85,
-        map: surfaceTexture(),
+        map: textured ? surfaceTexture() : null,
         flatShading: true,
         clippingPlanes: clip ? [clipping] : [],
       }),

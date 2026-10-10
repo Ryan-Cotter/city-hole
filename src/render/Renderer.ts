@@ -80,7 +80,7 @@ export class Renderer {
     );
     ground.name = "city-ground";
     ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -0.025;
+    ground.position.y = -0.0001;
     this.scene.add(ground);
     this.scene.add(this.boundary);
     const disk = new Mesh(
@@ -105,6 +105,9 @@ export class Renderer {
     this.resize();
   }
   follow(position: Vector3, radius = 1, moving = false, minimumView = 0) {
+    for (const edge of this.hole.children)
+      edge.position.y =
+        Math.min(0.012, radius * 0.04) + (edge.name === "rim" ? 0.00001 : 0);
     const now = performance.now(),
       dt = Math.min(0.1, (now - this.lastZoom) / 1000);
     this.lastZoom = now;

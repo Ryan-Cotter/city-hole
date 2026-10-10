@@ -36,6 +36,7 @@ export function generateCity(
       id: `${type}-${objects.length}`,
       cityIndex,
       type,
+      collisionOnly: type === "barrier",
       position: new Vector3(x, 0, z),
       ...spec,
       orientation,
@@ -214,6 +215,20 @@ export function generateCity(
             min: x - 5.5,
             max: x + 5.5,
           });
+      // Continuous curb-to-curb crosswalk routes; crossings persist across block edges.
+      if (x + 10 < cityConfig.bounds && z + 10 < cityConfig.bounds) {
+        for (const [i, type] of (["person", "cat", "dog"] as const).entries()) {
+          const street = x + 10,
+            lane = z + 10 + 3.25;
+          add(type, street - 3.2 + i * 2.8, lane + (i - 1) * 0.3, Math.PI / 2, {
+            axis: "x",
+            direction: i % 2 ? -1 : 1,
+            speed: type === "person" ? 0.8 : 0.6,
+            min: street - 3.4,
+            max: street + 3.4,
+          });
+        }
+      }
       // Triple small street props independently, filling free sidewalk and interior pockets.
       const smallTypes: ObjectType[] = ["litter", "hydrant", "sign", "bench"];
       const original = objects
@@ -457,6 +472,21 @@ export function generateCity(
       });
     }
   }
+  // Magnified soil/food speck: each successive ring introduces a larger material.
+  const microTypes = ["bacterium", "spore", "dust", "pollen", "sand"] as const;
+  for (const [tier, type] of microTypes.entries()) {
+    const r = categories[type].radius;
+    for (let i = 0; i < 48; i++) {
+      const angle = i * 2.39996323;
+      const spread = r * (3 + Math.sqrt(i) * 2.3);
+      add(
+        type,
+        tier * 0.06 + Math.cos(angle) * spread,
+        Math.sin(angle) * spread,
+        random() * Math.PI * 2,
+      );
+    }
+  }
   // A loose spiral provides the first level without covering the starting hole.
   for (let i = 0; i < 16; i++) {
     const angle = i * 2.39996323,
@@ -498,8 +528,12 @@ export function generateCity(
           radius,
           height: radius * 1.5,
           unlockStage,
-          mass: unlockStage === 2 ? 21 : 377,
-          scoreValue: unlockStage === 2 ? 21 : 377,
+          mass:
+            unlockStage === 2 ? categories.mouse.mass : categories.sign.mass,
+          scoreValue:
+            unlockStage === 2
+              ? categories.mouse.scoreValue
+              : categories.sign.scoreValue,
           design: "boundary fence",
         });
       }
@@ -511,7 +545,13 @@ export function generateCity(
     objects,
     objectSlots: new Map(objects.map((o, i) => [o.id, i])),
     blocks,
-    totalMass: objects.reduce((sum, o) => sum + o.mass, 0),
-    totalScore: objects.reduce((sum, o) => sum + o.scoreValue, 0),
+    totalMass: objects.reduce(
+      (sum, o) => sum + (o.collisionOnly ? 0 : o.mass),
+      0,
+    ),
+    totalScore: objects.reduce(
+      (sum, o) => sum + (o.collisionOnly ? 0 : o.scoreValue),
+      0,
+    ),
   };
 }

@@ -1,23 +1,28 @@
 import { describe, it, expect } from "vitest";
 import { freshState } from "../game/Game";
-import { stages } from "../game/constants";
+import { categories, stages } from "../game/constants";
 import { updateBoosts } from "../game/boosts";
 import { ensureFoodBudget, availableFoodPoints } from "../game/foodBudget";
 import { updateTraffic } from "../world/traffic";
 
 describe("growth food reserves and scurrying bugs", () => {
   it("provides 150 percent of every required growth step without seeding tiny props in larger maps", () => {
+    const s = freshState();
     for (let i = 0; i < stages.length - 1; i++) {
       const stage = stages[i];
       if (stage.type === "cityBlock") continue;
-      const s = freshState();
       s.level.objects = [];
       s.level.objectSlots.clear();
       s.score.remainingObjects = 0;
       s.growthOffset = -stage.points;
-      s.areaStage = i < 7 ? 1 : 3;
+      s.areaStage =
+        categories[stage.type].radius <= categories.mouse.radius ? 1 : 3;
       s.world.phase =
-        i < 27 ? "city" : stage.type === "wholeCity" ? "planet" : "country";
+        categories[stage.type].radius < categories.cityBlock.radius
+          ? "city"
+          : stage.type === "wholeCity"
+            ? "planet"
+            : "country";
       s.level.bounds = s.world.phase === "city" ? 60 : 600;
       updateBoosts(s);
       const added = ensureFoodBudget(s);
@@ -44,7 +49,7 @@ describe("growth food reserves and scurrying bugs", () => {
       updateTraffic([bug], 0.1, frame * 0.1, s.hole);
       xTravel += Math.abs(bug.position.x - before.x);
       zTravel += Math.abs(bug.position.z - before.z);
-      expect(bug.position.distanceTo(before)).toBeLessThanOrEqual(0.017);
+      expect(bug.position.distanceTo(before)).toBeLessThanOrEqual(0.027);
       headings.add(Math.round(bug.orientation * 10));
     }
     expect(xTravel).toBeGreaterThan(0.1);

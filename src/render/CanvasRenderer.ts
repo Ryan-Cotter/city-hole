@@ -2,6 +2,8 @@ import { holeOutline } from "./holeEdge";
 import { clipAboveGround } from "./clipping";
 import {
   Mesh,
+  BoxGeometry,
+  PlaneGeometry,
   Vector3,
   Color,
   type Group,
@@ -220,9 +222,16 @@ export class CanvasRenderer {
         ) {
           triangles = [];
           const count = index ? index.count : position.count;
-          for (let i = 0; i < count; i += 3) {
+          // Keep planar box faces together: sorting their triangles separately creates
+          // diagonal cuts through glass, roofs and neighboring body panels.
+          const quad =
+            geometry instanceof BoxGeometry ||
+            geometry instanceof PlaneGeometry;
+          const stride = quad ? 6 : 3;
+          for (let i = 0; i < count; i += stride) {
             const points: Vector3[] = [];
-            for (let j = 0; j < 3; j++) {
+            const corners = quad ? [0, 1, 4, 2] : [0, 1, 2];
+            for (const j of corners) {
               const n = index ? index.getX(i + j) : i + j;
               points.push(
                 new Vector3(
@@ -237,11 +246,9 @@ export class CanvasRenderer {
               .sub(points[0])
               .cross(points[2].clone().sub(points[0]))
               .normalize();
-            const center = points[0]
-              .clone()
-              .add(points[1])
-              .add(points[2])
-              .multiplyScalar(1 / 3);
+            const center = points
+              .reduce((sum, point) => sum.add(point), new Vector3())
+              .multiplyScalar(1 / points.length);
             triangles.push({ points, normal, center });
           }
           if (!o.motion && o.state !== "falling")
@@ -267,7 +274,7 @@ export class CanvasRenderer {
               0.52 * Math.max(0, normal.dot(light)) +
               0.08 * Math.max(0, normal.x)) *
             (0.98 +
-              0.04 *
+              (o.motion ? 0 : 0.04) *
                 Math.abs(
                   Math.sin(center.x * 37.1 + center.y * 17.3 + center.z * 53.7),
                 ));

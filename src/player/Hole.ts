@@ -20,7 +20,7 @@ export function clampHole(h: Hole, bounds: number) {
   }
 }
 export const speedForRadius = (radius: number) =>
-  Math.min(config.moveSpeed, Math.max(0.18, radius * 4.5));
+  Math.min(config.moveSpeed, Math.max(0.006, radius * 4.5));
 export function moveHole(
   h: Hole,
   input: InputManager,
