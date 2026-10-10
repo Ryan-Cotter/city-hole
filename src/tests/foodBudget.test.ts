@@ -54,6 +54,23 @@ describe("growth food reserves and scurrying bugs", () => {
         .position.toArray(),
     );
   });
+  it("mixes early size tiers across interiors without overlapping their colliders", () => {
+    const s = freshState();
+    const items = s.level.objects.filter((o) => o.id.startsWith("seed-food-"));
+    for (let a = 0; a < items.length; a++)
+      for (let b = a + 1; b < items.length; b++)
+        expect(
+          items[a].position.distanceTo(items[b].position),
+          `${items[a].id} / ${items[b].id}`,
+        ).toBeGreaterThanOrEqual(items[a].radius + items[b].radius);
+    for (let i = 0; i < 5; i++) {
+      const radii = items
+        .filter((o) => o.id.startsWith(`seed-food-${i}-`))
+        .map((o) => o.position.length());
+      // A filled patch must span a meaningful fraction of its footprint, not a jittered ring.
+      expect(Math.min(...radii) / Math.max(...radii)).toBeLessThan(0.75);
+    }
+  });
   it("makes bugs change direction and scurry on both ground axes", () => {
     const s = freshState(),
       bug = s.level.objects.find((o) => o.critter)!;

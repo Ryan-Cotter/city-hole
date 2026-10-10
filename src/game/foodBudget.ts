@@ -48,6 +48,7 @@ export function seedFoodBudget(s: GameState) {
     randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0;
     return randomSeed / 4294967296;
   };
+  const scatteredObjects: { position: Vector3; radius: number }[] = [];
   let previousOuter = 0;
   for (let i = 0; i < stages.length - 1; i++) {
     const stage = stages[i];
@@ -69,17 +70,14 @@ export function seedFoodBudget(s: GameState) {
     const count =
       Math.ceil(requiredPoints / spec.scoreValue) *
       (tiny ? starterPopulationConfig.multiplier : 1);
-    // Successive clusters sit in concentric bands. A larger collider never covers
-    // the previous tier's food, and all small tiers remain in their unlocked area.
+    // Reserve a progressively larger footprint, but scatter all size tiers across
+    // its interior instead of placing objects on concentric rings.
     const distance = Math.max(
       previousOuter + spec.radius * (tiny ? 5 : 1.05) + stage.radius * 0.15,
       ((count * spec.radius) / Math.PI) * (tiny ? 0.7 : 1.12),
     );
     previousOuter = distance + spec.radius * (tiny ? 5 : 1);
-    const halfWidth = spec.radius * (tiny ? 5 : 1);
-    const area =
-      Math.PI *
-      ((distance + halfWidth) ** 2 - Math.max(0, distance - halfWidth) ** 2);
+    const area = Math.PI * previousOuter ** 2;
     rows.push({ type: stage.type, count, requiredPoints, area });
     const groupId = `patch-${i}`;
     s.neighborhoods[groupId] = {
@@ -87,33 +85,43 @@ export function seedFoodBudget(s: GameState) {
       total: count,
       label: `${stage.name} patch cleared`,
     };
-    const placed: Vector3[] = [];
-    const clusterAngles = Array.from(
-      { length: 5 },
-      () => random() * Math.PI * 2,
-    );
+    const centers = Array.from({ length: 3 + Math.floor(random() * 4) }, () => {
+      const angle = random() * Math.PI * 2;
+      const radius = Math.sqrt(random()) * distance * 0.85;
+      return new Vector3(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+    });
     for (let n = 0; n < count; n++) {
-      const angle = (n / count) * Math.PI * 2 + i * 0.7;
-      const position = new Vector3(
-        Math.cos(angle) * distance,
-        0,
-        Math.sin(angle) * distance,
-      );
-      if (tiny) {
-        // Loose seeded patches, with gaps and isolated specks; rejection prevents overlaps.
-        for (let attempt = 0; attempt < 2000; attempt++) {
-          const a =
-            attempt < 1000 && random() < 0.75
-              ? clusterAngles[n % clusterAngles.length] + (random() - 0.5) * 1.1
-              : random() * Math.PI * 2;
-          const r = distance + (random() - 0.5) * spec.radius * 8;
-          position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
-          if (placed.every((p) => p.distanceTo(position) >= spec.radius * 2.05))
-            break;
-        }
+      const position = new Vector3();
+      // Uneven off-center islands mixed with scattered singles. All tiers share
+      // a collision exclusion list so larger objects never cover earlier food.
+      for (let attempt = 0; attempt < 10000; attempt++) {
+        const a = random() * Math.PI * 2;
+        const clustered = attempt < 1000 && random() < 0.7;
+        const r =
+          Math.sqrt(random()) *
+          (clustered ? distance * 0.45 : previousOuter - spec.radius);
+        position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+        if (clustered)
+          position.add(centers[Math.floor(random() * centers.length)]);
+        if (
+          position.length() > previousOuter - spec.radius ||
+          position.length() < 0.0015 + spec.radius * 1.1
+        )
+          continue;
+        if (
+          scatteredObjects.every(
+            (o) =>
+              o.position.distanceTo(position) >=
+              (spec.radius + o.radius) * 1.05,
+          )
+        )
+          break;
       }
-      placed.push(position.clone());
-      const variant = (n + i) % objectDesigns[type].length;
+      scatteredObjects.push({
+        position: position.clone(),
+        radius: spec.radius,
+      });
+      const variant = Math.floor(random() * objectDesigns[type].length);
       s.level.objects.push({
         id: `seed-food-${i}-${n}`,
         type,
@@ -123,12 +131,50 @@ export function seedFoodBudget(s: GameState) {
         groupId,
         cityIndex: s.cityIndex,
         design: objectDesigns[type][variant],
-        orientation: tiny ? random() * Math.PI * 2 : angle,
+        orientation: random() * Math.PI * 2,
         motion: null,
         state: "idle",
         fall: null,
       });
     }
+  }
+  // Distribute the extra microscopic food around larger neighbors as well as
+  // its own patch. Keep the original 150% reserve near the start of each tier.
+  const seeded = s.level.objects.filter((o) => o.id.startsWith("seed-food-"));
+  for (let tier = 0; tier < starterPopulationConfig.multipliedTiers; tier++) {
+    const items = seeded.filter((o) => o.id.startsWith(`seed-food-${tier}-`));
+    const neighbors = seeded.filter((o) =>
+      [tier + 1, tier + 2].includes(Number(o.id.split("-")[2])),
+    );
+    const reserve = Math.ceil((items.length * 2) / 3);
+    for (const item of items.slice(reserve)) {
+      for (let attempt = 0; attempt < 2000; attempt++) {
+        const anchor = neighbors[Math.floor(random() * neighbors.length)];
+        const a = random() * Math.PI * 2;
+        const distance = anchor.radius * (1.2 + random() * 2) + item.radius * 2;
+        const candidate = anchor.position
+          .clone()
+          .add(new Vector3(Math.cos(a) * distance, 0, Math.sin(a) * distance));
+        if (candidate.length() < 0.0015 + item.radius * 1.1) continue;
+        if (
+          seeded.every(
+            (other) =>
+              other === item ||
+              other.position.distanceTo(candidate) >=
+                (item.radius + other.radius) * 1.05,
+          )
+        ) {
+          item.position.copy(candidate);
+          break;
+        }
+      }
+    }
+  }
+  for (let tier = 0; tier < starterPopulationConfig.multipliedTiers; tier++) {
+    const items = seeded.filter((o) => o.id.startsWith(`seed-food-${tier}-`));
+    rows[tier].area =
+      Math.PI *
+      Math.max(...items.map((o) => o.position.length() + o.radius)) ** 2;
   }
   // A few pre-budgeted food specks are bugs; the rest stay still for reliable food.
   for (const o of s.level.objects

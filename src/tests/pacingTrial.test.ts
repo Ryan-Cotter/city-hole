@@ -32,7 +32,7 @@ it.skipIf(!process.env.RUN_PACING)(
         expect(result.remaining).toBe(0);
         expect(result.generatedDuringPlay).toBe(0);
         expect(Math.max(...result.rows.map((row) => row.seconds))).toBeLessThan(
-          15,
+          17, // Mixed layouts allow up to two extra seconds of route variation.
         );
       }
   },

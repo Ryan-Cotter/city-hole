@@ -144,3 +144,11 @@ fall animations. Already loaded models may remain until they leave the preload r
 Configuration is in `renderChunkConfig` and `starterPopulationConfig` in `constants.ts`.
 The four deterministic full-loop trials after this change finished in 4:08–4:32;
 see [the chunk rendering report](docs/chunk-rendering/report.html).
+
+The authored food ladder now uses overlapping placement areas for every size,
+with three to six off-center patches per tier and scattered singles. It no longer
+places each size on a separate ring. One third of the microscopic population is
+additionally distributed around objects one or two sizes larger, while the rest
+keeps the opening well supplied. Cross-tier collider checks prevent intersections;
+all placement still happens once at generation. See `docs/chunk-rendering/mixed-sizes.png`
+for the revised opening.

@@ -227,7 +227,8 @@ describe("self play and pacing", () => {
             })),
         }),
       ).toBe(3);
-      expect(yardSeconds).toBeGreaterThan(45);
+      // Mixed patches allow direct routes; still prevent an instant starter clear.
+      expect(yardSeconds).toBeGreaterThan(35);
       expect(yardSeconds).toBeLessThan(300);
       expect(state.hole.level).toBeGreaterThanOrEqual(9);
       expect(state.score.points).toBeGreaterThanOrEqual(stages[8].points);
