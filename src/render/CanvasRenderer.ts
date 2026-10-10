@@ -105,10 +105,10 @@ export class CanvasRenderer {
     ctx.restore();
     // Ground contact shadows stay subtle and work in the software renderer too.
     ctx.fillStyle = "#152637";
-    ctx.globalAlpha = 0.13;
+    ctx.globalAlpha = 0.19;
     for (const group of scene.children) {
       const o = group.userData.object as SwallowableObject | undefined;
-      if (!o || !group.visible || o.state !== "idle" || o.height < 0.6)
+      if (!o || !group.visible || o.state !== "idle" || o.height < 0.015)
         continue;
       const radius = Math.min(1.6, o.radius) * 0.85;
       const center = project(group.position);
@@ -247,7 +247,7 @@ export class CanvasRenderer {
           )
             continue;
           const shade =
-            (0.61 + 0.35 * Math.max(0, normal.dot(light))) *
+            (0.48 + 0.48 * Math.max(0, normal.dot(light))) *
             (0.98 +
               0.04 *
                 Math.abs(

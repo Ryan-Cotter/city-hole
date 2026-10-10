@@ -32,6 +32,8 @@ Rewards follow ascending Fibonacci values starting 1, 2. Every item contributes 
 
 Normal capture pulls an object toward the hole and animates it below the ground at full scale. Score and mass are awarded once after completion. Objects five or more tiers below current capacity keep their original static models. Once their entire footprint is inside the circle, they disappear and award their rewards immediately. They remain visible until then. Completed records and models leave the active city, motion lists and spatial index. Victory waits for all objects to complete.
 
+The starter plaza uses separated mixed items across its full area, with a loose bottlecap trail near the hole. Toys include tops, dominoes, trains and stacking rings; food includes doughnuts, ice cream, hot dogs and pizza. Dice have face pips, coins raised rims, caps printed tops, and cats have coats and collars. Cats use a 0.27 footprint radius and 0.28 height, below people in the size ladder.
+
 Small piles cluster around medium fixtures and dumpsters. Each block has a small crowd, outdoor restaurant tables with separately scored food, patio covers and animals. Manhole covers and dividers sit on streets. People flee when swallowable; animals run 25% faster near the hole; cars swerve within their assigned lanes. Vehicles follow signals and queue spacing. Building façades use brick, concrete, stone and muted glass colors, with contrasting windows and roofs. Trees occupy parks; vehicles stay on streets or curb parking.
 
 The hole can overhang an edge by 30% of its radius to reach corner objects. Its outline smoothly compresses against section/map edges instead of staying rigidly circular.

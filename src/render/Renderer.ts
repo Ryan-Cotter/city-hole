@@ -67,8 +67,8 @@ export class Renderer {
     );
     container.append(this.webgl.domElement);
     this.scene.background = new Color("#a9c4dd");
-    this.scene.add(new HemisphereLight("#ffffff", "#8e9ccb", 2));
-    const sun = new DirectionalLight("#ffffff", 2);
+    this.scene.add(new HemisphereLight("#e9eff4", "#65717e", 1.25));
+    const sun = new DirectionalLight("#fff0d6", 2.6);
     sun.position.set(-15, 30, 10);
     this.scene.add(sun);
     const ground = new Mesh(

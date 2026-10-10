@@ -362,8 +362,8 @@ export function generateCity(
       add("manhole", position, street + 0.5);
       add("barrier", position + 3, street);
     }
-  // A tiny starter plaza, then successively larger clustered piles.
-  for (const type of [
+  // Mixed, separated items occupy the entire plaza instead of overlapping rows.
+  const starterTypes = [
     "bottlecap",
     "dice",
     "pebble",
@@ -371,31 +371,25 @@ export function generateCity(
     "toy",
     "snack",
     "mouse",
-  ] as const)
-    for (let item = 0; item < 80; item++) {
-      const index = [
-        "bottlecap",
-        "dice",
-        "pebble",
-        "coin",
-        "toy",
-        "snack",
-        "mouse",
-      ].indexOf(type);
-      add(
-        type,
-        -2.4 + (item % 10) * 0.16,
-        -2.4 + Math.floor(item / 10) * 0.16 + index * 0.62,
-        random() * 6,
-      );
-    }
-  // First objects are within immediate reach of the tiny starting hole.
-  for (let item = 0; item < 16; item++)
-    add(
-      "bottlecap",
-      ((item % 4) - 1.5) * 0.07,
-      (Math.floor(item / 4) - 1.5) * 0.07,
-    );
+  ] as const;
+  const cells = Array.from({ length: 224 }, (_, i) => i);
+  for (let i = cells.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [cells[i], cells[j]] = [cells[j], cells[i]];
+  }
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i],
+      x = ((cell % 16) - 7.5) * 0.34 + (random() - 0.5) * 0.03,
+      z = (Math.floor(cell / 16) - 6.5) * 0.38 + (random() - 0.5) * 0.03;
+    if (Math.hypot(x, z) < 0.85) continue;
+    add(starterTypes[i % starterTypes.length], x, z, random() * Math.PI * 2);
+  }
+  // A loose spiral provides the first level without covering the starting hole.
+  for (let i = 0; i < 16; i++) {
+    const angle = i * 2.39996323,
+      radius = 0.11 + i * 0.044;
+    add("bottlecap", Math.cos(angle) * radius, Math.sin(angle) * radius, angle);
+  }
   // A small sidewalk starter cluster near the central intersection.
   for (let i = 0; i < 8 * smallItemMultiplier; i++)
     add(

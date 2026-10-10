@@ -3,6 +3,7 @@ import {
   BoxGeometry,
   CylinderGeometry,
   ConeGeometry,
+  TorusGeometry,
   IcosahedronGeometry,
   Group,
   Mesh,
@@ -15,7 +16,8 @@ import { material } from "../render/Materials";
 const box = new BoxGeometry(1, 1, 1),
   cylinder = new CylinderGeometry(1, 1, 1, 8),
   cone = new ConeGeometry(1, 1, 8),
-  sphere = new IcosahedronGeometry(1, 0);
+  sphere = new IcosahedronGeometry(1, 0),
+  ring = new TorusGeometry(0.7, 0.3, 4, 12);
 const panelGeometry = new PlaneGeometry(1, 1);
 const roofGeometry = new BufferGeometry();
 roofGeometry.setAttribute(
@@ -126,6 +128,33 @@ export function createObjectVisual(o: SwallowableObject) {
   const kind = o.variant % objectDesigns[o.type].length;
   g.name = o.design;
   if (o.type === "snack") {
+    if (kind >= 4) {
+      if (kind === 4) {
+        const dough = add(ring, "#bd8854", 0, 0.05, 0, 0.11, 0.11, 0.11);
+        dough.rotation.x = Math.PI / 2;
+        const icing = add(ring, "#ce8192", 0, 0.075, 0, 0.1, 0.1, 0.045);
+        icing.rotation.x = Math.PI / 2;
+      }
+      if (kind === 5) {
+        const cup = add(cone, "#be9662", 0, 0.05, 0, 0.07, 0.1, 0.07);
+        cup.rotation.z = Math.PI;
+        add(sphere, "#e7cdb2", 0, 0.12, 0, 0.08, 0.07, 0.08);
+      }
+      if (kind === 6) {
+        add(box, "#d6ae68", 0, 0.055, 0, 0.19, 0.08, 0.1);
+        add(cylinder, "#a2583d", 0, 0.09, 0, 0.035, 0.17, 0.035).rotation.z =
+          Math.PI / 2;
+        add(box, "#d5ba45", 0, 0.12, 0, 0.14, 0.008, 0.016);
+      }
+      if (kind === 7) {
+        add(roofGeometry, "#d6ad64", 0, 0.03, 0, 0.18, 0.02, 0.18).rotation.y =
+          Math.PI / 2;
+        add(box, "#d8be6c", 0, 0.055, 0, 0.13, 0.02, 0.13);
+        for (const x of [-0.035, 0.035])
+          add(cylinder, "#b55b48", x, 0.073, 0, 0.025, 0.012, 0.025);
+      }
+      return g;
+    }
     if (kind === 0) {
       add(cylinder, "#c8954e", 0, 0.035, 0, 0.105, 0.05, 0.105);
       add(cylinder, "#75492e", 0, 0.07, 0, 0.102, 0.025, 0.102);
@@ -142,6 +171,39 @@ export function createObjectVisual(o: SwallowableObject) {
       add(cylinder, "#a3c5c7", 0, 0.07, 0, 0.07, 0.14, 0.07);
       add(cylinder, "#d7d3bf", 0, 0.147, 0, 0.078, 0.015, 0.078);
       add(box, "#cc674d", 0.025, 0.185, 0, 0.012, 0.075, 0.012);
+    }
+    return g;
+  }
+  if (o.type === "toy" && kind >= 4) {
+    if (kind === 4) {
+      add(cone, color, 0, 0.045, 0, 0.09, 0.075, 0.09);
+      add(cylinder, "#d7c69a", 0, 0.095, 0, 0.016, 0.065, 0.016);
+    }
+    if (kind === 5) {
+      add(box, "#e3dcc7", 0, 0.026, 0, 0.12, 0.052, 0.07);
+      add(box, "#344452", 0, 0.055, 0, 0.007, 0.006, 0.065);
+      for (const x of [-0.035, 0.035])
+        add(sphere, "#344452", x, 0.057, 0, 0.009, 0.004, 0.009);
+    }
+    if (kind === 6) {
+      add(box, color, 0, 0.06, 0, 0.13, 0.09, 0.1);
+      add(cylinder, "#52666c", 0.045, 0.13, 0, 0.018, 0.065, 0.018);
+      for (const x of [-0.05, 0.05])
+        for (const z of [-0.055, 0.055])
+          add(sphere, "#33444a", x, 0.027, z, 0.022, 0.022, 0.016);
+    }
+    if (kind === 7) {
+      for (let i = 0; i < 3; i++)
+        add(
+          cylinder,
+          ["#c27659", "#d3b859", "#669795"][i],
+          0,
+          0.026 + i * 0.034,
+          0,
+          0.09 - i * 0.02,
+          0.026,
+          0.09 - i * 0.02,
+        );
     }
     return g;
   }
@@ -168,7 +230,9 @@ export function createObjectVisual(o: SwallowableObject) {
     const round = ["bottlecap", "coin", "manhole"].includes(o.type);
     const itemColor =
       o.type === "pebble"
-        ? ["#85847b", "#696d70", "#b89f7a", "#939591"][kind]
+        ? ["#85847b", "#696d70", "#b89f7a", "#939591", "#c4bab0", "#748c91"][
+            kind
+          ]
         : o.type === "manhole"
           ? "#56616a"
           : color;
@@ -186,18 +250,134 @@ export function createObjectVisual(o: SwallowableObject) {
       o.height,
       round ? o.radius : o.radius * 1.4,
     );
-    if (o.type === "dice")
-      for (let pip = 0; pip <= kind; pip++)
+    if (o.type === "dice") {
+      (g.children[0] as Mesh).material = material(
+        ["#dbd6bd", "#b75c50", "#678da6", "#75906c", "#555861", "#c8b28e"][
+          kind
+        ],
+      );
+      const pips = [
+        [[0, 0]],
+        [
+          [-1, -1],
+          [1, 1],
+        ],
+        [
+          [-1, -1],
+          [0, 0],
+          [1, 1],
+        ],
+        [
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1],
+        ],
+        [
+          [-1, -1],
+          [-1, 1],
+          [0, 0],
+          [1, -1],
+          [1, 1],
+        ],
+        [
+          [-1, -1],
+          [-1, 0],
+          [-1, 1],
+          [1, -1],
+          [1, 0],
+          [1, 1],
+        ],
+      ][kind];
+      for (const [x, z] of pips)
+        add(
+          cylinder,
+          "#243340",
+          x * 0.013,
+          o.height + 0.002,
+          z * 0.013,
+          0.004,
+          0.003,
+          0.004,
+        );
+      for (const z of [-0.013, 0.013])
         add(
           sphere,
-          "#f1e8d6",
-          -0.025 + pip * 0.014,
-          o.height + 0.003,
-          0,
-          0.004,
+          "#243340",
+          o.radius * 0.705,
+          o.height * 0.5,
+          z,
+          0.003,
           0.004,
           0.004,
         );
+    }
+    if (o.type === "bottlecap") {
+      add(
+        cylinder,
+        "#d8d6bc",
+        0,
+        o.height + 0.001,
+        0,
+        o.radius * 0.72,
+        0.003,
+        o.radius * 0.72,
+      );
+      add(box, color, 0, o.height + 0.004, 0, o.radius * 0.75, 0.003, 0.006);
+    }
+    if (o.type === "coin") {
+      const metal = [
+        "#b87f55",
+        "#abb7bc",
+        "#c5ac5d",
+        "#9b9274",
+        "#bdb887",
+        "#8f8060",
+      ][kind];
+      (g.children[0] as Mesh).material = material(metal);
+      add(
+        cylinder,
+        metal,
+        0,
+        o.height + 0.002,
+        0,
+        o.radius * 0.78,
+        0.004,
+        o.radius * 0.78,
+      );
+      add(box, "#ded1aa", 0, o.height + 0.005, 0, 0.014, 0.003, 0.052);
+    }
+    if (o.type === "pebble") {
+      const mesh = g.children[0];
+      mesh.scale.x *= kind % 2 ? 0.85 : 1;
+      mesh.scale.z *= kind % 3 === 0 ? 0.8 : 1;
+      mesh.rotation.y = kind * 0.65;
+      add(
+        box,
+        "#c5bfae",
+        0,
+        o.height * 0.84,
+        0,
+        o.radius * 0.6,
+        0.002,
+        0.006,
+      ).rotation.y = kind * 0.5;
+    }
+    if (o.type === "toy" && kind === 0)
+      for (const x of [-0.035, 0.035])
+        for (const z of [-0.035, 0.035])
+          add(cylinder, "#ead29a", x, o.height + 0.008, z, 0.014, 0.016, 0.014);
+    if (o.type === "toy" && (kind === 1 || kind === 3))
+      add(
+        cylinder,
+        "#eadbb6",
+        0,
+        o.height * 0.6,
+        0,
+        o.radius * 0.92,
+        0.015,
+        o.radius * 0.92,
+      );
     if (o.type === "manhole")
       for (let stripe = -2; stripe <= 2; stripe++)
         add(box, "#283640", stripe * 0.055, 0.032, 0, 0.016, 0.006, 0.25);
@@ -242,6 +422,33 @@ export function createObjectVisual(o: SwallowableObject) {
       }
     }
     add(box, fur, 0, h * 0.65, -r * 0.9, r * 0.13, r * 0.13, r * 0.6);
+    add(
+      sphere,
+      "#b47c78",
+      0,
+      h * 0.9,
+      r * 0.96,
+      r * 0.07,
+      r * 0.055,
+      r * 0.045,
+    );
+    if (o.type === "cat") {
+      add(box, "#a7554b", 0, h * 0.76, r * 0.38, r * 0.82, h * 0.075, r * 0.13);
+      if (kind === 0 || kind === 1)
+        for (const z of [-0.35, 0, 0.3])
+          add(box, "#67544b", 0, h * 0.89, r * z, r * 0.83, 0.012, r * 0.1);
+      if (kind === 3)
+        add(
+          box,
+          "#b49270",
+          r * 0.28,
+          h * 0.89,
+          -r * 0.2,
+          r * 0.35,
+          0.015,
+          r * 0.4,
+        );
+    }
     return g;
   }
   if (o.type === "table") {
@@ -710,7 +917,8 @@ export function createObjectVisual(o: SwallowableObject) {
           add(box, "#ad404e", 0, height + 0.25, 0, 0.5, 0.12, 0.04);
         }
       }
-      const facade = color, tower = o.type === "skyscraper";
+      const facade = color,
+        tower = o.type === "skyscraper";
       add(box, "#87909f", 0, 0.1, 0, width, 0.2, width);
       const stepped =
           kind === 1 &&
