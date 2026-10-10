@@ -25,6 +25,35 @@ describe("growth food reserves and scurrying bugs", () => {
       other.level.objects.map((o) => [o.id, o.position.toArray()]),
     );
   });
+  it("triples microscopic food in non-overlapping irregular patches", () => {
+    const s = freshState();
+    for (let i = 0; i < 5; i++) {
+      const row = s.level.densityPlan![i];
+      const objects = s.level.objects.filter((o) =>
+        o.id.startsWith(`seed-food-${i}-`),
+      );
+      expect(objects.length).toBe(
+        Math.ceil(row.requiredPoints / objects[0].scoreValue) * 3,
+      );
+      const radii = objects.map((o) => Math.hypot(o.position.x, o.position.z));
+      expect(Math.max(...radii) - Math.min(...radii)).toBeGreaterThan(
+        objects[0].radius * 2,
+      );
+      for (let a = 0; a < objects.length; a++)
+        for (let b = a + 1; b < objects.length; b++)
+          expect(
+            objects[a].position.distanceTo(objects[b].position),
+          ).toBeGreaterThanOrEqual(objects[a].radius * 2);
+    }
+    const other = freshState(1);
+    expect(
+      s.level.objects.find((o) => o.id === "seed-food-0-0")!.position.toArray(),
+    ).not.toEqual(
+      other.level.objects
+        .find((o) => o.id === "seed-food-0-0")!
+        .position.toArray(),
+    );
+  });
   it("makes bugs change direction and scurry on both ground axes", () => {
     const s = freshState(),
       bug = s.level.objects.find((o) => o.critter)!;

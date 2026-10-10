@@ -124,3 +124,23 @@ During sustained slow frames, items at most 22% of the hole radius disappear at 
 ### Art direction review
 
 Open `http://localhost:4173/polish.html` after building and starting preview (or `/polish.html` on the dev server). The car, corner building, and street-prop gallery has orbit/zoom controls, current-model comparison, and procedural material swatches. Approved modern sedan/apartment variants use the polished geometry in WebGL gameplay. Shared masonry textures improve other building surfaces; the software gameplay renderer retains simpler models. Street-prop gallery models remain reference prototypes; the game uses its independently scored prop geometry. Full textured/specular rendering needs WebGL; software mode shows textured geometry with approximate lighting. See `docs/visual-review/REVIEW.html` for proposed responsiveness mechanics and attributed Hole.io gameplay references.
+
+### Recursive chunk streaming and denser opening
+
+The first five microscopic tiers (bacteria, spores, dust, pollen, sand) now contain
+213 starter items, up from 71. Seeded loose patches vary distance, angle and orientation;
+positions remain fixed after generation. Other tier counts are unchanged.
+
+`RenderChunks` subdivides the full world into a sparse recursive 3×3 hierarchy.
+The camera's ground footprint, a 40% view-size margin, and a 60% directional look-ahead
+select cells. An additional neighboring-cell ring is retained at the selected scale.
+Small items descend to approximately 0.08-unit leaves; large objects are held at
+coarser nodes. As the hole grows, traversal uses larger parent cells. Existing whole-block
+objects still replace their members, avoiding duplicate parent/child visuals.
+Simulation chunks remain separate so visual unloading cannot delete food or grant points.
+
+New model creation is blocked below the largest edible tier minus five, including
+fall animations. Already loaded models may remain until they leave the preload region.
+Configuration is in `renderChunkConfig` and `starterPopulationConfig` in `constants.ts`.
+The four deterministic full-loop trials after this change finished in 4:08–4:32;
+see [the chunk rendering report](docs/chunk-rendering/report.html).

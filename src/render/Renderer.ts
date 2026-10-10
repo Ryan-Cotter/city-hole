@@ -1,5 +1,5 @@
 import { bendHoleCoordinate, rimColorForLevel } from "./holeEdge";
-import { cameraConfig } from "../game/constants";
+import { cameraConfig, renderChunkConfig } from "../game/constants";
 import { blocksHoleView, fadedMaterial, isBuildingType } from "./occlusion";
 import {
   CanvasTexture,
@@ -110,6 +110,11 @@ export class Renderer {
     this.resize();
   }
   follow(position: Vector3, radius = 1, moving = false, minimumView = 0) {
+    const displacement = position.clone().sub(this.previousFocus);
+    if (displacement.lengthSq() > 1e-12)
+      this.preloadDirection.copy(displacement).normalize();
+    if (!moving) this.preloadDirection.multiplyScalar(0.9);
+    this.previousFocus.copy(position);
     for (const edge of this.hole.children)
       edge.position.y =
         Math.min(0.00001, radius * 0.001) +
@@ -182,6 +187,32 @@ export class Renderer {
       points.needsUpdate = true;
       mesh.geometry.computeBoundingSphere();
     }
+  }
+  private previousFocus = new Vector3();
+  private preloadDirection = new Vector3();
+  preloadRegion() {
+    const points: Vector3[] = [];
+    for (const x of [-1, 1])
+      for (const y of [-1, 1]) {
+        const near = new Vector3(x, y, -1).unproject(this.camera);
+        const far = new Vector3(x, y, 1).unproject(this.camera);
+        const direction = far.sub(near);
+        points.push(near.addScaledVector(direction, -near.y / direction.y));
+      }
+    const padding = this.viewSize * renderChunkConfig.cameraPadding;
+    const ahead = this.preloadDirection
+      .clone()
+      .multiplyScalar(this.viewSize * renderChunkConfig.movementLookAhead);
+    return {
+      minX:
+        Math.min(...points.map((p) => p.x)) - padding + Math.min(0, ahead.x),
+      maxX:
+        Math.max(...points.map((p) => p.x)) + padding + Math.max(0, ahead.x),
+      minZ:
+        Math.min(...points.map((p) => p.z)) - padding + Math.min(0, ahead.z),
+      maxZ:
+        Math.max(...points.map((p) => p.z)) + padding + Math.max(0, ahead.z),
+    };
   }
   chunkVisible(x: number, z: number, size: number) {
     this.frustum.setFromProjectionMatrix(

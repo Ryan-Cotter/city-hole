@@ -18,10 +18,14 @@ import {
   tierOf,
   blockScaleRadius,
 } from "./sections";
-import { createBlockVisual, disposeBlockVisual } from "../render/BlockVisual";
+import { RenderChunks } from "../world/RenderChunks";
 import { CityChunks } from "../world/CityChunks";
 import { SelfPlayer } from "../testing/SelfPlayer";
-import { categories, adaptiveSwallowConfig } from "./constants";
+import {
+  categories,
+  adaptiveSwallowConfig,
+  renderChunkConfig,
+} from "./constants";
 import { signalFor } from "../world/traffic";
 import type { Group } from "three";
 import type { SwallowableObject, GameState } from "./GameState";
@@ -77,10 +81,7 @@ export class Game {
   selfPlayer = new SelfPlayer();
   visuals = new Map<string, Group>();
   chunks = new CityChunks(this.state.level.objects);
-  private blockVisuals = new Map<
-    string,
-    { signature: string; visual: Group }
-  >();
+  renderChunks = new RenderChunks(this.state.level.objects, 3400);
   private actors = this.state.level.objects.filter(
     (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
   );
@@ -179,6 +180,7 @@ export class Game {
     );
   }
   populate() {
+    this.renderChunks = new RenderChunks(this.state.level.objects, 3400);
     this.chunks = new CityChunks(
       this.state.level.objects,
       this.state.world.phase === "planet"
@@ -210,7 +212,16 @@ export class Game {
     const block = this.state.level.objects[index];
     return isUnlocked(this.state, block) && block.state !== "swallowed";
   }
+  private canLoadVisual(o: SwallowableObject) {
+    return Boolean(
+      o.collisionOnly ||
+        o.pickup ||
+        this.visuals.has(o.id) ||
+        tierOf(o) >= lowestDetailTier(this.state),
+    );
+  }
   private loadVisual(o: SwallowableObject) {
+    if (!this.canLoadVisual(o)) return undefined;
     let visual = this.visuals.get(o.id);
     if (!visual) {
       visual =
@@ -223,59 +234,35 @@ export class Game {
     return visual;
   }
   refreshTargets() {
-    const active: SwallowableObject[] = [];
-    const coarseKeys = new Set<string>();
-    for (const chunk of this.chunks.chunks.values()) {
-      if (this.renderer.chunkVisible(chunk.x, chunk.z, this.chunks.size)) {
-        const coarse =
-          this.state.world.phase === "city" &&
-          this.state.hole.radius >= blockScaleRadius &&
-          Math.hypot(
-            chunk.x - this.state.hole.position.x,
-            chunk.z - this.state.hole.position.z,
-          ) >
-            this.state.hole.radius + 14;
-        if (coarse) {
-          const objects = chunk.objects.filter(
-            (o) => isUnlocked(this.state, o) && o.state === "idle",
-          );
-          const signature = objects.map((o) => o.id).join(",");
-          coarseKeys.add(chunk.key);
-          let cached = this.blockVisuals.get(chunk.key);
-          if (cached?.signature !== signature) {
-            if (cached) {
-              this.renderer.scene.remove(cached.visual);
-              disposeBlockVisual(cached.visual);
-            }
-            cached = { signature, visual: createBlockVisual(chunk, objects) };
-            this.blockVisuals.set(chunk.key, cached);
-            this.renderer.scene.add(cached.visual);
-          }
-          active.push(...chunk.objects.filter((o) => o.state === "falling"));
-        } else
-          active.push(
-            ...chunk.objects.filter((o) => !this.representedByBlock(o)),
-          );
-      }
-    }
-    for (const [key, cached] of this.blockVisuals)
-      if (!coarseKeys.has(key)) {
-        this.renderer.scene.remove(cached.visual);
-        disposeBlockVisual(cached.visual);
-        this.blockVisuals.delete(key);
-      }
+    const region = this.renderer.preloadRegion?.();
+    const active = region
+      ? this.renderChunks.query(
+          region,
+          Math.max(
+            renderChunkConfig.minimumSize,
+            this.state.hole.radius * renderChunkConfig.detailRadiusScale,
+          ),
+        )
+      : [];
+    // Moving actors retain their simulation positions and use the same preload area.
     active.push(
       ...this.actors.filter(
         (o) =>
-          o.state !== "swallowed" &&
-          this.renderer.chunkVisible(o.position.x, o.position.z, 2),
+          region &&
+          o.position.x + o.radius >= region.minX &&
+          o.position.x - o.radius <= region.maxX &&
+          o.position.z + o.radius >= region.minZ &&
+          o.position.z - o.radius <= region.maxZ,
       ),
       ...this.falling,
     );
-    const detailed = active.filter(
+    const detailed = [...new Set(active)].filter(
       (o) =>
-        o.state === "falling" ||
-        (isUnlocked(this.state, o) && this.renderer.objectVisible(o)),
+        this.canLoadVisual(o) &&
+        (o.state === "falling" ||
+          (o.state !== "swallowed" &&
+            isUnlocked(this.state, o) &&
+            !this.representedByBlock(o))),
     );
     const ids = new Set(
       detailed.filter((o) => o.state !== "swallowed").map((o) => o.id),
@@ -289,12 +276,15 @@ export class Game {
     for (const o of detailed)
       if (o.state !== "swallowed") {
         const visual = this.loadVisual(o);
-        if (o.state === "idle" && !o.motion && !o.pickup) {
+        if (visual && o.state === "idle" && !o.motion && !o.pickup) {
           visual.position.copy(o.position);
           visual.rotation.y = o.orientation;
         }
       }
     this.renderer.updateVisibility(this.state, this.visuals, detailed);
+    this.renderer.webgl.domElement.dataset.renderNodes = String(
+      this.renderChunks.visited,
+    );
     this.renderer.webgl.domElement.dataset.loadedObjects = String(
       this.visuals.size,
     );
@@ -310,11 +300,6 @@ export class Game {
     for (const visual of this.visuals.values())
       this.renderer.scene.remove(visual);
     this.visuals.clear();
-    for (const cached of this.blockVisuals.values()) {
-      this.renderer.scene.remove(cached.visual);
-      disposeBlockVisual(cached.visual);
-    }
-    this.blockVisuals.clear();
     this.state = freshState(cityIndex);
     enablePacing(this.state);
     this.renderer.setCity(this.state.level);
@@ -353,6 +338,7 @@ export class Game {
     this.visuals.delete(o.id);
     this.falling.delete(o);
     this.chunks.remove(o);
+    this.renderChunks?.remove(o);
     if (o.motion) this.actors = this.actors.filter((actor) => actor !== o);
     if (o.motion || ["person", "mouse", "cat", "dog"].includes(o.type))
       this.movers = this.movers.filter((actor) => actor !== o);
@@ -398,6 +384,7 @@ export class Game {
       animateSpill(o, dt);
       if (spilling) {
         this.chunks.relocate(o);
+        this.renderChunks.relocate(o);
         const visual = this.visuals.get(o.id);
         if (visual) {
           visual.position.copy(o.position);
@@ -502,26 +489,26 @@ export class Game {
     for (const o of this.falling) {
       o.fall!.capture.copy(s.hole.position);
       const f = advanceFall(o, dt)!;
-      const visual = this.visuals.get(o.id)!;
-      visual.position.set(f.x, f.y, f.z);
-      visual.scale.setScalar(f.scale);
-      const direction = o.fall!.capture.clone().sub(o.fall!.start).normalize();
-      visual.rotation.set(
-        direction.z * f.tilt,
-        o.orientation + f.u * 0.25,
-        -direction.x * f.tilt,
-      );
+      const visual = this.visuals.get(o.id);
+      if (visual) {
+        visual.position.set(f.x, f.y, f.z);
+        visual.scale.setScalar(f.scale);
+        const direction = o
+          .fall!.capture.clone()
+          .sub(o.fall!.start)
+          .normalize();
+        visual.rotation.set(
+          direction.z * f.tilt,
+          o.orientation + f.u * 0.25,
+          -direction.x * f.tilt,
+        );
+      }
       if (f.u >= 1 && complete(s, o)) this.removeCompleted(o);
     }
     if (advanceWorld(s)) {
       for (const visual of this.visuals.values())
         this.renderer.scene.remove(visual);
       this.visuals.clear();
-      for (const cached of this.blockVisuals.values()) {
-        this.renderer.scene.remove(cached.visual);
-        disposeBlockVisual(cached.visual);
-      }
-      this.blockVisuals.clear();
       this.renderer.setCity(s.level);
       this.selfPlayer.reset();
       this.populate();

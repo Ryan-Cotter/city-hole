@@ -1,5 +1,10 @@
 import { Vector3 } from "three";
-import { categories, objectDesigns, stages } from "./constants";
+import {
+  categories,
+  objectDesigns,
+  stages,
+  starterPopulationConfig,
+} from "./constants";
 import type {
   GameState,
   Level,
@@ -38,6 +43,11 @@ export function seedFoodBudget(s: GameState) {
       o.members ||
       Math.hypot(o.position.x, o.position.z) > 36,
   );
+  let randomSeed = s.level.seed >>> 0;
+  const random = () => {
+    randomSeed = (Math.imul(randomSeed, 1664525) + 1013904223) >>> 0;
+    return randomSeed / 4294967296;
+  };
   let previousOuter = 0;
   for (let i = 0; i < stages.length - 1; i++) {
     const stage = stages[i];
@@ -55,18 +65,21 @@ export function seedFoodBudget(s: GameState) {
       requiredPoints = Math.ceil(
         (stages[i + 1].points - stage.points) * foodBudgetFactor,
       );
-    const count = Math.ceil(requiredPoints / spec.scoreValue);
+    const tiny = i < starterPopulationConfig.multipliedTiers; // Bacteria through sand: the opening before the first bugs.
+    const count =
+      Math.ceil(requiredPoints / spec.scoreValue) *
+      (tiny ? starterPopulationConfig.multiplier : 1);
     // Successive clusters sit in concentric bands. A larger collider never covers
     // the previous tier's food, and all small tiers remain in their unlocked area.
     const distance = Math.max(
-      previousOuter + spec.radius * 1.05 + stage.radius * 0.15,
-      ((count * spec.radius) / Math.PI) * 1.12,
+      previousOuter + spec.radius * (tiny ? 5 : 1.05) + stage.radius * 0.15,
+      ((count * spec.radius) / Math.PI) * (tiny ? 0.7 : 1.12),
     );
-    previousOuter = distance + spec.radius;
+    previousOuter = distance + spec.radius * (tiny ? 5 : 1);
+    const halfWidth = spec.radius * (tiny ? 5 : 1);
     const area =
       Math.PI *
-      ((distance + spec.radius) ** 2 -
-        Math.max(0, distance - spec.radius) ** 2);
+      ((distance + halfWidth) ** 2 - Math.max(0, distance - halfWidth) ** 2);
     rows.push({ type: stage.type, count, requiredPoints, area });
     const groupId = `patch-${i}`;
     s.neighborhoods[groupId] = {
@@ -74,6 +87,11 @@ export function seedFoodBudget(s: GameState) {
       total: count,
       label: `${stage.name} patch cleared`,
     };
+    const placed: Vector3[] = [];
+    const clusterAngles = Array.from(
+      { length: 5 },
+      () => random() * Math.PI * 2,
+    );
     for (let n = 0; n < count; n++) {
       const angle = (n / count) * Math.PI * 2 + i * 0.7;
       const position = new Vector3(
@@ -81,6 +99,20 @@ export function seedFoodBudget(s: GameState) {
         0,
         Math.sin(angle) * distance,
       );
+      if (tiny) {
+        // Loose seeded patches, with gaps and isolated specks; rejection prevents overlaps.
+        for (let attempt = 0; attempt < 2000; attempt++) {
+          const a =
+            attempt < 1000 && random() < 0.75
+              ? clusterAngles[n % clusterAngles.length] + (random() - 0.5) * 1.1
+              : random() * Math.PI * 2;
+          const r = distance + (random() - 0.5) * spec.radius * 8;
+          position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+          if (placed.every((p) => p.distanceTo(position) >= spec.radius * 2.05))
+            break;
+        }
+      }
+      placed.push(position.clone());
       const variant = (n + i) % objectDesigns[type].length;
       s.level.objects.push({
         id: `seed-food-${i}-${n}`,
@@ -91,7 +123,7 @@ export function seedFoodBudget(s: GameState) {
         groupId,
         cityIndex: s.cityIndex,
         design: objectDesigns[type][variant],
-        orientation: angle,
+        orientation: tiny ? random() * Math.PI * 2 : angle,
         motion: null,
         state: "idle",
         fall: null,

@@ -1,5 +1,5 @@
 import type { GameState, SwallowableObject } from "./GameState";
-import { categories } from "./constants";
+import { categories, renderChunkConfig } from "./constants";
 export const blockScaleRadius = categories.cityBlock.radius * 8;
 export const areaConfig = [
   { index: 1, bounds: 3, name: "Starter yard" },
@@ -49,7 +49,7 @@ export function lowestDetailTier(state: GameState) {
   let highest = 0;
   for (let i = 0; i < specs.length; i++)
     if (specs[i].radius <= state.hole.radius * 0.85) highest = i;
-  return Math.max(0, highest - 4);
+  return Math.max(0, highest - renderChunkConfig.retainedTierDistance);
 }
 const tierIndices = new Map(
   Object.keys(categories).map((type, index) => [type, index]),

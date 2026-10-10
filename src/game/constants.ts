@@ -1,3 +1,11 @@
+export const renderChunkConfig = {
+  minimumSize: 0.08,
+  detailRadiusScale: 2,
+  cameraPadding: 0.4,
+  movementLookAhead: 0.6,
+  retainedTierDistance: 5,
+};
+export const starterPopulationConfig = { multipliedTiers: 5, multiplier: 3 };
 export const config = {
   baseRadius: 0.0015,
   swallowFactor: 0.85,
