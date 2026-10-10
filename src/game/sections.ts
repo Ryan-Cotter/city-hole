@@ -44,13 +44,20 @@ export const isUnlocked = (state: GameState, o: SwallowableObject) => {
       o.unlockStage === 2)
   );
 };
-export function lowestDetailTier(state: GameState) {
+function highestEdibleTier(state: GameState) {
   const specs = Object.values(categories);
   let highest = 0;
   for (let i = 0; i < specs.length; i++)
     if (specs[i].radius <= state.hole.radius * 0.85) highest = i;
-  return Math.max(0, highest - renderChunkConfig.retainedTierDistance);
+  return highest;
 }
+export const lowestDetailTier = (state: GameState) =>
+  Math.max(0, highestEdibleTier(state) - 5);
+export const lowestRenderTier = (state: GameState) =>
+  Math.max(
+    0,
+    highestEdibleTier(state) - renderChunkConfig.retainedTierDistance,
+  );
 const tierIndices = new Map(
   Object.keys(categories).map((type, index) => [type, index]),
 );

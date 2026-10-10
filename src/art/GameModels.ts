@@ -4,6 +4,7 @@ import { polishedCar, polishedBuilding } from "./PolishModels";
 const templates = new Map<string, Group>();
 const clipping = new Plane(new Vector3(0, 1, 0), 0);
 export function polishedGameModel(o: SwallowableObject): Group | null {
+  if (o.district) return null;
   if (
     (o.cityIndex ?? 0) % 4 !== 2 ||
     !(

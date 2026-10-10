@@ -52,6 +52,7 @@ export function attachCityBlocks(level: Level) {
       i % 4,
       level.cityIndex ?? 0,
     );
+    block.district = b.district;
     block.members = level.objects.filter(
       (o) =>
         !o.members &&

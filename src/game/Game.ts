@@ -15,6 +15,7 @@ import {
   activeBounds,
   isUnlocked,
   lowestDetailTier,
+  lowestRenderTier,
   tierOf,
   blockScaleRadius,
 } from "./sections";
@@ -53,6 +54,7 @@ export function freshState(cityIndex = 0): GameState {
     },
     performance: { strained: false, slowSeconds: 0 },
     feedback: { points: 0, count: 0, until: 0, bumpUntil: 0, cleared: 0 },
+    streak: { count: 0, expiresAt: -1, multiplier: 1, best: 0 },
     growthOffset: 0,
     status: "playing",
     areaStage: 1,
@@ -217,7 +219,7 @@ export class Game {
       o.collisionOnly ||
         o.pickup ||
         this.visuals.has(o.id) ||
-        tierOf(o) >= lowestDetailTier(this.state),
+        tierOf(o) >= lowestRenderTier(this.state),
     );
   }
   private loadVisual(o: SwallowableObject) {

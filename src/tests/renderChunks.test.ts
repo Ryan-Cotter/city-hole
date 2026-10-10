@@ -3,7 +3,7 @@ import { Vector3, Group } from "three";
 import { RenderChunks } from "../world/RenderChunks";
 import { freshState, Game } from "../game/Game";
 import { categories } from "../game/constants";
-import { lowestDetailTier, tierOf } from "../game/sections";
+import { lowestRenderTier, tierOf } from "../game/sections";
 import { Renderer } from "../render/Renderer";
 import { createCamera, resizeCamera } from "../render/Camera";
 
@@ -68,16 +68,23 @@ describe("recursive 3×3 rendering", () => {
     expect(still.minX).toBeLessThan(0);
     expect(still.maxX).toBeGreaterThan(0);
   });
-  it("preloads invisible models but never newly loads items more than five edible tiers behind", () => {
+  it("preloads invisible models but never newly loads items more than twenty edible tiers behind", () => {
     const game = Object.create(Game.prototype) as Game;
     const state = freshState();
     state.areaStage = 3;
-    state.hole.radius = categories.snack.radius / 0.85 + 0.00001;
-    const min = lowestDetailTier(state);
+    state.hole.radius = categories.skyscraper.radius / 0.85 + 0.00001;
+    const min = lowestRenderTier(state);
     const objects = [min - 1, min, min + 1].map((tier, i) => {
-      const o = state.level.objects.find(
-        (o) => tierOf(o) === tier && !o.members && !o.motion,
-      )!;
+      const type = Object.keys(categories)[tier] as keyof typeof categories;
+      const o = {
+        ...state.level.objects[0],
+        ...categories[type],
+        type,
+        motion: null,
+        worldRing: 1 as const,
+        unlockStage: undefined,
+        collisionOnly: false,
+      };
       return {
         ...o,
         id: `cutoff-${i}`,
@@ -103,7 +110,7 @@ describe("recursive 3×3 rendering", () => {
       },
     });
     game.populate();
-    expect(min).toBe(Object.keys(categories).indexOf("snack") - 5);
+    expect(min).toBe(Object.keys(categories).indexOf("skyscraper") - 20);
     expect(game.visuals.has(objects[0].id)).toBe(false);
     expect(game.visuals.has(objects[1].id)).toBe(true);
     expect(game.visuals.has(objects[2].id)).toBe(true);

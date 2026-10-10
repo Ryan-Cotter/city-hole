@@ -139,7 +139,7 @@ coarser nodes. As the hole grows, traversal uses larger parent cells. Existing w
 objects still replace their members, avoiding duplicate parent/child visuals.
 Simulation chunks remain separate so visual unloading cannot delete food or grant points.
 
-New model creation is blocked below the largest edible tier minus five, including
+New model creation is blocked below the largest edible tier minus twenty, including
 fall animations. Already loaded models may remain until they leave the preload region.
 Configuration is in `renderChunkConfig` and `starterPopulationConfig` in `constants.ts`.
 The four deterministic full-loop trials after this change finished in 4:08–4:32;
@@ -152,3 +152,28 @@ additionally distributed around objects one or two sizes larger, while the rest
 keeps the opening well supplied. Cross-tier collider checks prevent intersections;
 all placement still happens once at generation. See `docs/chunk-rendering/mixed-sizes.png`
 for the revised opening.
+
+### Streaks, microscopic life, and district identities
+
+Swallow another item within two simulation seconds to continue a streak. The third
+completion awards ×1.5 points; the eighth and later completions award ×2. Rewards
+are rounded per object, credited once, and do not multiply mass. One aggregate block
+counts as one streak event; its contents inherit the multiplier without adding hits.
+A compact gold HUD countdown shows the multiplier. Pausing freezes the countdown;
+restarting resets it. `streakConfig` controls thresholds and duration.
+
+The beginning now has four virus forms, six bacterial forms and sixteen bug species
+across eight early size tiers. Bugs replace a minority of pre-generated food, retaining
+its score and mass. Walking speed and patrol radius scale with body size. Model reviews:
+`/models.html?life` and `/models.html?districts`.
+
+Five functional block themes provide main buildings and five prop-size groups:
+banking quarters (coins/ledgers/chests), restaurant rows (crumbs/plates/baskets/tables),
+industrial yards (filings/bolts/tools/barrels/spools), apartment courtyards
+(buttons/books/planters/mail chests/seats), and parks (seeds/acorns/flowers/birdbaths/benches).
+Whole-block models preserve their district identity. Building roofs distinguish the four
+campaign eras. The rendering cutoff is L−20; simulation scheduling and the older
+obsolete-item swallowing optimization retain their separate performance settings.
+
+Latest streak-enabled full-loop trials finish in 3:42–3:56. See
+`docs/life-and-districts/report.html` for validation and model previews.

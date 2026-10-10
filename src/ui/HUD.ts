@@ -1,3 +1,4 @@
+import { streakConfig } from "../game/streak";
 import { MealAudio } from "./MealAudio";
 import { stages } from "../game/constants";
 import { themeForCity } from "../game/campaign";
@@ -26,7 +27,7 @@ export class HUD {
     onSelfPlay: () => void,
     onNextCity: () => void,
   ) {
-    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><small id="city-theme"></small><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track" title="Light bar: earned growth. Solid bar: current size progress."><i id="earned-progress"></i><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><small id="boost-status"></small><div id="meal-toast" role="status"></div><small id="district-goal"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="sound" aria-pressed="false">Sound: off</button><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
+    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><small id="city-theme"></small><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track" title="Light bar: earned growth. Solid bar: current size progress."><i id="earned-progress"></i><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><small id="boost-status"></small><div id="streak" hidden><b id="streak-label"></b><span><i id="streak-time"></i></span></div><div id="meal-toast" role="status"></div><small id="district-goal"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="sound" aria-pressed="false">Sound: off</button><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
     container
       .querySelector("#phone-preview")!
       .addEventListener("click", (event) => {
@@ -63,6 +64,20 @@ export class HUD {
       if (el.textContent !== value) el.textContent = value;
     };
     this.root.dataset.status = s.status;
+    const streak = s.streak;
+    const activeStreak =
+      !!streak &&
+      streak.count >= streakConfig.firstBonusAt &&
+      streak.expiresAt > s.elapsedSeconds;
+    (this.root.querySelector("#streak") as HTMLElement).hidden = !activeStreak;
+    if (activeStreak) {
+      text(
+        "streak-label",
+        `STREAK ${streak!.count} · ×${streak!.multiplier} points`,
+      );
+      (this.root.querySelector("#streak-time") as HTMLElement).style.width =
+        `${Math.min(100, ((streak!.expiresAt - s.elapsedSeconds) / streakConfig.windowSeconds) * 100)}%`;
+    }
     if (s.feedback) {
       text(
         "meal-toast",

@@ -46,6 +46,8 @@ export interface SwallowableObject {
   signalAxis?: "x" | "z";
   variant: number;
   design: string;
+  district?: District;
+  districtProp?: string;
   motion: Motion | null;
   state: "idle" | "falling" | "swallowed" | "discarded";
   fall: null | {
@@ -86,6 +88,12 @@ export interface Level {
   totalScore: number;
 }
 export interface GameState {
+  streak?: {
+    count: number;
+    expiresAt: number;
+    multiplier: number;
+    best: number;
+  };
   pacing?: { points: number };
   neighborhoods?: Record<
     string,

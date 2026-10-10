@@ -374,6 +374,8 @@ describe("city gameplay", () => {
   });
   it("lets mixed-size rewards advance discrete point-based levels", () => {
     const s = freshState();
+    s.streak = undefined; // This case isolates base point thresholds; streak awards have separate tests.
+
     for (const type of ["hydrant", "person", "sign", "bench"] as const) {
       const o = s.level.objects.find((o) => o.type === type)!;
       o.state = "falling";

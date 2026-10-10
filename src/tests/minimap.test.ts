@@ -57,7 +57,12 @@ describe("map detail and recognizable small items", () => {
       const source = city.objects.find((o) => o.type === type)!;
       const signatures = new Set<string>();
       for (let variant = 0; variant < objectDesigns[type].length; variant++) {
-        const visual = createObjectVisual({ ...source, variant });
+        const visual = createObjectVisual({
+          ...source,
+          variant,
+          district: undefined,
+          districtProp: undefined,
+        });
         signatures.add(
           visual.children
             .map((child) => {

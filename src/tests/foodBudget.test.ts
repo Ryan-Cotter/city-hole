@@ -86,8 +86,8 @@ describe("growth food reserves and scurrying bugs", () => {
       expect(bug.position.distanceTo(before)).toBeLessThanOrEqual(0.027);
       headings.add(Math.round(bug.orientation * 10));
     }
-    expect(xTravel).toBeGreaterThan(0.1);
-    expect(zTravel).toBeGreaterThan(0.1);
+    expect(xTravel).toBeGreaterThan(bug.radius * 3);
+    expect(zTravel).toBeGreaterThan(bug.radius * 3);
     expect(headings.size).toBeGreaterThan(10);
     expect(bug.position.distanceTo(start)).toBeLessThan(1.5);
   });

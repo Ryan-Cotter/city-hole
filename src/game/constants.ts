@@ -3,7 +3,7 @@ export const renderChunkConfig = {
   detailRadiusScale: 2,
   cameraPadding: 0.4,
   movementLookAhead: 0.6,
-  retainedTierDistance: 5,
+  retainedTierDistance: 20,
 };
 export const starterPopulationConfig = { multipliedTiers: 5, multiplier: 3 };
 export const config = {
@@ -30,7 +30,7 @@ export const categories = {
     height: 0.0012,
     mass: 1,
     scoreValue: 1,
-    label: "bacteria",
+    label: "microbes",
   },
   spore: {
     radius: 0.002,

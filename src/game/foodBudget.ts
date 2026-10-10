@@ -1,3 +1,5 @@
+import { assignDistrict } from "../world/Districts";
+import { bacteriaDesigns, virusDesigns, bugDesigns } from "../world/MicroLife";
 import { Vector3 } from "three";
 import {
   categories,
@@ -176,19 +178,51 @@ export function seedFoodBudget(s: GameState) {
       Math.PI *
       Math.max(...items.map((o) => o.position.length() + o.radius)) ** 2;
   }
-  // A few pre-budgeted food specks are bugs; the rest stay still for reliable food.
-  for (const o of s.level.objects
-    .filter((o) => o.id.startsWith("seed-food-5-"))
-    .slice(-3)) {
-    o.critter = true;
-    o.design = "ant";
-    o.motion = {
-      axis: "x",
-      direction: 1,
-      speed: 0.045,
-      min: o.position.x - 0.15,
-      max: o.position.x + 0.15,
-    };
+  const microbes = [...bacteriaDesigns, ...virusDesigns];
+  seeded
+    .filter((o) => o.type === "bacterium")
+    .forEach((o, i) => {
+      o.design = microbes[(i + s.cityIndex) % microbes.length];
+      o.variant = Math.max(0, bacteriaDesigns.indexOf(o.design));
+    });
+  // Replace a minority of existing food, preserving each tier's point budget.
+  for (let tier = 3; tier <= 10; tier++) {
+    const items = seeded.filter((o) => o.id.startsWith(`seed-food-${tier}-`));
+    items.slice(-Math.max(2, Math.floor(items.length / 4))).forEach((o, i) => {
+      o.critter = true;
+      o.design = bugDesigns[(tier - 3) * 2 + (i % 2)];
+      o.height = o.radius;
+      const range = Math.min(0.4, o.radius * 6);
+      o.motion = {
+        axis: "x",
+        direction: 1,
+        speed: Math.min(0.16, o.radius * 3),
+        min: o.position.x - range,
+        max: o.position.x + range,
+      };
+    });
+  }
+  for (const o of seeded) {
+    const block = s.level.blocks.reduce((nearest, b) =>
+      Math.hypot(b.x - o.position.x, b.z - o.position.z) <
+      Math.hypot(nearest.x - o.position.x, nearest.z - o.position.z)
+        ? b
+        : nearest,
+    );
+    // Keep the mixed starter food recognizable; district props are accents here.
+    // The surrounding authored city blocks use their full functional prop palette.
+    if (
+      Number(o.id.split("-").at(-1)) % 3 === 0 ||
+      [
+        "house",
+        "shop",
+        "building",
+        "largeBuilding",
+        "skyscraper",
+        "kiosk",
+      ].includes(o.type)
+    )
+      assignDistrict(o, block.district);
   }
   s.level.densityPlan = rows;
   s.level.objectSlots = new Map(s.level.objects.map((o, i) => [o.id, i]));

@@ -1,3 +1,4 @@
+import { streakMultiplier } from "../game/streak";
 import { spillContents } from "../game/interactions";
 import { updateBoosts, activateBoost } from "../game/boosts";
 import type { GameState, Hole, SwallowableObject } from "../game/GameState";
@@ -35,8 +36,10 @@ export function complete(
   s: GameState,
   o: SwallowableObject,
   rewardMultiplier = 1,
+  countForStreak = true,
 ) {
   if (o.collisionOnly || o.state !== "falling") return false;
+  if (countForStreak) rewardMultiplier *= streakMultiplier(s);
   for (const member of o.members ?? []) {
     if (member.state === "swallowed" || member.state === "discarded") continue;
     member.state = "falling";
@@ -44,6 +47,7 @@ export function complete(
       s,
       member,
       rewardMultiplier * blockRewardConfig.contentsMultiplier,
+      false,
     );
   }
   if (

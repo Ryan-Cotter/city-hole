@@ -1,3 +1,6 @@
+import { districtProfiles, assignDistrict } from "../world/Districts";
+import type { District } from "../game/GameState";
+import { virusDesigns, bacteriaDesigns, bugDesigns } from "../world/MicroLife";
 import {
   Scene,
   OrthographicCamera,
@@ -12,17 +15,61 @@ import { createObjectVisual } from "../world/SwallowableObject";
 import { categories, objectDesigns } from "../game/constants";
 import type { ObjectType, SwallowableObject } from "../game/GameState";
 const host = document.querySelector("#models")!;
-const panels: [string, ObjectType[], number, number][] = [
-  ["Medieval market props", ["hydrant", "sign", "bench", "patio"], 0, 5],
-  ["Medieval block", ["cityBlock"], 0, 15],
-  ["Medieval carts", ["car", "van"], 0, 3],
-  ["Industrial vehicles", ["car", "van"], 1, 3],
-  ["Modern cars and vans", ["car", "van"], 2, 3],
-  ["Future vehicles", ["car", "van"], 3, 3],
-  ["Person · cat · dog", ["person", "cat", "dog"], 2, 2],
-  ["Whole block · reduced points", ["cityBlock"], 2, 15],
-];
-for (const [label, types, era, view] of panels) {
+const districtReview = new URLSearchParams(location.search).has("districts");
+const life = new URLSearchParams(location.search).has("life");
+if (life || districtReview) {
+  document.querySelector("header h1")!.textContent = life
+    ? "Microscopic life · model review"
+    : "Functional districts · model review";
+  document.querySelector("header p")!.textContent = life
+    ? "Viruses, bacteria, and bugs at normalized preview scale. In-game sizes follow the early size tiers."
+    : "Five block functions with matching prop families. Preview shows the modern era; the campaign uses period-specific roof details.";
+}
+const panels: [string, ObjectType[], number, number, string[]?][] =
+  districtReview
+    ? Object.entries(districtProfiles).map(([key, p]) => [
+        p.name,
+        ["building", "litter", "sign", "bench"],
+        2,
+        4,
+        [key],
+      ])
+    : life
+      ? [
+          virusDesigns,
+          bacteriaDesigns.slice(0, 3),
+          bacteriaDesigns.slice(3),
+          bugDesigns.slice(0, 4),
+          bugDesigns.slice(4, 8),
+          bugDesigns.slice(8, 12),
+          bugDesigns.slice(12),
+        ].map((designs, i) => [
+          i === 0
+            ? "Viruses"
+            : i < 3
+              ? "Bacteria"
+              : `Bugs · ${designs.join(" / ")}`,
+          designs.map(() => (i < 3 ? "bacterium" : "bottlecap")),
+          0,
+          3.2,
+          designs,
+        ])
+      : [
+          [
+            "Medieval market props",
+            ["hydrant", "sign", "bench", "patio"],
+            0,
+            5,
+          ],
+          ["Medieval block", ["cityBlock"], 0, 15],
+          ["Medieval carts", ["car", "van"], 0, 3],
+          ["Industrial vehicles", ["car", "van"], 1, 3],
+          ["Modern cars and vans", ["car", "van"], 2, 3],
+          ["Future vehicles", ["car", "van"], 3, 3],
+          ["Person · cat · dog", ["person", "cat", "dog"], 2, 2],
+          ["Whole block · reduced points", ["cityBlock"], 2, 15],
+        ];
+for (const [label, types, era, view, designs] of panels) {
   const section = document.createElement("section");
   section.innerHTML = `<h2>${label}</h2>`;
   host.append(section);
@@ -35,21 +82,34 @@ for (const [label, types, era, view] of panels) {
   for (const [i, type] of types.entries()) {
     const o: SwallowableObject = {
       ...categories[type],
+      ...(life ? { radius: 0.62, height: 0.8 } : {}),
+      critter: designs ? bugDesigns.includes(designs[i]) : false,
       id: `preview-${era}-${type}`,
       type,
       cityIndex: era,
       position: new Vector3(
-        (i - (types.length - 1) / 2) * (view === 2 ? 0.7 : 2.3),
+        (i - (types.length - 1) / 2) * (life ? 1.5 : view === 2 ? 0.7 : 2.3),
         0,
         0,
       ),
       orientation: 0,
-      variant: 0,
-      design: objectDesigns[type][0],
+      variant:
+        life && designs && bacteriaDesigns.includes(designs[i])
+          ? bacteriaDesigns.indexOf(designs[i])
+          : i,
+      design: designs?.[i] ?? objectDesigns[type][0],
       motion: null,
       state: "idle",
       fall: null,
     };
+    if (districtReview) {
+      o.position.set(i === 0 ? 0 : (i - 2) * 1.7, 0, i === 0 ? -1 : 1.8);
+      if (i === 0) {
+        o.radius = 1.6;
+        o.height = 2.8;
+      }
+      assignDistrict(o, designs![0] as District);
+    }
     scene.add(createObjectVisual(o));
   }
   const camera = new OrthographicCamera(

@@ -1,3 +1,5 @@
+import { assignDistrict } from "./Districts";
+import type { District } from "../game/GameState";
 import { Vector3 } from "three";
 import { categories, cityConfig, objectDesigns } from "../game/constants";
 import type {
@@ -19,6 +21,7 @@ export function generateCity(
   };
   const objects: SwallowableObject[] = [],
     blocks: Block[] = [];
+  let currentDistrict: District | undefined;
   const designCounts = new Map<ObjectType, number>();
   const add = (
     type: ObjectType,
@@ -46,6 +49,7 @@ export function generateCity(
       state: "idle",
       fall: null,
     });
+    if (currentDistrict) assignDistrict(objects.at(-1)!, currentDistrict);
   };
   const blockCount = (cityConfig.bounds * 2) / cityConfig.blockSize;
   for (let row = 0; row < blockCount; row++)
@@ -62,6 +66,7 @@ export function generateCity(
             : (row + col) % 3 === 1
               ? "commercial"
               : "residential";
+      currentDistrict = districtType;
       blocks.push({ x, z, park, district: districtType });
       // Three times the previous per-block population, with a complete size ladder.
       const district = Math.max(Math.abs(x), Math.abs(z));
@@ -319,6 +324,7 @@ export function generateCity(
           }
         }
     }
+  currentDistrict = undefined;
   // Cars remain on the road grid. Some are parked at the curb, others cruise straight lanes.
   for (
     let street = -cityConfig.bounds + 20;

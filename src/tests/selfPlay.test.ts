@@ -1,3 +1,4 @@
+import { enablePacing, advanceGrowth } from "../game/pacing";
 import { describe, it, expect } from "vitest";
 import { Vector3 } from "three";
 import { SelfPlayer, findPath, edibleClusters } from "../testing/SelfPlayer";
@@ -156,10 +157,12 @@ describe("self play and pacing", () => {
           g.objects.every((o) => o.radius <= state.hole.radius * 0.85),
         ),
       ).toBe(true);
+      enablePacing(state);
       let yardSeconds = 0,
         budgetLevel = 0;
       for (let step = 0; step < 6000; step++) {
         state.elapsedSeconds += 0.1;
+        advanceGrowth(state, 0.1);
         updateBoosts(state);
         if (budgetLevel !== state.hole.level || step % 50 === 0) {
           budgetLevel = state.hole.level;

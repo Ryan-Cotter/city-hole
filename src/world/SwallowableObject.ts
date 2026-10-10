@@ -1,3 +1,4 @@
+import { districtModel } from "../art/DistrictModels";
 import { themeForCity } from "../game/campaign";
 import { isBuildingType } from "../render/occlusion";
 import { objectDesigns } from "../game/constants";
@@ -73,6 +74,8 @@ const bright = [
   "#23c99d",
 ];
 export function createObjectVisual(o: SwallowableObject) {
+  const themed = districtModel(o);
+  if (themed) return themed;
   const g = new Group();
   g.position.copy(o.position);
   g.rotation.y = o.orientation;
@@ -143,12 +146,203 @@ export function createObjectVisual(o: SwallowableObject) {
     m.renderOrder = name === "window" ? 2 : name === "door-glass" ? 3 : 2;
     return m;
   };
+  if (o.critter) {
+    const r = o.radius;
+    const palette: Record<string, string> = {
+      mite: "#b55e43",
+      aphid: "#8cbd4f",
+      springtail: "#dbd0a4",
+      flea: "#78513c",
+      ant: "#593a34",
+      ladybug: "#d94b43",
+      weevil: "#877063",
+      beetle: "#398d82",
+      pillbug: "#738591",
+      earwig: "#915c39",
+      cricket: "#a4904d",
+      spider: "#7c6489",
+      grasshopper: "#6ba84c",
+      caterpillar: "#a3c756",
+      moth: "#ba9671",
+      dragonfly: "#40aebb",
+    };
+    const color = palette[o.design] ?? "#493c30";
+    add(sphere, color, 0, r * 0.5, 0, r * 0.65, r * 0.45, r * 0.9);
+    add(sphere, "#332c29", 0, r * 0.45, r * 0.7, r * 0.35, r * 0.3, r * 0.35);
+    for (const side of [-1, 1])
+      for (const z of o.design === "spider" || o.design === "mite"
+        ? [-0.6, -0.2, 0.2, 0.6]
+        : [-0.5, 0, 0.5]) {
+        const leg = add(
+          box,
+          "#473c32",
+          side * r * 0.6,
+          r * 0.2,
+          z * r,
+          r * 0.65,
+          r * 0.1,
+          r * 0.12,
+        );
+        leg.userData.walkSide = side * (z === 0 ? -1 : 1);
+      }
+    if (o.design === "ladybug")
+      for (const side of [-1, 1])
+        add(
+          sphere,
+          "#292d2d",
+          side * r * 0.27,
+          r * 0.85,
+          0,
+          r * 0.15,
+          r * 0.06,
+          r * 0.2,
+        );
+    for (const side of [-1, 1]) {
+      add(
+        sphere,
+        "#f6e7bc",
+        side * r * 0.17,
+        r * 0.67,
+        r * 0.84,
+        r * 0.08,
+        r * 0.08,
+        r * 0.06,
+      );
+      const antenna = add(
+        box,
+        "#453d39",
+        side * r * 0.28,
+        r * 0.56,
+        r * 0.85,
+        r * 0.07,
+        r * 0.08,
+        r * 0.3,
+      );
+      antenna.rotation.y = side * 0.5;
+      if (["moth", "dragonfly"].includes(o.design)) {
+        const wing = add(
+          sphere,
+          o.design === "moth" ? "#e5bb83" : "#b6e8da",
+          side * r * 0.5,
+          r * 0.68,
+          0,
+          r * 0.48,
+          r * 0.07,
+          r * (o.design === "moth" ? 0.65 : 0.25),
+        );
+        wing.userData.walkSide = side * 0.4;
+      }
+      if (["grasshopper", "cricket", "flea"].includes(o.design)) {
+        const leg = add(
+          box,
+          color,
+          side * r * 0.65,
+          r * 0.48,
+          -r * 0.38,
+          r * 0.16,
+          r * 0.16,
+          r * 0.8,
+        );
+        leg.rotation.x = 0.5;
+      }
+      if (o.design === "earwig")
+        add(
+          box,
+          "#4f322a",
+          side * r * 0.25,
+          r * 0.35,
+          -r * 0.82,
+          r * 0.09,
+          r * 0.09,
+          r * 0.3,
+        );
+    }
+    if (["pillbug", "caterpillar"].includes(o.design))
+      for (let i = 0; i < 5; i++)
+        add(
+          sphere,
+          i % 2 ? color : "#c2ce8c",
+          0,
+          r * 0.6,
+          (i - 2) * r * 0.3,
+          r * 0.54,
+          r * 0.27,
+          r * 0.17,
+        );
+    if (["beetle", "weevil", "ladybug"].includes(o.design))
+      add(box, "#283a35", 0, r * 0.92, -r * 0.1, r * 0.045, r * 0.035, r * 1.2);
+    return g;
+  }
+  if (o.design.includes("virus") || o.design === "tailed phage") {
+    const r = o.radius;
+    const color =
+      o.design === "spiked virus"
+        ? "#ba67bd"
+        : o.design === "tailed phage"
+          ? "#67b7c9"
+          : "#e6a14d";
+    if (o.design === "filament virus") {
+      for (let i = 0; i < 7; i++)
+        add(
+          sphere,
+          color,
+          Math.sin(i * 0.8) * r * 0.25,
+          r * 0.3,
+          (i - 3) * r * 0.25,
+          r * 0.2,
+          r * 0.2,
+          r * 0.2,
+        );
+    } else {
+      add(
+        sphere,
+        color,
+        0,
+        r * 0.55,
+        o.design === "tailed phage" ? -r * 0.35 : 0,
+        r * 0.55,
+        r * 0.5,
+        r * 0.55,
+      );
+      if (o.design === "tailed phage") {
+        add(box, "#cfebe6", 0, r * 0.3, r * 0.25, r * 0.13, r * 0.13, r * 0.7);
+        for (const side of [-1, 1]) {
+          const fiber = add(
+            box,
+            color,
+            side * r * 0.25,
+            r * 0.15,
+            r * 0.65,
+            r * 0.6,
+            r * 0.07,
+            r * 0.07,
+          );
+          fiber.rotation.y = side * 0.7;
+        }
+      } else
+        for (let i = 0; i < (o.design === "spiked virus" ? 10 : 5); i++) {
+          const a = (i * Math.PI * 2) / (o.design === "spiked virus" ? 10 : 5);
+          add(
+            sphere,
+            "#f2d3a1",
+            Math.cos(a) * r * 0.72,
+            r * 0.65,
+            Math.sin(a) * r * 0.72,
+            r * 0.16,
+            r * 0.18,
+            r * 0.16,
+          );
+        }
+    }
+    return g;
+  }
   if (["bacterium", "spore", "dust", "pollen", "sand"].includes(o.type)) {
     const r = o.radius,
       v = o.variant % 4;
     if (o.type === "bacterium") {
       const color = ["#48ac92", "#66bdcf", "#9ab754", "#b18ace"][v];
-      const count = v === 2 ? 4 : v === 1 ? 2 : 1;
+      const count =
+        o.design === "cell chain" ? 6 : v === 2 ? 4 : v === 1 ? 2 : 1;
       for (let i = 0; i < count; i++) {
         const z = count === 1 ? 0 : (i / (count - 1) - 0.5) * r;
         add(
@@ -162,6 +356,18 @@ export function createObjectVisual(o: SwallowableObject) {
           r * (count === 1 && v === 0 ? 0.9 : 0.4),
         );
       }
+      if (o.design === "flagellated bacterium")
+        for (let i = 0; i < 4; i++)
+          add(
+            sphere,
+            "#b2de9d",
+            Math.sin(i) * r * 0.15,
+            r * 0.25,
+            -r * (0.45 + i * 0.14),
+            r * 0.07,
+            r * 0.07,
+            r * 0.12,
+          );
       add(sphere, "#245e67", 0, r * 0.83, 0, r * 0.18, r * 0.08, r * 0.22);
     } else if (o.type === "pollen" || o.type === "spore") {
       const color =
@@ -201,44 +407,6 @@ export function createObjectVisual(o: SwallowableObject) {
       if (o.type === "dust" && v === 2)
         add(box, "#e0d4b9", 0, r * 0.35, 0, r * 1.7, r * 0.12, r * 0.18);
     }
-    return g;
-  }
-  if (o.critter) {
-    const r = o.radius,
-      color =
-        o.design === "ladybug"
-          ? "#d84c38"
-          : o.design === "beetle"
-            ? "#518268"
-            : "#493c30";
-    add(sphere, color, 0, r * 0.5, 0, r * 0.65, r * 0.45, r * 0.9);
-    add(sphere, "#332c29", 0, r * 0.45, r * 0.7, r * 0.35, r * 0.3, r * 0.35);
-    for (const side of [-1, 1])
-      for (const z of [-0.5, 0, 0.5]) {
-        const leg = add(
-          box,
-          "#473c32",
-          side * r * 0.6,
-          r * 0.2,
-          z * r,
-          r * 0.65,
-          r * 0.1,
-          r * 0.12,
-        );
-        leg.userData.walkSide = side * (z === 0 ? -1 : 1);
-      }
-    if (o.design === "ladybug")
-      for (const side of [-1, 1])
-        add(
-          sphere,
-          "#292d2d",
-          side * r * 0.27,
-          r * 0.85,
-          0,
-          r * 0.15,
-          r * 0.06,
-          r * 0.2,
-        );
     return g;
   }
   if (["rice grain", "pea", "berry", "cookie crumb"].includes(o.design)) {

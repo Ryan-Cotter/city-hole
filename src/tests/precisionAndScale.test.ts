@@ -167,6 +167,8 @@ describe("precise steering and delayed block scale", () => {
       for (let variant = 0; variant < 8; variant++) {
         const visual = createObjectVisual({
           ...original,
+          district: undefined,
+          districtProp: undefined,
           cityIndex: 0,
           variant,
         });

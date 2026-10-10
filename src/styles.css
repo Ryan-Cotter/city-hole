@@ -338,3 +338,8 @@ summary {
 #meal-toast{color:#95e6ce;font-weight:650;font-size:13px;min-height:18px;transition:opacity .15s}#district-goal{display:block;color:#c7c9a0}
 
 .track{position:relative}.track i{position:absolute;inset:0 auto 0 0}#earned-progress{background:#91ddc5;opacity:.3}#progress{z-index:1}
+
+#streak { color: #ffdc76; font-size: 12px; margin-top: 8px; }
+#streak[hidden] { display:none; }
+#streak > span { display:block; height:3px; background:#ffffff20; margin-top:4px; border-radius:3px; overflow:hidden; }
+#streak-time { display:block; height:100%; background:#ffca59; transition:width .1s linear; }

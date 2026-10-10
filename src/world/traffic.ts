@@ -128,14 +128,20 @@ export function updateTraffic(
       const m = o.motion;
       m.laneCenter ??= o.position.z;
       const phase = time * 2.5 + Number(o.id.split("-").at(-1)) * 1.37;
-      const targetX = (m.min + m.max) / 2 + Math.sin(phase * 0.63) * 0.42;
-      const targetZ = m.laneCenter + Math.sin(phase * 1.07) * 0.28;
+      const range = (m.max - m.min) / 2;
+      const targetX = (m.min + m.max) / 2 + Math.sin(phase * 0.63) * range;
+      const targetZ = m.laneCenter + Math.sin(phase * 1.07) * range * 0.65;
       const dx = targetX - o.position.x,
         dz = targetZ - o.position.z,
         distance = Math.hypot(dx, dz);
       const speed =
-        0.13 * (hole && o.position.distanceTo(hole.position) < 0.5 ? 2 : 1);
-      if (distance > 0.001) {
+        m.speed *
+        (hole &&
+        o.radius <= hole.radius * 0.85 &&
+        o.position.distanceTo(hole.position) < o.radius * 12
+          ? 2
+          : 1);
+      if (distance > Math.min(0.001, o.radius * 0.05)) {
         const step = Math.min(distance, speed * dt);
         o.position.x += (dx / distance) * step;
         o.position.z += (dz / distance) * step;

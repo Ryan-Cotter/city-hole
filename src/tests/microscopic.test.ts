@@ -18,7 +18,9 @@ describe("microscopic opening and permanent obstacles", () => {
     for (const type of types) {
       const items = s.level.objects.filter((o) => o.type === type);
       expect(items.length).toBeGreaterThanOrEqual(4);
-      expect(new Set(items.map((o) => o.design)).size).toBe(4);
+      expect(new Set(items.map((o) => o.design)).size).toBeGreaterThanOrEqual(
+        4,
+      );
       expect(createObjectVisual(items[0]).children.length).toBeGreaterThan(0);
     }
     const bug = s.level.objects.find((o) => o.critter)!;
@@ -130,7 +132,9 @@ describe("crosswalks, animal proportions and block pacing", () => {
     );
     const s = freshState(),
       o = s.level.objects.find((o) => o.type === "cityBlock")!;
-    expect(createObjectVisual(o).children.length).toBeGreaterThan(100);
+    let parts = 0;
+    createObjectVisual(o).traverse(() => parts++);
+    expect(parts).toBeGreaterThan(100);
   });
 });
 
