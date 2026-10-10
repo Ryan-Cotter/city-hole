@@ -9,8 +9,10 @@ export const createHole = (): Hole => ({
   mass: 0,
   level: 1,
 });
+export const movementLimit = (radius: number, bounds: number) =>
+  Math.max(0, bounds - radius * 0.7);
 export function clampHole(h: Hole, bounds: number) {
-  const limit = Math.max(0, bounds - h.radius);
+  const limit = movementLimit(h.radius, bounds);
   for (const axis of ["x", "z"] as const) {
     const old = h.position[axis];
     h.position[axis] = Math.max(-limit, Math.min(limit, old));
@@ -24,15 +26,24 @@ export function moveHole(
   dt: number,
   bounds: number,
 ) {
-  const desired = new Vector3();
-  if (input.target && input.hold.active !== null) {
-    desired.subVectors(input.target, h.position);
-    const distance = desired.length();
-    if (distance > config.mouseStopDistance)
-      desired.normalize().multiplyScalar(config.moveSpeed);
-    else h.velocity.set(0, 0, 0);
+  moveToward(h, input.hold.active !== null ? input.target : null, dt, bounds);
+}
+export function moveToward(
+  h: Hole,
+  target: Vector3 | null,
+  dt: number,
+  bounds: number,
+) {
+  h.velocity.set(0, 0, 0);
+  if (target) {
+    const delta = target.clone().sub(h.position),
+      distance = delta.length();
+    if (distance > Math.min(config.mouseStopDistance, h.radius * 0.3))
+      h.velocity
+        .copy(delta)
+        .normalize()
+        .multiplyScalar(Math.min(config.moveSpeed, distance / dt));
   }
-  h.velocity.copy(desired);
   h.position.addScaledVector(h.velocity, dt);
   clampHole(h, bounds);
 }

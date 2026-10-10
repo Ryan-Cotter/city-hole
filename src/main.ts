@@ -8,7 +8,11 @@ try {
   console.error(error);
 }
 
-if (import.meta.env.PROD && "serviceWorker" in navigator)
+if (
+  import.meta.env.PROD &&
+  location.protocol !== "file:" &&
+  "serviceWorker" in navigator
+)
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(console.warn);
+    navigator.serviceWorker.register("./sw.js").catch(console.warn);
   });

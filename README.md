@@ -1,16 +1,18 @@
-# City Hole (`city-hole`)
+# City Hole
 
-A playable browser city-swallowing game with TypeScript, Vite, Three.js, and custom physics. Explore a 200×200 city with 100 compact blocks and 15,117 objects, moving cars, walking pedestrians, parks, street furniture, and skyscrapers.
+An original low-poly city swallowing game built with TypeScript, Vite, Three.js and custom physics. The seeded 120 × 120 map has 36 blocks across residential, commercial, industrial, downtown and park districts. Start with bottlecaps, work through 27 size tiers, and eventually swallow skyscrapers.
 
-## Run
+## Startup
 
-Use Node.js 22.12+ (Capacitor requires Node 22 or newer).
+Use Node.js 22.12 or newer.
 
 ```sh
 cd /home/swarm/Projects/Videogames/hole-city-game
-npm install
+npm ci
 npm run dev
 ```
+
+Vite prints the local game URL. For production verification:
 
 ```sh
 npm test
@@ -18,81 +20,51 @@ npm run build
 npm run preview
 ```
 
-Open the localhost URL printed by Vite. No keys or paid assets are required.
-
 ## Controls
 
-- Click and hold the primary mouse button, or touch and hold the city, to steer toward that location. Move the held pointer to change direction. Hovering and keyboard movement do not move the hole.
-- Release to stop immediately. Cancellation, lost pointer capture and focus loss also stop input.
-- Movement stays at 3.2 world units per second at every size; the cursor remains visible.
-- Use **Menu → Phone preview** to fit a 390 × 844 game screen inside your browser; use **Desktop view** to return. Phones automatically use the responsive layout.
-- Escape or Pause pauses/resumes. Hidden tabs and focus loss pause automatically.
-- Restart creates a fresh run with the same seed.
-- The compact HUD is entirely on the left: score, level/radius, growth progress, remaining objects, pause/restart, and an expandable map. The game UI contains no score-sequence explanation.
+Hold the primary mouse button or a touch to steer toward the pointer. Release to stop. Hovering and keyboard movement do not steer. Speed stays at 3.2 world units per second. Escape/Pause pauses; focus loss also pauses. Restart resets the seeded city. Menu contains self play, a section minimap, and a 390 × 844 phone preview.
 
-## Scoring and growth
+## Progression and world
 
-Every swallowed object contributes its Fibonacci score and mass. There are no category quotas, target highlights, or muted locked objects. Only footprint size and proximity determine whether an object fits. Hole size changes at explicit score thresholds; the HUD shows the next threshold and growth progress.
+The starting hole has radius 0.04 and is confined to a tiny 6-meter plaza. Four concentric sections unlock at levels 8, 13 and 19, expanding to 40, 80 and 120 meters across. The HUD identifies the section, and the minimap zooms to its boundaries. Item-level detail gives way to building and district detail as the hole grows.
 
-| Object             | Points |
-| ------------------ | -----: |
-| Litter             |      1 |
-| Fire hydrant       |      2 |
-| Person             |      3 |
-| Street sign        |      5 |
-| Bench              |      8 |
-| Park tree          |     13 |
-| Car                |     21 |
-| Van                |     34 |
-| Kiosk              |     55 |
-| House              |     89 |
-| Shop               |    144 |
-| Apartment building |    233 |
-| Large building     |    377 |
-| Skyscraper         |    610 |
+Rewards follow ascending Fibonacci values starting 1, 2. Every item contributes independently, including food on tables. Original log₂ pacing has been restored: each initial step costs `ceil(8 × log2(level))` additional points. Stage radii fit the corresponding footprint with a 0.08 margin. After skyscrapers, each step adds 0.70 radius without a cap; logarithmic costs retain the original requirement-to-largest-object-reward ratio, scaled to the expanded size ladder. All balance values live in `src/game/constants.ts`.
 
-The first 14 levels unlock increasing footprint sizes. Thresholds are 0, 15, 45, 100, 200, 400, 800, 1,400, 2,500, 4,000, 6,000, 8,500, 12,000, and 16,000 points.
+Normal capture pulls an object toward the hole and animates it below the ground at full scale. Score and mass are awarded once after completion. Objects five or more tiers below current capacity keep their original static models. Once their entire footprint is inside the circle, they disappear and award their rewards immediately. They remain visible until then. Completed records and models leave the active city, motion lists and spatial index. Victory waits for all objects to complete.
 
-After skyscrapers, growth has no level or radius cap. For extra level index `n` starting at zero, the next incremental points requirement is:
+Small piles cluster around medium fixtures and dumpsters. Each block has a small crowd, outdoor restaurant tables with separately scored food, patio covers and animals. Manhole covers and dividers sit on streets. People flee when swallowable; animals run 25% faster near the hole; cars swerve within their assigned lanes. Vehicles follow signals and queue spacing. Building façades use brick, concrete, stone and muted glass colors, with contrasting windows and roofs. Trees occupy parks; vehicles stay on streets or curb parking.
 
-```text
-ceil(10,000 × (1 + log2(n + 2)))
+The hole can overhang an edge by 30% of its radius to reach corner objects. Its outline smoothly compresses against section/map edges instead of staying rigidly circular.
+
+## Performance
+
+Block and object frustum tests load models only where needed. Unloaded blocks retain lightweight simulation records. Captures query spatial chunks; completed objects use constant-time swap deletion. Only relevant visible or nearby actors move. Older object designs stay recognizable but stop animating. At large sizes, distant blocks become one merged building mesh; approaching or swallowing them restores individual physics. HUD and minimap updates are throttled.
+
+Self play uses normal movement and rewards. It groups eligible objects, follows clear paths directly, and runs bounded A* around oversized buildings when needed. Valid routes persist across frames rather than being rebuilt on a timer. Pointer input takes over immediately. Planning is bounded and can retry an inaccessible group.
+
+WebGL is preferred. The Canvas fallback supports shaded geometry, progressive ground clipping and hole deformation, but remains slower and can show painter-order artifacts. Real-device GPU performance still needs benchmarking.
+
+## Native desktop
+
+```sh
+npm run desktop:start
+npm run desktop:package
 ```
 
-Requirements are cumulative: the first extra level costs 20,000 additional points; subsequent incremental costs increase logarithmically. Every extra level adds 0.7 world units to the radius. The camera smoothly changes zoom with hole radius, starting with a close view and widening as the hole grows. The run ends when every object has completed its fall; finite map content naturally limits the points available in one run.
+The Electron desktop app uses local production assets, hardware acceleration by default, a sandboxed renderer, and no Node access in game code. Packaging emits an unpacked native app in `desktop-release`; on Linux run `desktop-release/linux-unpacked/city-hole`. Build for each target operating system on its appropriate host. The Linux package builds and Electron startup was checked; this environment cannot create a hardware OpenGL context, so native GPU smoothness is not verified. Signed installers, native app icons, macOS notarization and Windows signing remain release work.
 
-## City and rendering
+## Mobile / PWA
 
-The map remains 200×200 units, but block spacing is now 20 units instead of 40. Buildings sit in interior lots with varied colors, orientation, gabled/flat/stepped roofs, contrasting window frames, darker glass, entrances, storefronts, and rooftop details. Trees occur only inside designated parks. Cars and vans drive in right-hand lanes or park beside the curb. Intersection signals alternate green, yellow, and all-red clearance phases; cars stop before crossings, accelerate smoothly, maintain queue spacing, and clear intersections they have already entered. Pedestrians remain on sidewalks, turn around rather than wrap at block ends, and maintain separation from other walkers. Arms swing about shoulder pivots and legs about hip pivots. Signs, hydrants, benches, and litter provide smaller targets. The four small-prop tiers contain eight designs each; the other ten tiers contain four each (72 designs total), while retaining the same footprint threshold and score within the tier. The city includes cans/bottles/bags, hydrants/cones/mailboxes, varied people/signs/park furniture/trees, sedans/hatchbacks/taxis, delivery vans/minibuses/pickups, four kiosk/store/house types, and several larger building and skyscraper silhouettes.
+```sh
+npm run mobile:sync
+npm run mobile:open:android
+npm run mobile:open:ios
+```
 
-Roads, sidewalks, crossings, and park paths are baked into one city texture rendered on a single ground plane. This avoids intersecting thin road meshes and unstable depth ordering.
+Android and iOS Capacitor projects are generated and synced. Android SDK/Android Studio are needed for APK/AAB builds; macOS/Xcode are needed for an iOS archive. The provisional application ID is `com.cityhole.game`. The browser production build includes a manifest, icons and offline cache; deployment requires HTTPS. See `docs/MOBILE_RELEASE.md` for release preparation.
 
-GPU browsers use Three.js WebGLRenderer. Browsers without WebGL use a raster Canvas2D renderer with projected Three.js geometry, depth sorting, backface removal, visibility culling, and ground-plane polygon clipping. The former SVG fallback has been removed. Shared primitive geometry and materials keep allocation low; the HUD refreshes at 10 Hz.
+## Validation and repository
 
-Objects remain full scale while pulled into the hole, then visibly descend. Geometry below ground is clipped progressively, and objects are removed only after their entire fall finishes. Rewards apply exactly once at completion. This is a scripted fall rather than a rigid-body simulation.
+Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, fixed-speed hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, section unlocks, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, section minimap and visible small items.
 
-## Validation
-
-27 tests cover Fibonacci ordering, swallow boundaries, exact-once rewards, mixed-object progression, uncapped logarithmic growth, deterministic city generation, multiple designs per tier, road/park placement, signal phases, stop lines and queue spacing, pedestrian persistence and separation, anchored walking limbs, vehicle windows, building features, full-city completion, fixed-speed hold-to-steer motion and sightline transparency, restart/victory, highlight removal, and progressive clipping. TypeScript checks and the production build pass.
-
-Browser smoke checks cover the production city, stable roads, mouse swallowing, moving cars and pedestrians, compact left HUD, pause/resume, expandable map, and visible cursor. The final phone-preview raster smoke test sampled 37–38 FPS after static-geometry caching; comprehensive real-device benchmarking has not been performed. WebGL visual validation remains unperformed because the available verification browser disables WebGL.
-
-## Reference and limitations
-
-The design comparison uses [Hole.io's official mobile listing](https://play.google.com/store/apps/details?id=io.voodoo.holeio), particularly its small-object-to-skyscraper progression, glide controls, and vivid city presentation. City Hole uses original procedural geometry and adds the requested Fibonacci scores and logarithmic post-skyscraper growth.
-
-Traffic obeys the implemented lane, signal, stop-line, clearance, and queue-spacing rules. Vehicles still take straight routes and wrap at city edges; intersection turning and lane changes are future work. Pedestrians walk persistent sidewalk routes rather than crossing roads. The raster renderer uses object-level painter ordering, so unusual overlap between tall objects can still show occlusion artifacts. No multiplayer, sound, saved leaderboard, or physical building destruction yet. Typography uses local system fonts.
-
-## Dense city and visibility
-
-Each block contains three times its previous object count and a complete 14-tier size ladder, including a skyscraper. The map remains 200 × 200 with 100 blocks. Mixed-use lots contain compact buildings, pocket parks, sidewalk furniture and pedestrians; cars and vans remain on streets or curb parking. Tall buildings preserve their capture tier while using compact lot widths so the dense layout fits.
-
-Buildings obstructing the camera-to-hole sightline become 50% transparent, then return to full opacity when clear. Shared materials are preserved. The software renderer composites a complete object before fading it.
-
-See [the city catalog](docs/CITY_OBJECTS.md) for implemented designs and further common city objects, and [mobile release preparation](docs/MOBILE_RELEASE.md) for native startup commands and remaining launch work.
-
-## GitHub
-
-The local repository is initialized on `main`, with package name `city-hole` and a GitHub Actions validation workflow. Repository creation requires a signed-in GitHub browser session because the connected GitHub tools expose repository content operations but not repository creation. No GitHub remote is claimed until it is created and verified.
-
-Small props (litter, compact fixtures, signs and sidewalk furniture) are independently tripled relative to the previous dense city, with eight designs in each tier. Placement rejects building footprints, existing props and pedestrian corridors. The mobile HUD shows score, level, growth, pause and a compact menu; supporting controls are tucked into that menu. Only houses, shops, buildings, large buildings and skyscrapers fade on obstruction. Vehicles, people, trees, kiosks and street props stay opaque.
+The local Git project is named `city-hole`. GitHub publication remains pending authenticated repository creation; no remote repository or public deployment has been claimed. See `docs/CITY_OBJECTS.md` for the object catalog and `docs/GAME_DESIGN.md` for implementation details.

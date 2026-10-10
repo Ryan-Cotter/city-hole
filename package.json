@@ -12,7 +12,9 @@
     "mobile:ios": "npm run build && cap add ios",
     "mobile:sync": "npm run build && cap sync",
     "mobile:open:android": "cap open android",
-    "mobile:open:ios": "cap open ios"
+    "mobile:open:ios": "cap open ios",
+    "desktop:start": "npm run build && electron .",
+    "desktop:package": "npm run build && electron-builder --dir"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
@@ -23,6 +25,8 @@
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
     "@types/three": "^0.180.0",
+    "electron": "^44.7.0",
+    "electron-builder": "^26.5.0",
     "typescript": "^5.9.3",
     "vite": "^7.1.9",
     "vitest": "^4.1.11"
@@ -30,9 +34,29 @@
   "overrides": {
     "xcode": {
       "uuid": "^11.1.1"
-    }
+    },
+    "@electron/get": "^5.1.0"
   },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "main": "desktop/main.cjs",
+  "description": "A stylized city swallowing game",
+  "author": "City Hole",
+  "build": {
+    "appId": "com.cityhole.game",
+    "productName": "City Hole",
+    "directories": {
+      "output": "desktop-release"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "category": "Game"
+    },
+    "npmRebuild": false
   }
 }

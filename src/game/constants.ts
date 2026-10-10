@@ -1,5 +1,5 @@
 export const config = {
-  baseRadius: 0.25,
+  baseRadius: 0.04,
   swallowFactor: 0.85,
   moveSpeed: 3.2,
   velocityResponse: 8,
@@ -10,103 +10,191 @@ export const config = {
   maxSimulationStepsPerFrame: 15,
 };
 export const cityConfig = {
-  bounds: 100,
+  bounds: 60,
   blockSize: 20,
   roadWidth: 5,
   blockDensityMultiplier: 3,
   smallItemMultiplier: 3,
 };
 export const categories = {
+  bottlecap: {
+    radius: 0.025,
+    height: 0.02,
+    mass: 1,
+    scoreValue: 1,
+    label: "bottlecaps",
+  },
+  dice: { radius: 0.04, height: 0.055, mass: 2, scoreValue: 2, label: "dice" },
+  pebble: {
+    radius: 0.055,
+    height: 0.045,
+    mass: 3,
+    scoreValue: 3,
+    label: "pebbles",
+  },
+  coin: { radius: 0.07, height: 0.025, mass: 5, scoreValue: 5, label: "coins" },
+  toy: {
+    radius: 0.095,
+    height: 0.12,
+    mass: 8,
+    scoreValue: 8,
+    label: "small toys",
+  },
+  snack: {
+    radius: 0.12,
+    height: 0.14,
+    mass: 13,
+    scoreValue: 13,
+    label: "food",
+  },
+  mouse: { radius: 0.14, height: 0.1, mass: 21, scoreValue: 21, label: "mice" },
   litter: {
     radius: 0.16,
     height: 0.18,
-    mass: 1,
-    scoreValue: 1,
+    mass: 34,
+    scoreValue: 34,
     label: "litter",
+  },
+  manhole: {
+    radius: 0.2,
+    height: 0.03,
+    mass: 55,
+    scoreValue: 55,
+    label: "manhole covers",
   },
   hydrant: {
     radius: 0.24,
     height: 0.65,
-    mass: 2,
-    scoreValue: 2,
+    mass: 89,
+    scoreValue: 89,
     label: "fire hydrants",
   },
   person: {
     radius: 0.32,
     height: 1.25,
-    mass: 3,
-    scoreValue: 3,
+    mass: 144,
+    scoreValue: 144,
     label: "people",
+  },
+  cat: {
+    radius: 0.38,
+    height: 0.45,
+    mass: 233,
+    scoreValue: 233,
+    label: "cats",
   },
   sign: {
     radius: 0.42,
     height: 1.65,
-    mass: 5,
-    scoreValue: 5,
+    mass: 377,
+    scoreValue: 377,
     label: "street signs",
   },
+  dog: { radius: 0.48, height: 0.5, mass: 610, scoreValue: 610, label: "dogs" },
   bench: {
     radius: 0.55,
     height: 0.7,
-    mass: 8,
-    scoreValue: 8,
+    mass: 987,
+    scoreValue: 987,
     label: "benches",
+  },
+  table: {
+    radius: 0.65,
+    height: 0.75,
+    mass: 1597,
+    scoreValue: 1597,
+    label: "outdoor tables",
   },
   tree: {
     radius: 0.72,
     height: 2.8,
-    mass: 13,
-    scoreValue: 13,
+    mass: 2584,
+    scoreValue: 2584,
     label: "park trees",
   },
-  car: { radius: 0.95, height: 0.85, mass: 21, scoreValue: 21, label: "cars" },
-  van: { radius: 1.2, height: 1.25, mass: 34, scoreValue: 34, label: "vans" },
+  barrier: {
+    radius: 0.82,
+    height: 0.6,
+    mass: 4181,
+    scoreValue: 4181,
+    label: "street barriers",
+  },
+  car: {
+    radius: 0.95,
+    height: 0.85,
+    mass: 6765,
+    scoreValue: 6765,
+    label: "cars",
+  },
+  van: {
+    radius: 1.2,
+    height: 1.25,
+    mass: 10946,
+    scoreValue: 10946,
+    label: "vans",
+  },
+  patio: {
+    radius: 1.35,
+    height: 2.4,
+    mass: 17711,
+    scoreValue: 17711,
+    label: "patio covers",
+  },
   kiosk: {
     radius: 1.5,
     height: 1.8,
-    mass: 55,
-    scoreValue: 55,
+    mass: 28657,
+    scoreValue: 28657,
     label: "kiosks",
   },
   house: {
     radius: 1.85,
     height: 2.6,
-    mass: 89,
-    scoreValue: 89,
+    mass: 46368,
+    scoreValue: 46368,
     label: "houses",
   },
   shop: {
     radius: 2.3,
     height: 3.2,
-    mass: 144,
-    scoreValue: 144,
+    mass: 75025,
+    scoreValue: 75025,
     label: "shops",
   },
   building: {
     radius: 2.85,
     height: 5,
-    mass: 233,
-    scoreValue: 233,
+    mass: 121393,
+    scoreValue: 121393,
     label: "apartment buildings",
   },
   largeBuilding: {
     radius: 3.5,
     height: 7.5,
-    mass: 377,
-    scoreValue: 377,
+    mass: 196418,
+    scoreValue: 196418,
     label: "large buildings",
   },
   skyscraper: {
     radius: 4.4,
     height: 15,
-    mass: 610,
-    scoreValue: 610,
+    mass: 317811,
+    scoreValue: 317811,
     label: "skyscrapers",
   },
 };
-const thresholds = [
-  0, 15, 45, 100, 200, 400, 800, 1400, 2500, 4000, 6000, 8500, 12000, 16000,
-];
+export const progressionConfig = {
+  baseLevelCost: 8,
+  postCityCost: categories.skyscraper.scoreValue * (1000 / 610),
+  extraRadiusStep: 0.7,
+};
+// Every incremental growth cost is logarithmic in its level index, with base 2.
+const thresholds = [0];
+for (let i = 1; i < Object.keys(categories).length; i++)
+  thresholds.push(
+    thresholds[i - 1] +
+      Math.ceil(progressionConfig.baseLevelCost * Math.log2(i + 1)),
+  );
 export const stages = (
   Object.keys(categories) as (keyof typeof categories)[]
 ).map((type, index) => ({
@@ -121,6 +209,24 @@ export const stages = (
 }));
 
 export const objectDesigns = {
+  bottlecap: ["soda cap", "water cap", "beer cap", "juice cap"],
+  dice: ["white die", "red die", "blue die", "green die"],
+  pebble: ["granite pebble", "slate chip", "sandstone", "round stone"],
+  coin: ["copper coin", "silver coin", "gold coin", "token"],
+  toy: ["toy block", "marble", "toy car", "rubber ball"],
+  snack: ["burger", "fruit", "cake", "drink"],
+  mouse: ["gray mouse", "brown mouse", "field mouse", "white mouse"],
+  manhole: ["round cover", "drain", "utility cover", "sewer grate"],
+  cat: ["ginger cat", "gray cat", "black cat", "white cat"],
+  dog: ["terrier", "retriever", "shepherd", "spaniel"],
+  table: ["cafe table", "picnic setting", "bistro table", "terrace table"],
+  barrier: [
+    "road barrier",
+    "street divider",
+    "construction fence",
+    "bollard row",
+  ],
+  patio: ["striped awning", "cafe umbrella", "pergola", "patio canopy"],
   litter: [
     "can",
     "bottle",
@@ -161,6 +267,7 @@ export const objectDesigns = {
     "scooter",
     "vending machine",
     "parcel locker",
+    "dumpster",
   ],
   tree: ["pine", "broadleaf", "palm", "flower planter"],
   car: ["sedan", "hatchback", "taxi", "police car"],
@@ -177,3 +284,18 @@ export const objectDesigns = {
     "observation tower",
   ],
 } as const;
+
+export const selfPlayConfig = {
+  cellSize: 1.25,
+  clusterSize: 4,
+  replanSeconds: 1.25,
+  candidateGroups: 4,
+  maxSearchNodes: 2000,
+};
+
+export const cameraConfig = {
+  baseView: 0.7,
+  radiusScale: 1.3,
+  movingZoom: 1.25,
+  smoothing: 4,
+};

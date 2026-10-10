@@ -1,0 +1,272 @@
+import {
+  activeBounds,
+  isUnlocked,
+  lowestDetailTier,
+  tierOf,
+} from "../game/sections";
+import { movementLimit } from "../player/Hole";
+import { Vector3 } from "three";
+import type { GameState, SwallowableObject } from "../game/GameState";
+import { config, selfPlayConfig } from "../game/constants";
+import { isBuildingType } from "../render/occlusion";
+
+export interface Obstacle {
+  x: number;
+  z: number;
+  half: number;
+}
+// A* on an eight-neighbor grid. No diagonal cuts through occupied corners.
+export function findPath(
+  start: Vector3,
+  end: Vector3,
+  bounds: number,
+  obstacles: Obstacle[],
+  cell = selfPlayConfig.cellSize,
+): Vector3[] {
+  const size = Math.floor((bounds * 2) / cell) + 1;
+  const coord = (n: number) =>
+    Math.max(0, Math.min(size - 1, Math.round((n + bounds) / cell)));
+  const key = (x: number, z: number) => z * size + x;
+  const sx = coord(start.x),
+    sz = coord(start.z),
+    ex = coord(end.x),
+    ez = coord(end.z);
+  const source = key(sx, sz),
+    goal = key(ex, ez);
+  const blocked = new Set<number>();
+  for (const o of obstacles)
+    for (let z = coord(o.z - o.half); z <= coord(o.z + o.half); z++)
+      for (let x = coord(o.x - o.half); x <= coord(o.x + o.half); x++) {
+        const wx = x * cell - bounds,
+          wz = z * cell - bounds;
+        if (
+          Math.abs(wx - o.x) <= o.half + cell * 0.35 &&
+          Math.abs(wz - o.z) <= o.half + cell * 0.35
+        )
+          blocked.add(key(x, z));
+      }
+  blocked.delete(source);
+  const goalIsolated =
+    blocked.has(goal) &&
+    [-1, 0, 1].every((dz) =>
+      [-1, 0, 1].every(
+        (dx) => (!dx && !dz) || blocked.has(key(ex + dx, ez + dz)),
+      ),
+    );
+  if (goalIsolated) return [];
+  blocked.delete(goal);
+  const costs = new Map([[source, 0]]),
+    parent = new Map<number, number>();
+  const queue: { id: number; score: number }[] = [];
+  const push = (entry: { id: number; score: number }) => {
+    queue.push(entry);
+    let i = queue.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (queue[p].score <= entry.score) break;
+      queue[i] = queue[p];
+      i = p;
+    }
+    queue[i] = entry;
+  };
+  const pop = () => {
+    const first = queue[0],
+      last = queue.pop()!;
+    if (queue.length) {
+      let i = 0;
+      while (i * 2 + 1 < queue.length) {
+        let c = i * 2 + 1;
+        if (c + 1 < queue.length && queue[c + 1].score < queue[c].score) c++;
+        if (queue[c].score >= last.score) break;
+        queue[i] = queue[c];
+        i = c;
+      }
+      queue[i] = last;
+    }
+    return first;
+  };
+  push({ id: source, score: 0 });
+  const closed = new Set<number>();
+  while (queue.length && closed.size < selfPlayConfig.maxSearchNodes) {
+    const current = pop().id;
+    if (closed.has(current)) continue;
+    if (current === goal) {
+      const path: Vector3[] = [end.clone()];
+      let id = goal;
+      while (id !== source) {
+        path.push(
+          new Vector3(
+            (id % size) * cell - bounds,
+            0,
+            Math.floor(id / size) * cell - bounds,
+          ),
+        );
+        id = parent.get(id)!;
+      }
+      return path.reverse();
+    }
+    closed.add(current);
+    const x = current % size,
+      z = Math.floor(current / size);
+    for (let dz = -1; dz <= 1; dz++)
+      for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dz) continue;
+        const nx = x + dx,
+          nz = z + dz;
+        if (nx < 0 || nz < 0 || nx >= size || nz >= size) continue;
+        const next = key(nx, nz);
+        if (
+          blocked.has(next) ||
+          closed.has(next) ||
+          (dx &&
+            dz &&
+            (blocked.has(key(x + dx, z)) || blocked.has(key(x, z + dz))))
+        )
+          continue;
+        const cost = costs.get(current)! + Math.hypot(dx, dz);
+        if (cost >= (costs.get(next) ?? Infinity)) continue;
+        parent.set(next, current);
+        costs.set(next, cost);
+        push({ id: next, score: cost + Math.hypot(nx - ex, nz - ez) });
+      }
+  }
+  return [];
+}
+export function edibleClusters(state: GameState) {
+  const bins = new Map<
+    string,
+    { objects: SwallowableObject[]; points: number; center: Vector3 }
+  >();
+  for (const o of state.level.objects) {
+    if (
+      o.state !== "idle" ||
+      !isUnlocked(state, o) ||
+      o.radius > state.hole.radius * config.swallowFactor
+    )
+      continue;
+    const key = `${Math.floor(o.position.x / selfPlayConfig.clusterSize)},${Math.floor(o.position.z / selfPlayConfig.clusterSize)}`;
+    let group = bins.get(key);
+    if (!group) {
+      group = { objects: [], points: 0, center: new Vector3() };
+      bins.set(key, group);
+    }
+    group.objects.push(o);
+    group.points += o.scoreValue;
+    group.center.add(o.position);
+  }
+  const minimum = lowestDetailTier(state);
+  const relevant = [...bins.values()].filter((g) =>
+    g.objects.some((o) => tierOf(o) >= minimum),
+  );
+  return (relevant.length ? relevant : [...bins.values()])
+    .map((group) => {
+      group.center.multiplyScalar(1 / group.objects.length);
+      // Favor quick nearby harvests, weighted toward currently valuable size tiers.
+      const distance = group.center.distanceTo(state.hole.position);
+      return { ...group, utility: group.points / Math.pow(distance + 3, 1.35) };
+    })
+    .sort((a, b) => b.utility - a.utility);
+}
+export function segmentIntersectsBox(
+  a: Vector3,
+  b: Vector3,
+  obstacle: Obstacle,
+) {
+  let entry = 0,
+    exit = 1;
+  for (const axis of ["x", "z"] as const) {
+    const delta = b[axis] - a[axis],
+      low = obstacle[axis] - obstacle.half,
+      high = obstacle[axis] + obstacle.half;
+    if (Math.abs(delta) < 1e-8) {
+      if (a[axis] < low || a[axis] > high) return false;
+    } else {
+      const t1 = (low - a[axis]) / delta,
+        t2 = (high - a[axis]) / delta;
+      entry = Math.max(entry, Math.min(t1, t2));
+      exit = Math.min(exit, Math.max(t1, t2));
+      if (entry > exit) return false;
+    }
+  }
+  return exit > 0 && entry < 1;
+}
+export class SelfPlayer {
+  enabled = false;
+  path: Vector3[] = [];
+  goal: SwallowableObject | null = null;
+  private countdown = 0;
+  private level = 0;
+  reset() {
+    this.path = [];
+    this.goal = null;
+    this.countdown = 0;
+    this.level = 0;
+  }
+  target(state: GameState, dt: number): Vector3 | null {
+    if (!this.enabled) return null;
+    this.countdown -= dt;
+    if (this.goal && this.goal.state !== "idle") {
+      this.path = [];
+      this.goal = null;
+      this.countdown = 0;
+    }
+    if (
+      (!this.goal && this.countdown <= 0) ||
+      this.level !== state.hole.level
+    ) {
+      this.countdown = selfPlayConfig.replanSeconds;
+      this.level = state.hole.level;
+      const obstacles = state.level.objects
+        .filter(
+          (o) =>
+            o.state === "idle" &&
+            isUnlocked(state, o) &&
+            isBuildingType(o.type) &&
+            o.radius > state.hole.radius * config.swallowFactor,
+        )
+        .map((o) => ({
+          x: o.position.x,
+          z: o.position.z,
+          half: Math.min(3.2, o.radius * Math.SQRT2 * 0.94) / 2 + 0.25,
+        }));
+      const limit = movementLimit(state.hole.radius, activeBounds(state));
+      this.path = [];
+      this.goal = null;
+      for (const group of edibleClusters(state).slice(
+        0,
+        selfPlayConfig.candidateGroups,
+      )) {
+        const targets = group.objects.sort(
+          (a, b) =>
+            a.position.distanceToSquared(state.hole.position) -
+            b.position.distanceToSquared(state.hole.position),
+        );
+        for (const target of targets.slice(0, 3)) {
+          const destination = target.position.clone();
+          destination.x = Math.max(-limit, Math.min(limit, destination.x));
+          destination.z = Math.max(-limit, Math.min(limit, destination.z));
+          const clear = !obstacles.some((o) =>
+            segmentIntersectsBox(state.hole.position, destination, o),
+          );
+          const route = clear
+            ? [destination]
+            : findPath(state.hole.position, destination, limit, obstacles);
+          if (route.length) {
+            this.goal = target;
+            this.path = route;
+            break;
+          }
+        }
+        if (this.goal) break;
+      }
+    }
+    while (
+      this.path.length > 1 &&
+      this.path[0].distanceTo(state.hole.position) < 0.22
+    )
+      this.path.shift();
+    if (this.path.length === 1 && this.goal)
+      this.path[0].copy(this.goal.position);
+    return this.path[0] ?? null;
+  }
+}

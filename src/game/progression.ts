@@ -1,7 +1,7 @@
-import { stages } from "./constants";
+import { stages, progressionConfig } from "./constants";
 // After skyscrapers, incremental costs rise logarithmically without a size cap.
 export const extraLevelCost = (extraIndex: number) =>
-  Math.ceil(10000 * (1 + Math.log2(extraIndex + 2)));
+  Math.ceil(progressionConfig.postCityCost * (1 + Math.log2(extraIndex + 2)));
 export function growthForPoints(points: number) {
   let level = 1;
   while (level < stages.length && points >= stages[level].points) level++;
@@ -20,7 +20,7 @@ export function growthForPoints(points: number) {
   }
   return {
     level: stages.length + extra,
-    radius: stages.at(-1)!.radius + extra * 0.7,
+    radius: stages.at(-1)!.radius + extra * progressionConfig.extraRadiusStep,
     threshold,
     nextThreshold: threshold + extraLevelCost(extra),
   };

@@ -11,7 +11,7 @@ export function advanceFall(o: SwallowableObject, dt: number) {
     u,
     x: o.fall.start.x + (o.fall.capture.x - o.fall.start.x) * pull,
     z: o.fall.start.z + (o.fall.capture.z - o.fall.start.z) * pull,
-    y: -(o.height + 3) * drop * drop,
+    y: o.fall.start.y - (o.height + o.fall.start.y + 3) * drop * drop,
     scale: 1,
   };
 }

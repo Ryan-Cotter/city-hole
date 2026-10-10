@@ -3,6 +3,7 @@
 ## Implemented
 
 - Pointer and touch hold-to-steer controls; release, cancellation, lost pointer capture and focus loss stop steering.
+- Self-play pilot in Menu for normal-speed progression testing, with manual takeover.
 - Fixed movement speed, visible cursor, touch-action suppression and automatic pause on hidden tabs.
 - Compact left HUD with supporting controls inside Menu, safe-area spacing, 44 px controls and a 390 × 844 phone preview in desktop browsers.
 - Installable web manifest, original 192/512 px icons and production-only offline service worker.
@@ -35,3 +36,5 @@ Native projects have been generated and synchronized, but no Android APK/AAB or 
 Before store submission: finalize branding and native icons/splash screens, confirm app ID, create signing credentials, configure developer accounts, capture device screenshots, write descriptions and support/privacy pages, complete the stores' content-rating and data disclosures, and perform platform testing. No store submission, public hosting or monetization has been performed.
 
 [Android guide](https://capacitorjs.com/docs/android) · [iOS guide](https://capacitorjs.com/docs/ios)
+
+The game now streams visible blocks, removes completed records, and uses a 120-meter map with staged unlocks. Native desktop startup and packaging are also available; see the root README. These reduce workload but do not replace hardware frame-rate, memory and battery testing.

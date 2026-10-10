@@ -16,6 +16,8 @@ export interface Motion {
   max: number;
   currentSpeed?: number;
   intersection?: number | null;
+  baseSpeed?: number;
+  laneCenter?: number;
 }
 export interface SwallowableObject {
   id: string;
@@ -26,6 +28,7 @@ export interface SwallowableObject {
   mass: number;
   scoreValue: number;
   orientation: number;
+  supportId?: string;
   signalAxis?: "x" | "z";
   variant: number;
   design: string;
@@ -33,7 +36,10 @@ export interface SwallowableObject {
   state: "idle" | "falling" | "swallowed";
   fall: null | { elapsed: number; start: Vector3; capture: Vector3 };
 }
+export type District =
+  "residential" | "commercial" | "downtown" | "industrial" | "park";
 export interface Block {
+  district: District;
   x: number;
   z: number;
   park: boolean;
@@ -42,6 +48,7 @@ export interface Level {
   seed: number;
   bounds: number;
   objects: SwallowableObject[];
+  objectSlots: Map<string, number>;
   blocks: Block[];
   totalMass: number;
   totalScore: number;

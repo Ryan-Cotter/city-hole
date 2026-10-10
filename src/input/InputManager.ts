@@ -26,11 +26,21 @@ export class InputManager {
     });
     window.addEventListener("blur", () => this.clear());
     // Release can occur over the HUD or outside the captured canvas.
-    window.addEventListener("pointerup", (e) => { if (e.pointerId === this.hold.active) this.clear(); });
-    window.addEventListener("pointercancel", (e) => { if (e.pointerId === this.hold.active) this.clear(); });
-    window.addEventListener("mouseup", (e) => { if (e.button === 0) this.clear(); });
-    window.addEventListener("pointerdown", (e) => { if (e.target !== canvas) this.clear(); });
-    window.addEventListener("pointermove", (e) => { if (e.pointerType === "mouse" && !(e.buttons & 1)) this.clear(); });
+    window.addEventListener("pointerup", (e) => {
+      if (e.pointerId === this.hold.active) this.clear();
+    });
+    window.addEventListener("pointercancel", (e) => {
+      if (e.pointerId === this.hold.active) this.clear();
+    });
+    window.addEventListener("mouseup", (e) => {
+      if (e.button === 0) this.clear();
+    });
+    window.addEventListener("pointerdown", (e) => {
+      if (e.target !== canvas) this.clear();
+    });
+    window.addEventListener("pointermove", (e) => {
+      if (e.pointerType === "mouse" && !(e.buttons & 1)) this.clear();
+    });
 
     const point = (e: PointerEvent) => {
       const r = canvas.getBoundingClientRect();

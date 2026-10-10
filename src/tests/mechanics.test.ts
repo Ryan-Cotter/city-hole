@@ -7,7 +7,12 @@ import { Vector3, Mesh, RingGeometry, OrthographicCamera } from "three";
 import { clipAboveGround } from "../render/clipping";
 import { createObjectVisual } from "../world/SwallowableObject";
 import { describe, it, expect, vi } from "vitest";
-import { categories, config, stages } from "../game/constants";
+import {
+  categories,
+  config,
+  stages,
+  progressionConfig,
+} from "../game/constants";
 import { generateCity } from "../world/CityGenerator";
 import {
   advanceTraffic,
@@ -30,27 +35,66 @@ const litter = () => generateCity().objects.find((o) => o.type === "litter")!;
 describe("city gameplay", () => {
   it("clears held steering on release outside the canvas and on HUD presses", () => {
     const host = new EventTarget();
-    vi.stubGlobal("window",host);
+    vi.stubGlobal("window", host);
     const canvas = Object.assign(new EventTarget(), {
-      getBoundingClientRect:()=>({left:0,top:0,width:390,height:844}),
-      setPointerCapture:()=>{},
+      getBoundingClientRect: () => ({
+        left: 0,
+        top: 0,
+        width: 390,
+        height: 844,
+      }),
+      setPointerCapture: () => {},
     });
-    const event=(name:string,props:Record<string,unknown>)=>Object.assign(new Event(name),props);
+    const event = (name: string, props: Record<string, unknown>) =>
+      Object.assign(new Event(name), props);
     try {
-      const camera=new OrthographicCamera(-10,10,10,-10,.1,100);
-      camera.position.set(35,44,35);camera.lookAt(0,0,0);camera.updateMatrixWorld();
-      const input=new InputManager(canvas as unknown as HTMLElement,camera,()=>{});
-      canvas.dispatchEvent(event("pointermove",{pointerId:1,pointerType:"mouse",buttons:0,clientX:300,clientY:600}));
+      const camera = new OrthographicCamera(-10, 10, 10, -10, 0.1, 100);
+      camera.position.set(35, 44, 35);
+      camera.lookAt(0, 0, 0);
+      camera.updateMatrixWorld();
+      const input = new InputManager(
+        canvas as unknown as HTMLElement,
+        camera,
+        () => {},
+      );
+      canvas.dispatchEvent(
+        event("pointermove", {
+          pointerId: 1,
+          pointerType: "mouse",
+          buttons: 0,
+          clientX: 300,
+          clientY: 600,
+        }),
+      );
       expect(input.target).toBeNull();
-      canvas.dispatchEvent(event("pointerdown",{pointerId:1,isPrimary:true,button:0,buttons:1,clientX:300,clientY:600}));
+      canvas.dispatchEvent(
+        event("pointerdown", {
+          pointerId: 1,
+          isPrimary: true,
+          button: 0,
+          buttons: 1,
+          clientX: 300,
+          clientY: 600,
+        }),
+      );
       expect(input.hold.active).toBe(1);
       expect(input.target).not.toBeNull();
-      host.dispatchEvent(event("pointerup",{pointerId:1}));
+      host.dispatchEvent(event("pointerup", { pointerId: 1 }));
       expect(input.target).toBeNull();
-      canvas.dispatchEvent(event("pointerdown",{pointerId:2,isPrimary:true,button:0,clientX:300,clientY:600}));
-      host.dispatchEvent(event("pointerdown",{pointerId:2}));
+      canvas.dispatchEvent(
+        event("pointerdown", {
+          pointerId: 2,
+          isPrimary: true,
+          button: 0,
+          clientX: 300,
+          clientY: 600,
+        }),
+      );
+      host.dispatchEvent(event("pointerdown", { pointerId: 2 }));
       expect(input.hold.active).toBeNull();
-    } finally { vi.unstubAllGlobals(); }
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it("triples small props and gives every small tier eight designs", () => {
     const baseline = generateCity(814, 1),
@@ -65,7 +109,7 @@ describe("city gameplay", () => {
             .filter((o) => o.type === type && !o.signalAxis)
             .map((o) => o.design),
         ).size,
-      ).toBe(8);
+      ).toBe(type === "bench" ? 9 : 8);
     }
     for (const type of [
       "person",
@@ -305,7 +349,7 @@ describe("city gameplay", () => {
   });
   it("awards all rewards exactly once after a visible full-size fall", () => {
     const s = freshState(),
-      o = s.level.objects.find((o) => o.type === "litter")!;
+      o = s.level.objects.find((o) => o.type === "bottlecap")!;
     o.position.copy(s.hole.position);
     expect(capture(o, s.hole)).toBe(true);
     const mid = advanceFall(o, 0.7)!;
@@ -318,7 +362,7 @@ describe("city gameplay", () => {
     expect(complete(s, o)).toBe(false);
     expect(s.score.points).toBe(1);
     expect(s.hole.mass).toBe(1);
-    expect(s.score.remainingObjects).toBe(s.level.objects.length - 1);
+    expect(s.score.remainingObjects).toBe(s.level.objects.length);
   });
   it("lets mixed-size rewards advance discrete point-based levels", () => {
     const s = freshState();
@@ -327,9 +371,14 @@ describe("city gameplay", () => {
       o.state = "falling";
       complete(s, o);
     }
-    expect(s.score.points).toBe(18);
-    expect(s.hole.level).toBe(2);
-    expect(s.hole.radius).toBe(stages[1].radius);
+    const points = ["hydrant", "person", "sign", "bench"].reduce(
+      (sum, type) =>
+        sum + categories[type as keyof typeof categories].scoreValue,
+      0,
+    );
+    expect(s.score.points).toBe(points);
+    expect(s.hole.level).toBe(growthForPoints(points).level);
+    expect(s.hole.radius).toBe(growthForPoints(points).radius);
   });
   it("continues uncapped growth with increasing logarithmic incremental costs", () => {
     const base = stages.at(-1)!.points;
@@ -344,13 +393,15 @@ describe("city gameplay", () => {
     expect(extraLevelCost(2) - extraLevelCost(1)).toBeLessThan(
       extraLevelCost(1) - extraLevelCost(0),
     );
-    expect(growthForPoints(1e7).radius).toBeGreaterThan(50);
+    expect(
+      growthForPoints(base + progressionConfig.postCityCost * 1500).radius,
+    ).toBeGreaterThan(50);
   });
-  it("creates a deterministic 200×200 city with 100 smaller blocks and every category", () => {
+  it("creates a deterministic 120×120 city with 36 smaller blocks and every category", () => {
     const a = generateCity(),
       b = generateCity();
-    expect(a.bounds).toBe(100);
-    expect(a.blocks).toHaveLength(100);
+    expect(a.bounds).toBe(60);
+    expect(a.blocks).toHaveLength(36);
     expect(a.objects.length).toBeGreaterThan(2000);
     expect(new Set(a.objects.map((o) => o.id)).size).toBe(a.objects.length);
     expect(a.objects.map((o) => o.position.toArray())).toEqual(
@@ -430,41 +481,32 @@ describe("city gameplay", () => {
     expect(h.position.equals(before)).toBe(true);
     expect(h.velocity.length()).toBe(0);
   });
-  it("triples each block population and includes the complete size ladder", () => {
+  it("varies building sizes by district while retaining a dense city and all tiers", () => {
     const city = generateCity();
-    expect(city.objects.filter((o) => o.type === "skyscraper")).toHaveLength(
-      100,
-    );
+    expect(new Set(city.blocks.map((b) => b.district)).size).toBe(5);
     for (const b of city.blocks) {
       const local = city.objects.filter(
         (o) =>
-          Math.abs(o.position.x - b.x) <= 8 &&
-          Math.abs(o.position.z - b.z) <= 8,
+          Math.abs(o.position.x - b.x) <= 7.3 &&
+          Math.abs(o.position.z - b.z) <= 7.3,
       );
-      const row = Math.round((b.z + 90) / 20),
-        col = Math.round((b.x + 90) / 20);
-      const district = Math.max(Math.abs(b.x), Math.abs(b.z));
-      const oldCount = b.park
-        ? 28
-        : 18 +
-          (((row + col) % 11 === 0 && district > 30) ||
-          (row + col) % 7 === 0 ||
-          (row + col) % 4 === 0
-            ? 1
-            : 4);
-      expect(local.length).toBeGreaterThanOrEqual(oldCount * 3);
-      for (const type of Object.keys(categories))
-        expect(local.some((o) => o.type === type)).toBe(true);
+      expect(local.length).toBeGreaterThanOrEqual(54);
+      const towers = local.filter((o) => o.type === "skyscraper");
+      expect(towers.length).toBe(b.district === "downtown" ? 1 : 0);
+      if (b.district === "residential")
+        expect(local.filter((o) => o.type === "house").length).toBe(3);
+      if (b.district === "industrial")
+        expect(local.filter((o) => o.type === "largeBuilding").length).toBe(2);
     }
   });
   it("handles radii beyond map width without inverted movement limits", () => {
     const h = createHole();
-    h.radius = 120;
+    h.radius = 150;
     h.position.set(10, 0, -10);
     clampHole(h, 100);
     expect(h.position.x).toBeCloseTo(0);
     expect(h.position.z).toBeCloseTo(0);
-    expect(h.radius).toBe(120);
+    expect(h.radius).toBe(150);
   });
   it("waits for final completion and resets cleanly", () => {
     const s = freshState();

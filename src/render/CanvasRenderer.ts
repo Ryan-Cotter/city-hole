@@ -1,3 +1,4 @@
+import { holeOutline } from "./holeEdge";
 import { clipAboveGround } from "./clipping";
 import {
   Mesh,
@@ -102,6 +103,36 @@ export class CanvasRenderer {
     );
     ctx.drawImage(this.surface, 0, 0);
     ctx.restore();
+    // Ground contact shadows stay subtle and work in the software renderer too.
+    ctx.fillStyle = "#152637";
+    ctx.globalAlpha = 0.13;
+    for (const group of scene.children) {
+      const o = group.userData.object as SwallowableObject | undefined;
+      if (!o || !group.visible || o.state !== "idle" || o.height < 0.6)
+        continue;
+      const radius = Math.min(1.6, o.radius) * 0.85;
+      const center = project(group.position);
+      const edgeX = project(
+        group.position.clone().add(new Vector3(radius, 0, 0)),
+      );
+      const edgeZ = project(
+        group.position.clone().add(new Vector3(0, 0, radius)),
+      );
+      ctx.save();
+      ctx.transform(
+        edgeX.x - center.x,
+        edgeX.y - center.y,
+        edgeZ.x - center.x,
+        edgeZ.y - center.y,
+        center.x,
+        center.y,
+      );
+      ctx.beginPath();
+      ctx.arc(0, 0, 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.globalAlpha = 1;
     const portals: Group[] = [];
     for (const child of scene.children) {
       if (child.name === "hole") {
@@ -110,20 +141,45 @@ export class CanvasRenderer {
       }
     }
     for (const hole of portals) {
-      const center = hole.position.clone();
-      const c = project(center),
-        x = project(center.clone().add(new Vector3(hole.scale.x, 0, 0))),
-        z = project(center.clone().add(new Vector3(0, 0, hole.scale.z)));
-      ctx.save();
-      ctx.transform(x.x - c.x, x.y - c.y, z.x - c.x, z.y - c.y, c.x, c.y);
+      const bound = hole.userData.bounds ?? this.bounds;
       ctx.beginPath();
-      ctx.arc(0, 0, 1, 0, Math.PI * 2);
+      [
+        [-bound, -bound],
+        [bound, -bound],
+        [bound, bound],
+        [-bound, bound],
+      ].forEach(([x, z], i) => {
+        const p = project(new Vector3(x, 0.02, z));
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.strokeStyle = "#c1a26c";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      const outline = holeOutline(
+        hole.position.x,
+        hole.position.z,
+        hole.scale.x,
+        hole.userData.bounds ?? this.bounds,
+      );
+      ctx.beginPath();
+      outline.forEach((point, i) => {
+        const p = project(new Vector3(point.x, 0.012, point.z));
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
       ctx.fillStyle = "#10122b";
       ctx.fill();
-      ctx.lineWidth = 0.045;
+      ctx.lineWidth = Math.max(
+        1,
+        ((hole.scale.x * this.width) /
+          Math.max(1, camera.right - camera.left)) *
+          0.045,
+      );
       ctx.strokeStyle = "#8256f6";
       ctx.stroke();
-      ctx.restore();
     }
     const faces: Face[] = [];
     const light = new Vector3(-0.4, 0.85, 0.3).normalize();
@@ -190,7 +246,13 @@ export class CanvasRenderer {
             screen.every((p) => p.y > this.height)
           )
             continue;
-          const shade = 0.66 + 0.34 * Math.max(0, normal.dot(light));
+          const shade =
+            (0.61 + 0.35 * Math.max(0, normal.dot(light))) *
+            (0.98 +
+              0.04 *
+                Math.abs(
+                  Math.sin(center.x * 37.1 + center.y * 17.3 + center.z * 53.7),
+                ));
           faces.push({
             points: screen,
             depth: center.clone().applyMatrix4(camera.matrixWorldInverse).z,
@@ -231,6 +293,26 @@ export class CanvasRenderer {
         target.closePath();
         target.fillStyle = f.color;
         target.fill();
+        if (f.layer === 0 && n % 7 === 0) {
+          target.save();
+          target.clip();
+          target.globalAlpha = 0.08;
+          target.fillStyle = "#122637";
+          const xs = f.points.map((p) => p.x),
+            ys = f.points.map((p) => p.y);
+          const left = Math.min(...xs),
+            top = Math.min(...ys),
+            w = Math.max(...xs) - left,
+            h = Math.max(...ys) - top;
+          for (let grain = 0; grain < 5; grain++)
+            target.fillRect(
+              left + w * ((grain * 0.37) % 1),
+              top + h * ((grain * 0.61) % 1),
+              1,
+              1,
+            );
+          target.restore();
+        }
       }
       if (translucent) {
         ctx.globalAlpha = 0.5;

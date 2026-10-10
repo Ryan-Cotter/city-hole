@@ -9,3 +9,5 @@ ios/App/Pods/
 *.keystore
 *.jks
 .env*
+
+desktop-release/

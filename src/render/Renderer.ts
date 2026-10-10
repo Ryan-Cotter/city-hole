@@ -1,3 +1,5 @@
+import { bendHoleCoordinate } from "./holeEdge";
+import { cameraConfig } from "../game/constants";
 import { blocksHoleView, fadedMaterial, isBuildingType } from "./occlusion";
 import {
   CanvasTexture,
@@ -17,9 +19,12 @@ import {
   Frustum,
   Matrix4,
   Sphere,
+  LineLoop,
+  LineBasicMaterial,
+  BufferGeometry,
 } from "three";
 import type { GameState, Level } from "../game/GameState";
-import { createCamera, resizeCamera } from "./Camera";
+import { createCamera, resizeCamera, cameraViewSize } from "./Camera";
 import { createCitySurface } from "./CitySurface";
 import { CanvasRenderer } from "./CanvasRenderer";
 export class Renderer {
@@ -31,9 +36,14 @@ export class Renderer {
   private frustum = new Frustum();
   private matrix = new Matrix4();
   private sphere = new Sphere();
+  private boundary = new LineLoop(
+    new BufferGeometry(),
+    new LineBasicMaterial({ color: "#c1a26c" }),
+  );
+  private boundaryBounds = 0;
   private frames = 0;
   private lastFps = performance.now();
-  private viewSize = 6.85;
+  private viewSize = 3.425;
   private lastZoom = performance.now();
   constructor(container: HTMLElement, level: Level) {
     const surface = createCitySurface(level);
@@ -62,12 +72,13 @@ export class Renderer {
     sun.position.set(-15, 30, 10);
     this.scene.add(sun);
     const ground = new Mesh(
-      new PlaneGeometry(200, 200),
+      new PlaneGeometry(level.bounds * 2, level.bounds * 2),
       new MeshBasicMaterial({ map: new CanvasTexture(surface) }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.025;
     this.scene.add(ground);
+    this.scene.add(this.boundary);
     const disk = new Mesh(
       new CircleGeometry(1, 48),
       new MeshBasicMaterial({ color: "#10122b" }),
@@ -88,29 +99,82 @@ export class Renderer {
     window.addEventListener("resize", () => this.resize());
     this.resize();
   }
-  follow(position: Vector3, radius = 1) {
+  follow(position: Vector3, radius = 1, moving = false) {
     const now = performance.now(),
       dt = Math.min(0.1, (now - this.lastZoom) / 1000);
     this.lastZoom = now;
     this.viewSize +=
-      (6.2 + radius * 2.6 - this.viewSize) * (1 - Math.exp(-5 * dt));
+      (cameraViewSize(radius, moving) - this.viewSize) *
+      (1 - Math.exp(-cameraConfig.smoothing * dt));
     const rect = this.webgl.domElement.parentElement!.getBoundingClientRect();
     resizeCamera(this.camera, rect.width, rect.height, this.viewSize);
     this.camera.position.set(position.x + 35, 44, position.z + 35);
     this.camera.lookAt(position.x, 0, position.z);
     this.camera.updateMatrixWorld();
   }
-  updateVisibility(state: GameState, visuals: Map<string, Group>) {
+  deformHole(position: Vector3, radius: number, bounds: number) {
+    this.hole.userData.bounds = bounds;
+    if (bounds !== this.boundaryBounds) {
+      this.boundaryBounds = bounds;
+      this.boundary.geometry.dispose();
+      this.boundary.geometry = new BufferGeometry().setFromPoints([
+        new Vector3(-bounds, 0.02, -bounds),
+        new Vector3(bounds, 0.02, -bounds),
+        new Vector3(bounds, 0.02, bounds),
+        new Vector3(-bounds, 0.02, bounds),
+      ]);
+    }
+    for (const child of this.hole.children) {
+      const mesh = child as Mesh;
+      const points = mesh.geometry.getAttribute("position");
+      mesh.userData.restPositions ??= Float32Array.from(points.array);
+      const rest = mesh.userData.restPositions as Float32Array;
+      for (let i = 0; i < points.count; i++) {
+        const x = position.x + rest[i * 3] * radius,
+          z = position.z - rest[i * 3 + 1] * radius;
+        points.setXYZ(
+          i,
+          (bendHoleCoordinate(x, bounds, radius) - position.x) / radius,
+          -(bendHoleCoordinate(z, bounds, radius) - position.z) / radius,
+          rest[i * 3 + 2],
+        );
+      }
+      points.needsUpdate = true;
+      mesh.geometry.computeBoundingSphere();
+    }
+  }
+  chunkVisible(x: number, z: number, size: number) {
     this.frustum.setFromProjectionMatrix(
       this.matrix.multiplyMatrices(
         this.camera.projectionMatrix,
         this.camera.matrixWorldInverse,
       ),
     );
-    for (const o of state.level.objects) {
+    this.sphere.center.set(x, 8, z);
+    this.sphere.radius = Math.hypot(size / 2 + 2, size / 2 + 2, 9);
+    return this.frustum.intersectsSphere(this.sphere);
+  }
+  objectVisible(o: import("../game/GameState").SwallowableObject) {
+    this.sphere.center.copy(o.position);
+    this.sphere.center.y += o.height / 2;
+    this.sphere.radius = Math.hypot(o.radius, o.height / 2) + 0.3;
+    return this.frustum.intersectsSphere(this.sphere);
+  }
+  updateVisibility(
+    state: GameState,
+    visuals: Map<string, Group>,
+    objects = state.level.objects,
+  ) {
+    this.frustum.setFromProjectionMatrix(
+      this.matrix.multiplyMatrices(
+        this.camera.projectionMatrix,
+        this.camera.matrixWorldInverse,
+      ),
+    );
+    for (const o of objects) {
       const g = visuals.get(o.id);
       if (!g) continue;
-      this.sphere.center.copy(g.position);
+      this.sphere.center.copy(o.state === "idle" ? o.position : g.position);
       this.sphere.center.y += o.height / 2;
       this.sphere.radius = Math.hypot(o.radius, o.height / 2) + 2;
       g.visible = this.frustum.intersectsSphere(this.sphere);

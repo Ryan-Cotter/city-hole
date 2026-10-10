@@ -1,3 +1,4 @@
+import { cameraConfig } from "../game/constants";
 import { OrthographicCamera } from "three";
 export function createCamera() {
   const camera = new OrthographicCamera(-32, 32, 32, -32, 0.1, 250);
@@ -19,3 +20,7 @@ export function resizeCamera(
   camera.bottom = -halfH;
   camera.updateProjectionMatrix();
 }
+
+export const cameraViewSize = (radius: number, moving: boolean) =>
+  (cameraConfig.baseView + radius * cameraConfig.radiusScale) *
+  (moving ? cameraConfig.movingZoom : 1);

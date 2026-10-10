@@ -1,24 +1,37 @@
 # City object catalog
 
-Sizes are gameplay tiers, not a claim that real-world objects have identical dimensions. Each small-prop tier has eight implemented and each other tier has four, swallowable designs, all with the same Fibonacci score and capture requirement. Tall buildings use compact lots (at most 3.2 units wide) while retaining their established size-tier requirement and height. Every block includes every tier; vehicles occupy its surrounding curb lanes and trees occupy its pocket parks.
+The 27 ascending tiers cover tiny loose items through skyscrapers. Each tier has at least four designs. Colors and cardinal/random orientations vary independently; generation is seeded.
 
-| Tier                  | Points | Capture radius | Implemented designs                                                                                                         | Other common city objects for future expansion |
-| --------------------- | -----: | -------------: | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| Tiny debris           |      1 |           0.16 | Can, bottle, paper bag, carton, cup, newspaper, wrapper, takeaway box                                                       | Cups, newspapers, food wrappers                |
-| Small street fixtures |      2 |           0.24 | Hydrant, cone, mailbox, bollard, parking meter, utility box, flowerpot, small crate                                         | Parking meters, utility boxes                  |
-| People                |      3 |           0.32 | Walker, backpacker, shopper, courier                                                                                        | Joggers, dog walkers, construction workers     |
-| Tall street fixtures  |      5 |           0.42 | Stop sign, parking sign, direction sign, street lamp, bus-stop sign, crossing sign, advertising board, construction barrier | Crossing signs, bus-stop signs                 |
-| Sidewalk furniture    |      8 |           0.55 | Bench, waste bin, picnic table, bike rack, bicycle, scooter, vending machine, parcel locker                                 | Bicycles, scooters, vending machines           |
-| Landscaping           |     13 |           0.72 | Pine, broadleaf tree, palm, flower planter                                                                                  | Hedges, fountains, sculptures                  |
-| Cars                  |     21 |           0.95 | Sedan, hatchback, taxi, police car                                                                                          | Compact cars, convertibles                     |
-| Larger vehicles       |     34 |           1.20 | Delivery van, minibus, pickup, ambulance                                                                                    | City buses, fire engines, delivery trucks      |
-| Small structures      |     55 |           1.50 | Newsstand, coffee booth, food stand, bus shelter                                                                            | Public toilets, kiosks, market stalls          |
-| Homes                 |     89 |           1.85 | Gable house, flat-roof house, duplex, townhouse                                                                             | Garages, row houses                            |
-| Shops                 |    144 |           2.30 | Bakery, cafe, grocery, pharmacy                                                                                             | Restaurants, laundromats, bookstores           |
-| Medium buildings      |    233 |           2.85 | Apartment, stepped office, hotel, school                                                                                    | Libraries, clinics, fire stations              |
-| Large buildings       |    377 |           3.50 | Civic building, terraced mall, warehouse, hospital                                                                          | Stadiums, factories, train stations            |
-| Towers                |    610 |           4.40 | Glass tower, stepped tower, spire tower, observation tower                                                                  | Residential high-rises, office towers          |
+| Size tier           | Footprint radius |  Points | Implemented designs                                                                                                         |
+| ------------------- | ---------------: | ------: | --------------------------------------------------------------------------------------------------------------------------- |
+| bottlecaps          |            0.025 |       1 | soda cap, water cap, beer cap, juice cap                                                                                    |
+| dice                |             0.04 |       2 | white die, red die, blue die, green die                                                                                     |
+| pebbles             |            0.055 |       3 | granite pebble, slate chip, sandstone, round stone                                                                          |
+| coins               |             0.07 |       5 | copper coin, silver coin, gold coin, token                                                                                  |
+| small toys          |            0.095 |       8 | toy block, marble, toy car, rubber ball                                                                                     |
+| food                |             0.12 |      13 | burger, fruit, cake, drink                                                                                                  |
+| mice                |             0.14 |      21 | gray mouse, brown mouse, field mouse, white mouse                                                                           |
+| litter              |             0.16 |      34 | can, bottle, paper bag, carton, cup, newspaper, wrapper, takeaway box                                                       |
+| manhole covers      |              0.2 |      55 | round cover, drain, utility cover, sewer grate                                                                              |
+| fire hydrants       |             0.24 |      89 | fire hydrant, traffic cone, mailbox, bollard, parking meter, utility box, flowerpot, small crate                            |
+| people              |             0.32 |     144 | walker, backpacker, shopper, courier                                                                                        |
+| cats                |             0.38 |     233 | ginger cat, gray cat, black cat, white cat                                                                                  |
+| street signs        |             0.42 |     377 | stop sign, parking sign, direction sign, street lamp, bus-stop sign, crossing sign, advertising board, construction barrier |
+| dogs                |             0.48 |     610 | terrier, retriever, shepherd, spaniel                                                                                       |
+| benches             |             0.55 |     987 | park bench, waste bin, picnic table, bike rack, bicycle, scooter, vending machine, parcel locker, dumpster                  |
+| outdoor tables      |             0.65 |   1,597 | cafe table, picnic setting, bistro table, terrace table                                                                     |
+| park trees          |             0.72 |   2,584 | pine, broadleaf, palm, flower planter                                                                                       |
+| street barriers     |             0.82 |   4,181 | road barrier, street divider, construction fence, bollard row                                                               |
+| cars                |             0.95 |   6,765 | sedan, hatchback, taxi, police car                                                                                          |
+| vans                |              1.2 |  10,946 | delivery van, minibus, pickup, ambulance                                                                                    |
+| patio covers        |             1.35 |  17,711 | striped awning, cafe umbrella, pergola, patio canopy                                                                        |
+| kiosks              |              1.5 |  28,657 | newsstand, coffee booth, food stand, bus shelter                                                                            |
+| houses              |             1.85 |  46,368 | gable house, flat-roof house, duplex, townhouse                                                                             |
+| shops               |              2.3 |  75,025 | bakery, cafe, grocery, pharmacy                                                                                             |
+| apartment buildings |             2.85 | 121,393 | apartment, stepped office, hotel, school                                                                                    |
+| large buildings     |              3.5 | 196,418 | civic building, terraced mall, warehouse, hospital                                                                          |
+| skyscrapers         |              4.4 | 317,811 | glass tower, stepped tower, spire tower, observation tower                                                                  |
 
-Eight designs in each of four small-prop tiers and four in the other ten tiers gives 72 implemented designs. Traffic signals remain an additional street-sign design. Generation is deterministic; color and orientation vary independently. New emergency vehicles are visual designs that follow ordinary traffic rules. Their sirens and emergency right-of-way are not simulated.
+Food on restaurant tables is counted separately. Dumpster designs belong to the sidewalk-furniture tier. Manholes and center dividers sit on streets; animals and crowds are persistent. Emergency vehicles use ordinary traffic rules rather than emergency right-of-way. Building districts vary the mix of houses, shops, offices, warehouses and towers.
 
-Small props are tripled independently from the base block-density setting. Open lots and sidewalk edges are filled through seeded placement, with clearance around buildings and walking corridors. Total city population for seed 814 is 15,117.
+Additional potential items include keys, cigarette ends, pencils, shopping bags, baskets, luggage, delivery carts, hedges, fountains, bus stops, playground equipment and civic monuments. These are expansion ideas, not claimed as implemented.

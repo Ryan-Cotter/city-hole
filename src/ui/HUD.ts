@@ -1,3 +1,4 @@
+import { sectionForLevel, activeBounds, isUnlocked } from "../game/sections";
 import type { GameState } from "../game/GameState";
 import { growthForPoints } from "../game/progression";
 export class HUD {
@@ -9,8 +10,9 @@ export class HUD {
     container: HTMLElement,
     onPause: () => void,
     onRestart: () => void,
+    onSelfPlay: () => void,
   ) {
-    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track"><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="restart">Restart</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
+    container.innerHTML = `<main id="viewport"><aside class="hud-panel"><div class="hud-brand"><span>◉</span> CITY HOLE</div><div class="score-row"><div><label>SCORE</label><strong id="score">0</strong></div><span id="timer">00:00</span></div><div class="level-row"><b id="level"></b><span id="radius"></span></div><div class="track"><i id="progress"></i></div><p id="hint"></p><small id="remaining"></small><div id="level-toast" role="status" hidden></div><div class="hud-actions"><button id="pause">Pause</button></div><details class="utility-menu"><summary>Menu</summary><button id="restart">Restart</button><button id="self-play" aria-pressed="false">Self play: off</button><p class="control-guide">Hold to steer · release to stop</p><button id="phone-preview" aria-pressed="false">Phone preview</button><details class="map-details"><summary>City map</summary><canvas id="minimap" width="140" height="140" aria-label="Street map and your location"></canvas></details></details><section id="overlay" hidden><h2 id="overlay-title"></h2><p id="overlay-text"></p><button id="overlay-action">Resume</button></section></aside></main>`;
     container
       .querySelector("#phone-preview")!
       .addEventListener("click", (event) => {
@@ -19,6 +21,9 @@ export class HUD {
         button.setAttribute("aria-pressed", String(active));
         button.textContent = active ? "Desktop view" : "Phone preview";
       });
+    container
+      .querySelector("#self-play")!
+      .addEventListener("click", onSelfPlay);
     this.root = container;
     container.querySelector("#pause")!.addEventListener("click", onPause);
     container.querySelector("#restart")!.addEventListener("click", onRestart);
@@ -28,7 +33,7 @@ export class HUD {
         this.root.dataset.status === "won" ? onRestart() : onPause(),
       );
   }
-  update(s: GameState) {
+  update(s: GameState, selfPlay = false) {
     const now = performance.now();
     if (now - this.lastUpdate < 100 && this.root.dataset.status === s.status)
       return;
@@ -38,6 +43,9 @@ export class HUD {
       if (el.textContent !== value) el.textContent = value;
     };
     this.root.dataset.status = s.status;
+    const selfButton = this.root.querySelector("#self-play")!;
+    selfButton.setAttribute("aria-pressed", String(selfPlay));
+    selfButton.textContent = selfPlay ? "Self play: on" : "Self play: off";
     const growth = growthForPoints(s.score.points),
       seconds = Math.floor(s.elapsedSeconds);
     text("score", s.score.points.toLocaleString());
@@ -55,7 +63,7 @@ export class HUD {
     );
     text(
       "remaining",
-      `${s.score.remainingObjects.toLocaleString()} objects remaining`,
+      `Section ${sectionForLevel(s.hole.level).index}/4 · ${s.score.remainingObjects.toLocaleString()} left`,
     );
     (this.root.querySelector("#progress") as HTMLElement).style.width =
       `${Math.min(100, ((s.score.points - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100)}%`;
@@ -86,16 +94,28 @@ export class HUD {
   drawMap(s: GameState) {
     const canvas = this.root.querySelector("#minimap") as HTMLCanvasElement,
       c = canvas.getContext("2d")!,
-      p = (n: number) => (n / s.level.bounds + 1) * 70;
+      bounds = activeBounds(s),
+      scale = 140 / (bounds * 2),
+      p = (n: number) => (n + bounds) * scale;
+    canvas.setAttribute(
+      "aria-label",
+      `Section ${sectionForLevel(s.hole.level).index} map, ${bounds * 2} meters wide, ${s.hole.radius < 0.3 ? "item" : s.hole.radius < 8 ? "building" : "block"} detail`,
+    );
     c.fillStyle = "#c4ccdb";
     c.fillRect(0, 0, 140, 140);
     for (const b of s.level.blocks) {
-      c.fillStyle = b.park ? "#44995a" : "#bc9d77";
-      c.fillRect(p(b.x - 7), p(b.z - 7), 9.8, 9.8);
+      c.fillStyle = b.park
+        ? "#44995a"
+        : b.district === "downtown"
+          ? "#87989d"
+          : b.district === "industrial"
+            ? "#9d9b96"
+            : "#bc9d77";
+      c.fillRect(p(b.x - 7), p(b.z - 7), 14 * scale, 14 * scale);
     }
     c.strokeStyle = "#526481";
-    c.lineWidth = 2;
-    for (let n = -100; n <= 100; n += 20) {
+    c.lineWidth = Math.max(1, 5 * scale);
+    for (let n = -s.level.bounds; n <= s.level.bounds; n += 20) {
       c.beginPath();
       c.moveTo(p(n), 0);
       c.lineTo(p(n), 140);
@@ -103,11 +123,41 @@ export class HUD {
       c.lineTo(140, p(n));
       c.stroke();
     }
+    if (s.hole.radius < 8)
+      for (const o of s.level.objects) {
+        if (!isUnlocked(s, o) || o.state !== "idle") continue;
+        const building = [
+          "house",
+          "shop",
+          "building",
+          "largeBuilding",
+          "skyscraper",
+        ].includes(o.type);
+        const edible = o.radius <= s.hole.radius * 0.85;
+        if (
+          s.hole.radius >= 0.3 &&
+          !building &&
+          (!edible || o.radius < s.hole.radius * 0.12)
+        )
+          continue;
+        if (s.hole.radius < 0.3 && o.radius > 0.24) continue;
+        c.fillStyle = building ? "#596d76" : edible ? "#b98349" : "#838b8e";
+        const half = building
+          ? Math.min(3.2, o.radius * Math.SQRT2 * 0.94) / 2
+          : o.radius;
+        const width = Math.max(1.5, half * 2 * scale);
+        c.fillRect(
+          p(o.position.x) - width / 2,
+          p(o.position.z) - width / 2,
+          width,
+          width,
+        );
+      }
     c.beginPath();
     c.arc(
       p(s.hole.position.x),
       p(s.hole.position.z),
-      Math.max(3, s.hole.radius * 0.7),
+      Math.max(2, s.hole.radius * scale),
       0,
       Math.PI * 2,
     );
@@ -116,5 +166,12 @@ export class HUD {
     c.strokeStyle = "#fff";
     c.lineWidth = 1.5;
     c.stroke();
+    c.fillStyle = "#203041";
+    c.font = "9px system-ui";
+    c.fillText(
+      `Section ${sectionForLevel(s.hole.level).index} · ${bounds * 2} m`,
+      5,
+      135,
+    );
   }
 }

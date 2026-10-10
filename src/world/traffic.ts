@@ -1,4 +1,4 @@
-import type { SwallowableObject, Motion } from "../game/GameState";
+import type { SwallowableObject, Hole } from "../game/GameState";
 export type Signal = "green" | "yellow" | "red";
 export function signalFor(axis: "x" | "z", time: number): Signal {
   const phase = ((time % 28) + 28) % 28;
@@ -10,7 +10,12 @@ export function signalFor(axis: "x" | "z", time: number): Signal {
       : "red";
 }
 export function advancePedestrian(o: SwallowableObject, dt: number) {
-  if (o.type !== "person" || o.state !== "idle" || !o.motion) return;
+  if (
+    !["person", "mouse", "cat", "dog"].includes(o.type) ||
+    o.state !== "idle" ||
+    !o.motion
+  )
+    return;
   const m = o.motion;
   let position = o.position[m.axis] + m.direction * m.speed * dt;
   while (position > m.max || position < m.min) {
@@ -95,12 +100,38 @@ export function updateTraffic(
   objects: SwallowableObject[],
   dt: number,
   time: number,
+  hole?: Hole,
 ) {
   const lanes = new Map<string, SwallowableObject[]>();
   const walkers = new Map<string, SwallowableObject[]>();
   for (const o of objects) {
-    if (o.state !== "idle" || !o.motion) continue;
-    if (o.type === "person") {
+    if (o.state !== "idle") continue;
+    const animal = ["mouse", "cat", "dog"].includes(o.type);
+    const threatened =
+      !!hole &&
+      o.position.distanceTo(hole.position) < Math.max(2, hole.radius * 2) &&
+      (animal || o.radius <= hole.radius * 0.85);
+    if (o.type === "person" && !o.motion && threatened) {
+      const center = Math.floor(o.position.x / 20) * 20 + 10;
+      o.motion = {
+        axis: "x",
+        direction: 1,
+        speed: 0.8,
+        min: center - 5.5,
+        max: center + 5.5,
+      };
+    }
+    if (animal && !o.motion && threatened) {
+      const central=Math.abs(o.position.x)<3 && Math.abs(o.position.z)<3;
+      o.motion={axis:"x",direction:o.position.x>=hole!.position.x ? 1 : -1,speed:.6,min:central ? -2.8 : o.position.x-2,max:central ? 2.8 : o.position.x+2};
+    }
+    if (!o.motion) continue;
+    if (o.type === "person" || animal) {
+      o.motion.baseSpeed ??= o.motion.speed;
+      o.motion.speed = o.motion.baseSpeed * (threatened ? 1.25 : 1);
+      if (threatened)
+        o.motion.direction =
+          o.position[o.motion.axis] >= hole!.position[o.motion.axis] ? 1 : -1;
       const m = o.motion,
         fixed = m.axis === "x" ? o.position.z : o.position.x,
         key = `${m.axis}:${fixed}:${m.min}:${m.max}`;
@@ -113,7 +144,7 @@ export function updateTraffic(
       continue;
     }
     const m = o.motion,
-      fixed = m.axis === "x" ? o.position.z : o.position.x,
+      fixed = m.laneCenter ?? (m.axis === "x" ? o.position.z : o.position.x),
       key = `${m.axis}:${fixed.toFixed(2)}:${m.direction}`;
     let lane = lanes.get(key);
     if (!lane) {
@@ -168,6 +199,20 @@ export function updateTraffic(
     let leader: SwallowableObject | null = null;
     for (const o of lane) {
       vehicleStep(o, dt, time, leader);
+      const cross = m.axis === "x" ? "z" : "x";
+      o.motion!.laneCenter ??= o.position[cross];
+      const near =
+        hole &&
+        o.radius <= hole.radius * 0.85 &&
+        o.position.distanceTo(hole.position) < hole.radius + 3;
+      const offset = near
+        ? o.position[cross] >= hole!.position[cross]
+          ? 0.22
+          : -0.22
+        : 0;
+      o.position[cross] +=
+        (o.motion!.laneCenter + offset - o.position[cross]) *
+        (1 - Math.exp(-5 * dt));
       leader = o;
     }
   }
