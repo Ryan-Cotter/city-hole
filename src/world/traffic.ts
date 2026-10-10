@@ -111,7 +111,7 @@ export function updateTraffic(
       !!hole &&
       o.position.distanceTo(hole.position) < Math.max(2, hole.radius * 2) &&
       (animal || o.radius <= hole.radius * 0.85);
-    if (o.type === "person" && !o.motion && threatened) {
+    if (o.type === "person" && !o.motion) {
       const center = Math.floor(o.position.x / 20) * 20 + 10;
       o.motion = {
         axis: "x",
@@ -121,9 +121,15 @@ export function updateTraffic(
         max: center + 5.5,
       };
     }
-    if (animal && !o.motion && threatened) {
-      const central=Math.abs(o.position.x)<3 && Math.abs(o.position.z)<3;
-      o.motion={axis:"x",direction:o.position.x>=hole!.position.x ? 1 : -1,speed:.6,min:central ? -2.8 : o.position.x-2,max:central ? 2.8 : o.position.x+2};
+    if (animal && !o.motion) {
+      const central = Math.abs(o.position.x) < 3 && Math.abs(o.position.z) < 3;
+      o.motion = {
+        axis: "x",
+        direction: o.variant % 2 ? 1 : -1,
+        speed: 0.6,
+        min: central ? -2.8 : o.position.x - 2,
+        max: central ? 2.8 : o.position.x + 2,
+      };
     }
     if (!o.motion) continue;
     if (o.type === "person" || animal) {

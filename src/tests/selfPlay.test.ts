@@ -12,14 +12,17 @@ import {
   cameraConfig,
   config,
 } from "../game/constants";
-import { activeBounds } from "../game/sections";
+import { resolveOversizedCollisions } from "../physics/collisions";
+import { updateTraffic } from "../world/traffic";
+import { activeBounds, isUnlocked } from "../game/sections";
 import { cameraViewSize } from "../render/Camera";
 
 describe("self play and pacing", () => {
   it("keeps elevated targets and edge waypoints on reachable ground", () => {
-    const state = freshState(), player = new SelfPlayer();
+    const state = freshState(),
+      player = new SelfPlayer();
     player.enabled = true;
-    const goal = state.level.objects.find(o => o.type === "bottlecap")!;
+    const goal = state.level.objects.find((o) => o.type === "bottlecap")!;
     player.target(state, 0.1);
     player.goal = goal;
     goal.position.set(2.99, 0.77, 0);
@@ -33,7 +36,8 @@ describe("self play and pacing", () => {
     expect(state.hole.position.y).toBe(0);
   });
   it("abandons a stalled target and chooses another instead of freezing", () => {
-    const state = freshState(), player = new SelfPlayer();
+    const state = freshState(),
+      player = new SelfPlayer();
     player.enabled = true;
     player.target(state, 0.1);
     const stuckGoal = player.goal;
@@ -129,7 +133,7 @@ describe("self play and pacing", () => {
         g.objects.every((o) => o.radius <= state.hole.radius * 0.85),
       ),
     ).toBe(true);
-    for (let step = 0; step < 600; step++) {
+    for (let step = 0; step < 1800; step++) {
       const before = state.hole.position.clone();
       moveToward(
         state.hole,
@@ -137,24 +141,37 @@ describe("self play and pacing", () => {
         0.1,
         activeBounds(state),
       );
+      resolveOversizedCollisions(
+        state.hole,
+        before,
+        state.level.objects.filter((o) => isUnlocked(state, o)),
+      );
+      updateTraffic(
+        state.level.objects.filter(
+          (o) =>
+            isUnlocked(state, o) &&
+            (o.motion || ["person", "mouse", "cat", "dog"].includes(o.type)),
+        ),
+        0.1,
+        step * 0.1,
+        state.hole,
+      );
       expect(state.hole.position.distanceTo(before)).toBeLessThanOrEqual(
         0.320001,
       );
       for (const o of state.level.objects) {
-        capture(o, state.hole);
+        if (isUnlocked(state, o)) capture(o, state.hole);
         if (o.state === "falling" && advanceFall(o, 0.1)!.u >= 1)
           complete(state, o);
       }
-      if (state.hole.level >= 9) break;
+      if (state.areaStage === 3) break;
     }
+    expect(state.areaStage).toBe(3);
     expect(state.hole.level).toBeGreaterThanOrEqual(9);
     expect(state.score.points).toBeGreaterThanOrEqual(stages[8].points);
     expect(state.score.points).toBe(
-      Object.entries(state.score.byType).reduce(
-        (sum, [type, count]) =>
-          sum + count * categories[type as keyof typeof categories].scoreValue,
-        0,
-      ),
+      state.level.totalScore -
+        state.level.objects.reduce((sum, o) => sum + o.scoreValue, 0),
     );
     player.enabled = false;
     expect(player.target(state, 0.1)).toBeNull();

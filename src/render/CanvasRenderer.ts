@@ -178,7 +178,7 @@ export class CanvasRenderer {
           Math.max(1, camera.right - camera.left)) *
           0.045,
       );
-      ctx.strokeStyle = "#8256f6";
+      ctx.strokeStyle = hole.userData.rimColor ?? "#f44747";
       ctx.stroke();
     }
     const faces: Face[] = [];
@@ -201,7 +201,7 @@ export class CanvasRenderer {
           mat = child.material as MeshStandardMaterial;
         const base = mat.color;
         let triangles = this.triangles.get(child);
-        if (!triangles || o.motion || o.state === "falling") {
+        if (!triangles || o.motion || o.type === "tree" || o.state === "falling") {
           triangles = [];
           const count = index ? index.count : position.count;
           for (let i = 0; i < count; i += 3) {

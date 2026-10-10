@@ -155,7 +155,7 @@ describe("city gameplay", () => {
       expect(new Set(objects.map((o) => o.design)).size).toBeGreaterThanOrEqual(
         4,
       );
-      for (const o of objects) {
+      for (const o of objects.filter((o) => !o.unlockStage)) {
         expect(o.radius).toBe(spec.radius);
         expect(o.scoreValue).toBe(spec.scoreValue);
       }
@@ -214,8 +214,10 @@ describe("city gameplay", () => {
     }
   });
 
-  it("uses the same configured speed at every hole size", () => {
-    for (const radius of [0.25, 1, 6, 50])
+  it("slows tiny holes and caps city-scale movement", () => {
+    expect(speedForRadius(0.04)).toBeCloseTo(0.18);
+    expect(speedForRadius(0.14)).toBeCloseTo(0.63);
+    for (const radius of [1, 6, 50])
       expect(speedForRadius(radius)).toBe(config.moveSpeed);
   });
   it("anchors walking limbs to shoulder and hip pivots", () => {
@@ -474,7 +476,7 @@ describe("city gameplay", () => {
     hold.press(8);
     expect(hold.active).toBe(7);
     moveHole(h, input, 1, 100);
-    expect(h.position.length()).toBeCloseTo(config.moveSpeed);
+    expect(h.position.length()).toBeCloseTo(speedForRadius(h.radius));
     hold.cancel();
     const before = h.position.clone();
     moveHole(h, input, 1, 100);

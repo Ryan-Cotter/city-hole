@@ -22,15 +22,15 @@ npm run preview
 
 ## Controls
 
-Hold the primary mouse button or a touch to steer toward the pointer. Release to stop. Hovering and keyboard movement do not steer. Speed stays at 3.2 world units per second. Escape/Pause pauses; focus loss also pauses. Restart resets the seeded city. Menu contains self play, a section minimap, and a 390 × 844 phone preview.
+Hold the primary mouse button or a touch to steer toward the pointer. Release to stop. Hovering and keyboard movement do not steer. Tiny holes start at 0.18 world units per second, scaling with radius up to the usual 3.2. Escape/Pause pauses. Focus loss pauses manual play; self-play continues in the background. Restart resets the seeded city. Menu contains self play, a section minimap, and a 390 × 844 phone preview.
 
 ## Progression and world
 
-The starting hole has radius 0.04 and is confined to a tiny 6-meter plaza. Four concentric sections unlock at levels 8, 13 and 19, expanding to 40, 80 and 120 meters across. The HUD identifies the section, and the minimap zooms to its boundaries. Item-level detail gives way to building and district detail as the hole grows.
+The starting hole has radius 0.04 and is confined to a tiny 6-meter plaza. Three areas progress from a fenced 6-meter yard to a 20-meter block-sized area, then the whole 120-meter city. Swallowing a boundary fence panel opens the next area after its fall finishes; gaining levels alone does not unlock it. The HUD identifies the section, and the minimap zooms to its boundaries. Item-level detail gives way to building and district detail as the hole grows.
 
 Rewards follow ascending Fibonacci values starting 1, 2. Every item contributes independently, including food on tables. Original log₂ pacing has been restored: each initial step costs `ceil(8 × log2(level))` additional points. Stage radii fit the corresponding footprint with a 0.08 margin. After skyscrapers, each step adds 0.70 radius without a cap; logarithmic costs retain the original requirement-to-largest-object-reward ratio, scaled to the expanded size ladder. All balance values live in `src/game/constants.ts`.
 
-Normal capture pulls an object toward the hole and animates it below the ground at full scale. Score and mass are awarded once after completion. Objects five or more tiers below current capacity keep their original static models. Once their entire footprint is inside the circle, they disappear and award their rewards immediately. They remain visible until then. Completed records and models leave the active city, motion lists and spatial index. Victory waits for all objects to complete.
+Normal capture pulls an object toward the hole and animates it below the ground at full scale. Score and mass are awarded once after completion. Objects five or more tiers below current capacity keep their original models and nearby actors keep moving. Once their entire footprint is inside the circle, they disappear and award their rewards immediately. They remain visible until then. Completed records and models leave the active city, motion lists and spatial index. Victory waits for all objects to complete.
 
 The starter plaza uses separated mixed items across its full area, with a loose bottlecap trail near the hole. Toys include tops, dominoes, trains and stacking rings; food includes doughnuts, ice cream, hot dogs and pizza. Dice have face pips, coins raised rims, caps printed tops, and cats have coats and collars. Cats use a 0.27 footprint radius and 0.28 height, below people in the size ladder.
 
@@ -67,8 +67,12 @@ Android and iOS Capacitor projects are generated and synced. Android SDK/Android
 
 ## Validation and repository
 
-Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, fixed-speed hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, section unlocks, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, section minimap and visible small items.
+Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, size-scaled hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, section unlocks, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, section minimap and visible small items.
 
 The local Git project is named `city-hole`. GitHub publication remains pending authenticated repository creation; no remote repository or public deployment has been claimed. See `docs/CITY_OBJECTS.md` for the object catalog and `docs/GAME_DESIGN.md` for implementation details.
 
 Self-play keeps routes on the ground and within the unlocked section, retries another target after two seconds without movement or a swallow, and limits fruitless chases. Unreachable clusters are skipped in bounded batches rather than retried forever.
+
+Oversized objects have solid footprints that the hole slides around; self-play plans around those footprints. People and animals wander without needing a threat, nearby traffic stays active at every size tier, and trees sway gently. The rim cycles red, orange, yellow, green, blue, indigo and violet each level, repeating every seven levels in both renderers.
+
+Hidden self-play uses a simulation timer without rendering; native desktop background throttling is disabled. Browsers may still throttle or suspend hidden tabs, especially on mobile or while the device sleeps. Manual pause always stops simulation.

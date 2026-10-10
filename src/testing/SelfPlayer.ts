@@ -4,11 +4,11 @@ import {
   lowestDetailTier,
   tierOf,
 } from "../game/sections";
-import { movementLimit } from "../player/Hole";
+import { movementLimit, speedForRadius } from "../player/Hole";
 import { Vector3 } from "three";
 import type { GameState, SwallowableObject } from "../game/GameState";
 import { config, selfPlayConfig } from "../game/constants";
-import { isBuildingType } from "../render/occlusion";
+import { obstacleRadius } from "../physics/collisions";
 
 export interface Obstacle {
   x: number;
@@ -163,7 +163,14 @@ export function edibleClusters(state: GameState) {
       group.center.multiplyScalar(1 / group.objects.length);
       // Favor quick nearby harvests, weighted toward currently valuable size tiers.
       const distance = group.center.distanceTo(state.hole.position);
-      return { ...group, utility: group.points / Math.pow(distance + 3, 1.35) };
+      return {
+        ...group,
+        utility:
+          (group.points / Math.pow(distance + 3, 1.35)) *
+          (group.objects.some((o) => o.unlockStage === state.areaStage + 1)
+            ? 10
+            : 1),
+      };
     })
     .sort((a, b) => b.utility - a.utility);
 }
@@ -219,12 +226,16 @@ export class SelfPlayer {
     if (!this.enabled) return null;
     this.countdown -= dt;
     this.elapsed += dt;
-    const moved = this.lastPosition.distanceToSquared(state.hole.position) > 0.000001;
+    const moved =
+      this.lastPosition.distanceToSquared(state.hole.position) > 0.000001;
     const harvested = this.lastRemaining !== state.score.remainingObjects;
     this.stalledSeconds = moved || harvested ? 0 : this.stalledSeconds + dt;
     this.lastPosition.copy(state.hole.position);
     this.lastRemaining = state.score.remainingObjects;
-    if (this.goal && (this.stalledSeconds >= 2 || this.elapsed >= this.goalDeadline)) {
+    if (
+      this.goal &&
+      (this.stalledSeconds >= 2 || this.elapsed >= this.goalDeadline)
+    ) {
       this.retryAfter.set(this.goal.id, this.elapsed + 8);
       this.goal = null;
       this.path = [];
@@ -249,13 +260,12 @@ export class SelfPlayer {
           (o) =>
             o.state === "idle" &&
             isUnlocked(state, o) &&
-            isBuildingType(o.type) &&
             o.radius > state.hole.radius * config.swallowFactor,
         )
         .map((o) => ({
           x: o.position.x,
           z: o.position.z,
-          half: Math.min(3.2, o.radius * Math.SQRT2 * 0.94) / 2 + 0.25,
+          half: obstacleRadius(o) + state.hole.radius * 0.45,
         }));
       const limit = movementLimit(state.hole.radius, activeBounds(state));
       this.path = [];
@@ -263,14 +273,18 @@ export class SelfPlayer {
       const groups = edibleClusters(state);
       // Keep each search bounded, but rotate past unreachable high-value clusters.
       const start = this.groupOffset % Math.max(1, groups.length);
-      const candidates = [...groups.slice(start), ...groups.slice(0, start)]
-        .slice(0, selfPlayConfig.candidateGroups);
+      const candidates = [
+        ...groups.slice(start),
+        ...groups.slice(0, start),
+      ].slice(0, selfPlayConfig.candidateGroups);
       for (const group of candidates) {
-        const targets = group.objects.filter((o) => !this.retryAfter.has(o.id)).sort(
-          (a, b) =>
-            a.position.distanceToSquared(state.hole.position) -
-            b.position.distanceToSquared(state.hole.position),
-        );
+        const targets = group.objects
+          .filter((o) => !this.retryAfter.has(o.id))
+          .sort(
+            (a, b) =>
+              a.position.distanceToSquared(state.hole.position) -
+              b.position.distanceToSquared(state.hole.position),
+          );
         for (const target of targets.slice(0, 3)) {
           const destination = target.position.clone();
           destination.y = 0;
@@ -281,16 +295,29 @@ export class SelfPlayer {
           );
           const route = clear
             ? [destination]
-            : findPath(state.hole.position, destination, limit, obstacles);
+            : findPath(
+                state.hole.position,
+                destination,
+                limit,
+                obstacles,
+                Math.min(
+                  selfPlayConfig.cellSize,
+                  Math.max(0.06, state.hole.radius),
+                ),
+              );
           if (route.length) {
             this.goal = target;
             this.path = route;
-            let routeLength = 0, previous = state.hole.position;
+            let routeLength = 0,
+              previous = state.hole.position;
             for (const point of route) {
               routeLength += previous.distanceTo(point);
               previous = point;
             }
-            this.goalDeadline = this.elapsed + routeLength / config.moveSpeed * 2 + 8;
+            this.goalDeadline =
+              this.elapsed +
+              (routeLength / speedForRadius(state.hole.radius)) * 2 +
+              8;
             break;
           }
         }

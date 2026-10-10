@@ -14,7 +14,7 @@ app.whenReady().then(() => {
       contextIsolation: true,
       sandbox: true,
       nodeIntegration: false,
-      backgroundThrottling: true,
+      backgroundThrottling: false,
     },
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));

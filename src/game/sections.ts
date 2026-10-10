@@ -1,21 +1,23 @@
 import type { GameState, SwallowableObject } from "./GameState";
 import { categories } from "./constants";
-export const sectionForLevel = (level: number) =>
-  level <= 7
-    ? { index: 1, bounds: 3, next: 8 }
-    : level <= 12
-      ? { index: 2, bounds: 20, next: 13 }
-      : level <= 18
-        ? { index: 3, bounds: 40, next: 19 }
-        : { index: 4, bounds: 60, next: null };
+export const areaConfig = [
+  { index: 1, bounds: 3, name: "Fenced yard" },
+  { index: 2, bounds: 10, name: "City block" },
+  { index: 3, bounds: 60, name: "Whole city" },
+] as const;
+export const sectionForState = (state: GameState) =>
+  areaConfig[state.areaStage - 1];
 export const activeBounds = (state: GameState) =>
-  Math.min(state.level.bounds, sectionForLevel(state.hole.level).bounds);
+  Math.min(state.level.bounds, sectionForState(state).bounds);
 export const isUnlocked = (state: GameState, o: SwallowableObject) => {
   const bounds = activeBounds(state);
   return (
     Math.abs(o.position.x) <= bounds &&
     Math.abs(o.position.z) <= bounds &&
-    (state.hole.level > 7 || o.radius <= categories.mouse.radius)
+    (!o.unlockStage || o.unlockStage <= state.areaStage + 1) &&
+    (state.areaStage > 1 ||
+      o.radius <= categories.mouse.radius ||
+      o.unlockStage === 2)
   );
 };
 export function lowestDetailTier(state: GameState) {

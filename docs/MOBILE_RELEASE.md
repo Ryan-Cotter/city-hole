@@ -4,7 +4,7 @@
 
 - Pointer and touch hold-to-steer controls; release, cancellation, lost pointer capture and focus loss stop steering.
 - Self-play pilot in Menu for normal-speed progression testing, with manual takeover.
-- Fixed movement speed, visible cursor, touch-action suppression and automatic pause on hidden tabs.
+- Slower tiny-scale movement, visible cursor, touch-action suppression and automatic pause on hidden tabs during manual play. Self-play uses a background simulation timer, subject to browser suspension policies.
 - Compact left HUD with supporting controls inside Menu, safe-area spacing, 44 px controls and a 390 × 844 phone preview in desktop browsers.
 - Installable web manifest, original 192/512 px icons and production-only offline service worker.
 - Offline build cache includes the game, fonts use system fallbacks, and no analytics or advertising SDK is included.

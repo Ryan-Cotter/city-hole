@@ -28,3 +28,6 @@ export function holeOutline(
     };
   });
 }
+
+export const rimColors = ["#f44747", "#ff922b", "#ffe34d", "#47d66d", "#379bff", "#6557d9", "#c35df5"] as const;
+export const rimColorForLevel = (level: number) => rimColors[Math.max(0, Math.floor(level) - 1) % rimColors.length];

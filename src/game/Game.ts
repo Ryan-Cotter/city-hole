@@ -1,3 +1,4 @@
+import { resolveOversizedCollisions } from "../physics/collisions";
 import { activeBounds, isUnlocked, lowestDetailTier, tierOf } from "./sections";
 import { createBlockVisual, disposeBlockVisual } from "../render/BlockVisual";
 import { CityChunks } from "../world/CityChunks";
@@ -19,6 +20,7 @@ export function freshState(): GameState {
   const level = generateCity();
   return {
     status: "playing",
+    areaStage: 1,
     elapsedSeconds: 0,
     hole: createHole(),
     level,
@@ -41,7 +43,9 @@ export class Game {
     string,
     { signature: string; visual: Group }
   >();
-  private actors = this.state.level.objects.filter((o) => o.motion || ["mouse", "cat", "dog"].includes(o.type));
+  private actors = this.state.level.objects.filter(
+    (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
+  );
   private movers = this.state.level.objects.filter(
     (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
   );
@@ -78,10 +82,16 @@ export class Game {
     });
     this.populate();
     window.addEventListener("blur", () => {
-      if (this.state.status === "playing") this.pause();
+      if (!this.selfPlayer.enabled && this.state.status === "playing")
+        this.pause();
     });
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden && this.state.status === "playing") this.pause();
+      if (
+        document.hidden &&
+        !this.selfPlayer.enabled &&
+        this.state.status === "playing"
+      )
+        this.pause();
     });
     startLoop(
       (dt) => this.update(dt),
@@ -97,11 +107,14 @@ export class Game {
         this.hud.update(this.state, this.selfPlayer.enabled);
         this.renderer.draw();
       },
+      () => this.selfPlayer.enabled && this.state.status === "playing",
     );
   }
   populate() {
     this.chunks = new CityChunks(this.state.level.objects);
-    this.actors = this.state.level.objects.filter((o) => o.motion || ["mouse", "cat", "dog"].includes(o.type));
+    this.actors = this.state.level.objects.filter(
+      (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
+    );
     this.movers = this.state.level.objects.filter(
       (o) => o.motion || ["person", "mouse", "cat", "dog"].includes(o.type),
     );
@@ -214,6 +227,7 @@ export class Game {
     this.input.clear();
   }
   syncHole() {
+    this.renderer.setHoleLevel(this.state.hole.level);
     this.renderer.webgl.domElement.dataset.holeX =
       this.state.hole.position.x.toFixed(3);
     this.renderer.webgl.domElement.dataset.holeZ =
@@ -248,15 +262,27 @@ export class Game {
     if (s.status !== "playing") return;
     s.elapsedSeconds += dt;
     this.input.refreshTarget();
+    const beforeMove = s.hole.position.clone();
     if (this.selfPlayer.enabled)
       moveToward(s.hole, this.selfPlayer.target(s, dt), dt, activeBounds(s));
     else moveHole(s.hole, this.input, dt, activeBounds(s));
+    resolveOversizedCollisions(
+      s.hole,
+      beforeMove,
+      [
+        ...this.chunks.nearby(
+          s.hole.position.x,
+          s.hole.position.z,
+          s.hole.radius + 5,
+        ),
+        ...this.actors,
+      ].filter((o) => isUnlocked(s, o)),
+    );
     const minimumTier = lowestDetailTier(s);
     updateTraffic(
       this.movers.filter(
         (o) =>
           isUnlocked(s, o) &&
-          tierOf(o) >= minimumTier &&
           (this.visuals.get(o.id)?.visible ||
             o.position.distanceTo(s.hole.position) < s.hole.radius + 12),
       ),
@@ -275,7 +301,12 @@ export class Game {
       }
     for (const [id, model] of this.visuals) {
       const o = model.userData.object as SwallowableObject;
-      if (!model.visible || tierOf(o) < minimumTier) continue;
+      if (!model.visible) continue;
+      if (o.type === "tree" && o.state === "idle") {
+        model.rotation.z =
+          Math.sin(s.elapsedSeconds * 1.3 + o.variant * 1.7) * 0.025;
+        model.rotation.x = Math.sin(s.elapsedSeconds * 0.9 + o.variant) * 0.018;
+      }
       if (o.signalAxis && o.state === "idle") {
         const visual = this.visuals.get(o.id);
         const phase = signalFor(o.signalAxis, s.elapsedSeconds);
@@ -284,7 +315,10 @@ export class Game {
             child.visible = child.name === `signal-${phase}`;
         }
       }
-      if ((o.motion || ["person", "mouse", "cat", "dog"].includes(o.type)) && o.state === "idle") {
+      if (
+        (o.motion || ["person", "mouse", "cat", "dog"].includes(o.type)) &&
+        o.state === "idle"
+      ) {
         const visual = this.visuals.get(o.id);
         if (visual) {
           visual.position.copy(o.position);

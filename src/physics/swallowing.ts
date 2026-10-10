@@ -24,6 +24,8 @@ export function capture(o: SwallowableObject, h: Hole) {
 export function complete(s: GameState, o: SwallowableObject) {
   if (o.state !== "falling") return false;
   o.state = "swallowed";
+  if (o.unlockStage && o.unlockStage === s.areaStage + 1)
+    s.areaStage = o.unlockStage;
   // Swap-delete: no rescanning or shifting the remaining city on each reward.
   const index = s.level.objectSlots.get(o.id);
   if (index !== undefined) {

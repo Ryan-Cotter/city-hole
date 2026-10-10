@@ -1,4 +1,4 @@
-import { sectionForLevel, activeBounds, isUnlocked } from "../game/sections";
+import { sectionForState, activeBounds, isUnlocked } from "../game/sections";
 import type { GameState } from "../game/GameState";
 import { growthForPoints } from "../game/progression";
 export class HUD {
@@ -59,11 +59,13 @@ export class HUD {
     text("level", `LEVEL ${s.hole.level}`);
     text(
       "hint",
-      `${(growth.nextThreshold - s.score.points).toLocaleString()} points to grow`,
+      s.areaStage < 3
+        ? `${sectionForState(s).name} · Eat a fence to unlock ${s.areaStage === 1 ? "the block" : "the city"}`
+        : `${(growth.nextThreshold - s.score.points).toLocaleString()} points to grow`,
     );
     text(
       "remaining",
-      `Section ${sectionForLevel(s.hole.level).index}/4 · ${s.score.remainingObjects.toLocaleString()} left`,
+      `Section ${sectionForState(s).index}/3 · ${s.score.remainingObjects.toLocaleString()} left`,
     );
     (this.root.querySelector("#progress") as HTMLElement).style.width =
       `${Math.min(100, ((s.score.points - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100)}%`;
@@ -99,7 +101,7 @@ export class HUD {
       p = (n: number) => (n + bounds) * scale;
     canvas.setAttribute(
       "aria-label",
-      `Section ${sectionForLevel(s.hole.level).index} map, ${bounds * 2} meters wide, ${s.hole.radius < 0.3 ? "item" : s.hole.radius < 8 ? "building" : "block"} detail`,
+      `Section ${sectionForState(s).index} map, ${bounds * 2} meters wide, ${s.hole.radius < 0.3 ? "item" : s.hole.radius < 8 ? "building" : "block"} detail`,
     );
     c.fillStyle = "#c4ccdb";
     c.fillRect(0, 0, 140, 140);
@@ -168,10 +170,6 @@ export class HUD {
     c.stroke();
     c.fillStyle = "#203041";
     c.font = "9px system-ui";
-    c.fillText(
-      `Section ${sectionForLevel(s.hole.level).index} · ${bounds * 2} m`,
-      5,
-      135,
-    );
+    c.fillText(`Section ${sectionForState(s).index} · ${bounds * 2} m`, 5, 135);
   }
 }

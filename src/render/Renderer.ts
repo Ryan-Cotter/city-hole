@@ -1,4 +1,4 @@
-import { bendHoleCoordinate } from "./holeEdge";
+import { bendHoleCoordinate, rimColorForLevel } from "./holeEdge";
 import { cameraConfig } from "../game/constants";
 import { blocksHoleView, fadedMaterial, isBuildingType } from "./occlusion";
 import {
@@ -88,8 +88,9 @@ export class Renderer {
     this.hole.add(disk);
     const rim = new Mesh(
       new RingGeometry(1, 1.045, 48),
-      new MeshBasicMaterial({ color: "#8256f6" }),
+      new MeshBasicMaterial({ color: rimColorForLevel(1) }),
     );
+    rim.name = "rim";
     rim.rotation.x = -Math.PI / 2;
     rim.position.y = 0.013;
     this.hole.add(rim);
@@ -111,6 +112,13 @@ export class Renderer {
     this.camera.position.set(position.x + 35, 44, position.z + 35);
     this.camera.lookAt(position.x, 0, position.z);
     this.camera.updateMatrixWorld();
+  }
+  setHoleLevel(level: number) {
+    const color = rimColorForLevel(level);
+    if (this.hole.userData.rimColor === color) return;
+    this.hole.userData.rimColor = color;
+    const rim = this.hole.getObjectByName("rim") as Mesh;
+    (rim.material as MeshBasicMaterial).color.set(color);
   }
   deformHole(position: Vector3, radius: number, bounds: number) {
     this.hole.userData.bounds = bounds;

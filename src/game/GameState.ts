@@ -28,6 +28,7 @@ export interface SwallowableObject {
   mass: number;
   scoreValue: number;
   orientation: number;
+  unlockStage?: 2 | 3;
   supportId?: string;
   signalAxis?: "x" | "z";
   variant: number;
@@ -54,6 +55,7 @@ export interface Level {
   totalScore: number;
 }
 export interface GameState {
+  areaStage: 1 | 2 | 3;
   status: "playing" | "paused" | "won";
   elapsedSeconds: number;
   hole: Hole;

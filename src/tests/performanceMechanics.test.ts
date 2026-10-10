@@ -56,14 +56,17 @@ describe("performance and scale mechanics", () => {
         .filter((o) => isUnlocked(s, o))
         .every((o) => o.radius <= categories.mouse.radius),
     ).toBe(true);
-    for (const [level, bounds] of [
-      [8, 20],
-      [13, 40],
-      [19, 60],
-    ]) {
-      s.hole.level = level;
-      expect(activeBounds(s)).toBe(bounds);
-    }
+    s.hole.level = 30;
+    expect(activeBounds(s)).toBe(3);
+    const gate = s.level.objects.find((o) => o.unlockStage === 2)!;
+    gate.state = "falling";
+    complete(s, gate);
+    expect(activeBounds(s)).toBe(10);
+    expect(complete(s, gate)).toBe(false);
+    const cityGate = s.level.objects.find((o) => o.unlockStage === 3)!;
+    cityGate.state = "falling";
+    complete(s, cityGate);
+    expect(activeBounds(s)).toBe(60);
   });
   it("allows corner access and keeps the rim softly bounded", () => {
     const s = freshState();
@@ -74,9 +77,9 @@ describe("performance and scale mechanics", () => {
     expect(
       Math.hypot(60 - s.hole.position.x, 60 - s.hole.position.z),
     ).toBeLessThan(2);
-    for(const radius of [2,20,60,80,100]) {
-      const limit=movementLimit(radius,60);
-      expect(Math.hypot(60-limit,60-limit)).toBeLessThanOrEqual(radius);
+    for (const radius of [2, 20, 60, 80, 100]) {
+      const limit = movementLimit(radius, 60);
+      expect(Math.hypot(60 - limit, 60 - limit)).toBeLessThanOrEqual(radius);
     }
     const outline = holeOutline(s.hole.position.x, s.hole.position.z, 2, 60);
     expect(Math.max(...outline.map((p) => p.x))).toBeLessThan(60.08);

@@ -465,6 +465,23 @@ export function createObjectVisual(o: SwallowableObject) {
       add(box, "#e1d6bc", stripe * 0.45, 2.38, 0, 0.2, 0.025, 1.9);
     return g;
   }
+  if (o.design === "boundary fence") {
+    const r = o.radius;
+    for (const side of [-1, 1])
+      add(
+        box,
+        "#e5d3ae",
+        side * r * 0.9,
+        r * 0.75,
+        0,
+        r * 0.14,
+        r * 1.5,
+        r * 0.18,
+      );
+    for (const y of [0.45, 1.15])
+      add(box, "#b58a58", 0, r * y, 0, r * 2, r * 0.16, r * 0.12);
+    return g;
+  }
   if (o.type === "barrier") {
     for (const side of [-1, 1])
       add(box, "#727b80", side * 0.6, 0.24, 0, 0.15, 0.48, 0.25);

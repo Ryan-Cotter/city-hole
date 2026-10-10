@@ -18,10 +18,12 @@ describe("map detail and recognizable small items", () => {
     HUD.prototype.drawMap.call(hud, state);
     expect(label).toContain("6 meters wide, item detail");
     state.hole.level = 13;
+    state.areaStage = 2;
     state.hole.radius = 1;
     HUD.prototype.drawMap.call(hud, state);
-    expect(label).toContain("80 meters wide, building detail");
+    expect(label).toContain("20 meters wide, building detail");
     state.hole.level = 30;
+    state.areaStage = 3;
     state.hole.radius = 9;
     HUD.prototype.drawMap.call(hud, state);
     expect(label).toContain("120 meters wide, block detail");

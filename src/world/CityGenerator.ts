@@ -398,6 +398,31 @@ export function generateCity(
       0.8 + Math.floor(i / 6) * 0.36,
       random() * 6,
     );
+  // Physical, independently swallowable boundary panels unlock the next area.
+  for (const [bounds, count, radius, unlockStage] of [
+    [2.85, 20, 0.14, 2],
+    [9.5, 12, 0.82, 3],
+  ] as const) {
+    for (let side = 0; side < 4; side++)
+      for (let i = 0; i < count; i++) {
+        const along = -bounds + ((i + 0.5) * bounds * 2) / count;
+        add(
+          "barrier",
+          side % 2 ? (side === 1 ? bounds : -bounds) : along,
+          side % 2 ? along : side === 0 ? -bounds : bounds,
+          side % 2 ? Math.PI / 2 : 0,
+        );
+        const fence = objects[objects.length - 1];
+        Object.assign(fence, {
+          radius,
+          height: radius * 1.5,
+          unlockStage,
+          mass: unlockStage === 2 ? 21 : 4181,
+          scoreValue: unlockStage === 2 ? 21 : 4181,
+          design: "boundary fence",
+        });
+      }
+  }
   return {
     seed,
     bounds: cityConfig.bounds,

@@ -19,7 +19,8 @@ export function clampHole(h: Hole, bounds: number) {
     if (old !== h.position[axis]) h.velocity[axis] = 0;
   }
 }
-export const speedForRadius = (_radius: number) => config.moveSpeed;
+export const speedForRadius = (radius: number) =>
+  Math.min(config.moveSpeed, Math.max(0.18, radius * 4.5));
 export function moveHole(
   h: Hole,
   input: InputManager,
@@ -42,7 +43,7 @@ export function moveToward(
       h.velocity
         .copy(delta)
         .normalize()
-        .multiplyScalar(Math.min(config.moveSpeed, distance / dt));
+        .multiplyScalar(Math.min(speedForRadius(h.radius), distance / dt));
   }
   h.position.addScaledVector(h.velocity, dt);
   clampHole(h, bounds);
