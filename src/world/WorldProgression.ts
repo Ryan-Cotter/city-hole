@@ -1,3 +1,4 @@
+import { blockScaleRadius, lowestDetailTier, tierOf } from "../game/sections";
 import { Vector3 } from "three";
 import { categories, objectDesigns, stages } from "../game/constants";
 import type {
@@ -194,4 +195,39 @@ export function advanceWorld(s: GameState): boolean {
   s.status = "playing";
   updateBoosts(s);
   return true;
+}
+
+// At block scale, tiny scenery is retired, never credited as food.
+export function discardSmallScenery(s: GameState): SwallowableObject[] {
+  if (
+    !["city", "metropolis"].includes(s.world.phase) ||
+    s.hole.radius < blockScaleRadius
+  )
+    return [];
+  const cutoff = lowestDetailTier(s);
+  const removed = s.level.objects.filter(
+    (o) =>
+      o.state !== "swallowed" &&
+      o.state !== "discarded" &&
+      !o.collisionOnly &&
+      !o.members &&
+      !isBuildingType(o.type) &&
+      tierOf(o) < cutoff,
+  );
+  if (!removed.length) return [];
+  const ids = new Set(removed.map((o) => o.id));
+  for (const o of removed) {
+    o.state = "discarded";
+    o.fall = null;
+    s.level.totalMass -= o.mass;
+    s.level.totalScore -= o.scoreValue;
+  }
+  s.level.objects = s.level.objects.filter((o) => !ids.has(o.id));
+  s.level.objectSlots = new Map(s.level.objects.map((o, i) => [o.id, i]));
+  for (const block of s.level.objects)
+    if (block.members)
+      block.members = block.members.filter((member) => !ids.has(member.id));
+  s.score.remainingObjects -= removed.length;
+  if (s.world.phase === "city") s.world.initialCount -= removed.length;
+  return removed;
 }

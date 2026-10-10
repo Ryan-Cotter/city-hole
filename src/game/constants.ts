@@ -469,6 +469,7 @@ export const selfPlayConfig = {
 };
 
 export const cameraConfig = {
+  desktopFraming: 1.2,
   baseView: 0.7,
   radiusScale: 1.3,
   movingZoom: 1.25,

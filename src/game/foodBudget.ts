@@ -2,7 +2,7 @@ import { Vector3 } from "three";
 import { categories, objectDesigns } from "./constants";
 import type { GameState, ObjectType, SwallowableObject } from "./GameState";
 import { growthForPoints, growthPoints } from "./progression";
-import { activeBounds, isUnlocked } from "./sections";
+import { activeBounds, isUnlocked, blockScaleRadius } from "./sections";
 import { isBuildingType } from "../render/occlusion";
 let reserveSerial = 0;
 export const foodBudgetFactor = 1.5;
@@ -28,7 +28,7 @@ export function ensureFoodBudget(s: GameState): SwallowableObject[] {
       ? categories.country.radius
       : s.world.phase === "country"
         ? categories.wholeCity.radius
-        : categories.cityBlock.radius;
+        : blockScaleRadius * 0.85;
   // Once everything in this map is edible, finish it instead of spawning forever.
   if (s.hole.radius * 0.85 >= goalRadius) return [];
   const growth = growthForPoints(growthPoints(s));

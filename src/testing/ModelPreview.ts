@@ -13,6 +13,8 @@ import { categories, objectDesigns } from "../game/constants";
 import type { ObjectType, SwallowableObject } from "../game/GameState";
 const host = document.querySelector("#models")!;
 const panels: [string, ObjectType[], number, number][] = [
+  ["Medieval market props", ["hydrant", "sign", "bench", "patio"], 0, 5],
+  ["Medieval block", ["cityBlock"], 0, 15],
   ["Medieval carts", ["car", "van"], 0, 3],
   ["Industrial vehicles", ["car", "van"], 1, 3],
   ["Modern cars and vans", ["car", "van"], 2, 3],

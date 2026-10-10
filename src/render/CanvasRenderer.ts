@@ -155,7 +155,7 @@ export class CanvasRenderer {
         [bound, bound],
         [-bound, bound],
       ].forEach(([x, z], i) => {
-        const p = project(new Vector3(x, 0.02, z));
+        const p = project(new Vector3(x, 0, z));
         if (i === 0) ctx.moveTo(p.x, p.y);
         else ctx.lineTo(p.x, p.y);
       });
@@ -171,7 +171,7 @@ export class CanvasRenderer {
       );
       ctx.beginPath();
       outline.forEach((point, i) => {
-        const p = project(new Vector3(point.x, 0.012, point.z));
+        const p = project(new Vector3(point.x, 0, point.z));
         if (i === 0) ctx.moveTo(p.x, p.y);
         else ctx.lineTo(p.x, p.y);
       });

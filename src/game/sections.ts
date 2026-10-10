@@ -1,5 +1,6 @@
 import type { GameState, SwallowableObject } from "./GameState";
 import { categories } from "./constants";
+export const blockScaleRadius = categories.cityBlock.radius * 8;
 export const areaConfig = [
   { index: 1, bounds: 3, name: "Starter yard" },
   { index: 2, bounds: 10, name: "City block" },
@@ -20,7 +21,10 @@ export const activeBounds = (state: GameState) =>
 export const isUnlocked = (state: GameState, o: SwallowableObject) => {
   if (o.unlockStage && o.unlockStage <= state.areaStage) return false;
   const bounds = activeBounds(state);
-  if (o.members && (state.areaStage < 3 || o.radius > state.hole.radius * 0.85))
+  if (
+    o.members &&
+    (state.areaStage < 3 || state.hole.radius < blockScaleRadius)
+  )
     return false;
   return (
     Math.abs(o.position.x) <= bounds &&

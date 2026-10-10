@@ -41,7 +41,7 @@ export interface SwallowableObject {
   variant: number;
   design: string;
   motion: Motion | null;
-  state: "idle" | "falling" | "swallowed";
+  state: "idle" | "falling" | "swallowed" | "discarded";
   fall: null | { elapsed: number; start: Vector3; capture: Vector3 };
 }
 export type District =

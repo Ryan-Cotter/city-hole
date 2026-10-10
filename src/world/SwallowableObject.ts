@@ -371,6 +371,7 @@ export function createObjectVisual(o: SwallowableObject) {
       add(box, "#539aaa", 0, 3.1, r * 0.25, r * 1.5, 0.2, r * 0.08);
     } else {
       const block = o.type === "cityBlock";
+      const medieval = (o.cityIndex ?? 0) === 0;
       add(box, "#7b8380", 0, 0.25, 0, r * 1.8, 0.5, r * 1.8);
       add(box, "#b7b2a2", 0, 0.53, 0, r * 1.65, 0.06, r * 1.65);
       for (const side of [-1, 1]) {
@@ -390,11 +391,20 @@ export function createObjectVisual(o: SwallowableObject) {
             themeForCity(o.cityIndex ?? 0).facade,
           ][(x + z + 8) % 4];
           add(box, color, bx, h / 2 + 0.56, bz, w, h, w);
-          add(box, "#58636b", bx, h + 0.6, bz, w * 1.06, r * 0.035, w * 1.06);
+          add(
+            medieval ? roofGeometry : box,
+            medieval ? "#88563f" : "#58636b",
+            bx,
+            h + 0.6,
+            bz,
+            w * 1.06,
+            r * (medieval ? 0.12 : 0.035),
+            w * 1.06,
+          );
           if (block) {
             add(
               box,
-              "#97a2a7",
+              medieval ? "#8c7962" : "#97a2a7",
               bx + w * 0.2,
               h + 0.85,
               bz,
@@ -410,7 +420,7 @@ export function createObjectVisual(o: SwallowableObject) {
                   bx,
                   0.56 + (h * floor) / 4,
                   bz + side * (w / 2 + 0.012),
-                  w * 0.76,
+                  w * (medieval ? 0.23 : 0.76),
                   r * 0.055,
                   0.025,
                 );
@@ -422,7 +432,7 @@ export function createObjectVisual(o: SwallowableObject) {
                   bz,
                   0.025,
                   r * 0.055,
-                  w * 0.76,
+                  w * (medieval ? 0.23 : 0.76),
                 );
               }
           }
@@ -473,6 +483,132 @@ export function createObjectVisual(o: SwallowableObject) {
     glow.material = borderMaterials[index];
     const halo = add(box, "#43f4ec", 0, 0.015, 0, r * 1.85, 0.025, r * 0.55);
     halo.material = borderHalos[index];
+    return g;
+  }
+  // Period-appropriate props share the same gameplay tiers and footprints.
+  if (
+    era === 0 &&
+    [
+      "bottlecap",
+      "toy",
+      "snack",
+      "litter",
+      "hydrant",
+      "sign",
+      "bench",
+      "table",
+      "patio",
+      "barrier",
+      "manhole",
+      "kiosk",
+    ].includes(o.type)
+  ) {
+    const r = o.radius,
+      h = o.height,
+      v = o.variant % 4;
+    const wood = ["#8b613b", "#a17a4e", "#76513a", "#b18b58"][v];
+    g.name = `medieval-${o.type}`;
+    const part = (
+      shape: BufferGeometry,
+      color: string,
+      x: number,
+      y: number,
+      z: number,
+      sx: number,
+      sy: number,
+      sz: number,
+    ) => add(shape, color, x * r, y * h, z * r, sx * r, sy * h, sz * r);
+    if (o.type === "bottlecap") {
+      part(cylinder, v % 2 ? "#b39b72" : wood, 0, 0.4, 0, 0.72, 0.8, 0.72);
+      for (const x of [-0.22, 0.22])
+        part(cylinder, "#493c2e", x, 0.82, 0, 0.08, 0.04, 0.08);
+    } else if (o.type === "toy") {
+      part(
+        [box, cone, sphere, cylinder][v],
+        wood,
+        0,
+        0.4,
+        0,
+        v % 2 ? 0.7 : 1.1,
+        0.8,
+        v % 2 ? 0.7 : 1.1,
+      );
+      part(cylinder, "#d2b47b", 0, 0.85, 0, 0.12, 0.3, 0.12);
+    } else if (o.type === "snack") {
+      part(
+        v === 2 ? box : sphere,
+        ["#be813c", "#a64e39", "#d3b452", "#738343"][v],
+        0,
+        0.4,
+        0,
+        0.8,
+        v === 3 ? 0.85 : 0.65,
+        0.65,
+      );
+      if (v % 2) part(box, "#64502f", 0, 0.8, 0, 0.1, 0.2, 0.1);
+      else
+        for (const x of [-0.35, 0, 0.35])
+          part(box, "#e1bc7c", x, 0.7, 0, 0.07, 0.06, 0.6);
+    } else if (o.type === "sign") {
+      part(box, wood, 0, 0.45, 0, 0.18, 0.9, 0.18);
+      part(box, "#ba955e", 0, 0.8, 0, 1.6, 0.23, 0.18);
+      part(cone, "#49382c", 0, 0.8, 0.13, 0.24, 0.13, 0.08);
+    } else if (["litter", "hydrant", "bench"].includes(o.type)) {
+      // Crates, clay jars and coopered barrels replace packaging and street furniture.
+      const crate = v % 2 === 0;
+      part(
+        crate ? box : cylinder,
+        crate ? wood : "#9b6948",
+        0,
+        0.43,
+        0,
+        crate ? 1.3 : 0.7,
+        0.86,
+        crate ? 1.3 : 0.7,
+      );
+      for (const y of [0.18, 0.7])
+        part(
+          crate ? box : cylinder,
+          "#584938",
+          0,
+          y,
+          0,
+          crate ? 1.38 : 0.73,
+          0.06,
+          crate ? 1.38 : 0.73,
+        );
+      if (crate)
+        for (const x of [-0.42, 0, 0.42])
+          part(box, "#57422e", x, 0.45, 0.66, 0.025, 0.75, 0.025);
+      else part(cylinder, "#d0af79", 0, 0.88, 0, 0.52, 0.04, 0.52);
+    } else if (o.type === "manhole") {
+      part(cylinder, "#a49c87", 0, 0.45, 0, 0.95, 0.9, 0.95);
+      part(box, "#625d50", 0, 0.95, 0, 0.5, 0.06, 0.13);
+    } else if (o.type === "barrier") {
+      for (const x of [-0.65, 0.65]) part(box, wood, x, 0.5, 0, 0.15, 1, 0.15);
+      for (const y of [0.4, 0.8])
+        part(box, "#b19566", 0, y, 0, 1.6, 0.13, 0.13);
+    } else {
+      const stall = o.type === "patio" || o.type === "kiosk";
+      for (const x of [-0.6, 0.6])
+        for (const z of [-0.45, 0.45])
+          part(box, wood, x, stall ? 0.5 : 0.3, z, 0.1, stall ? 1 : 0.6, 0.1);
+      part(box, "#b0905e", 0, stall ? 0.4 : 0.65, 0, 1.5, 0.09, 1.2);
+      if (stall) {
+        part(roofGeometry, "#987348", 0, 0.85, 0, 1.8, 0.25, 1.5);
+        for (const x of [-0.5, 0, 0.5])
+          part(
+            box,
+            v % 2 ? "#946648" : "#d2b581",
+            x,
+            0.87,
+            0.75,
+            0.4,
+            0.18,
+            0.04,
+          );
+      }
+    }
     return g;
   }
   if (era !== 2 && isBuildingType(o.type)) {
@@ -654,7 +790,10 @@ export function createObjectVisual(o: SwallowableObject) {
     ],
   };
   const palette = facades[o.type as keyof typeof facades] ?? bright;
-  const color = palette[o.variant % palette.length];
+  const color =
+    era === 0
+      ? ["#84704b", "#8c5944", "#536b50", "#ae936b"][o.variant % 4]
+      : palette[o.variant % palette.length];
   const kind = o.variant % objectDesigns[o.type].length;
   g.name = o.design;
   if (o.type === "snack") {
@@ -1196,7 +1335,10 @@ export function createObjectVisual(o: SwallowableObject) {
         limb(x, 0.44, 0.44, 0.12, 0.14, "#244681", x < 0 ? -1 : 1, "hip");
       for (const x of [-0.225, 0.225])
         limb(x, 0.86, 0.43, 0.11, 0.12, color, x < 0 ? 1 : -1, "shoulder");
-      if (kind === 3) {
+      if (era === 0) {
+        add(box, "#514333", 0, 0.48, 0, 0.37, 0.06, 0.24);
+        add(cone, color, 0, 1.23, 0, 0.18, 0.2, 0.18);
+      } else if (kind === 3) {
         add(box, "#e7b83e", 0, 0.68, -0.19, 0.3, 0.4, 0.2);
         add(box, "#d5eaff", 0, 1.23, 0, 0.28, 0.08, 0.28);
       } else if (kind === 0) add(cylinder, color, 0, 1.23, 0, 0.17, 0.06, 0.17);

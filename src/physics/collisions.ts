@@ -18,7 +18,7 @@ export function resolveOversizedCollisions(
   const delta = hole.position.clone().sub(previous);
   const steps = Math.max(
     1,
-    Math.ceil(delta.length() / Math.max(0.015, hole.radius * 0.4)),
+    Math.ceil(delta.length() / Math.max(0.00001, hole.radius * 0.4)),
   );
   hole.position.copy(previous);
   for (let step = 0; step < steps; step++) {

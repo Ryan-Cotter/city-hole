@@ -1,8 +1,18 @@
 import { ensureFoodBudget } from "./foodBudget";
-import { attachCityBlocks, advanceWorld } from "../world/WorldProgression";
+import {
+  attachCityBlocks,
+  advanceWorld,
+  discardSmallScenery,
+} from "../world/WorldProgression";
 import { activateBoost, updateBoosts } from "./boosts";
 import { resolveOversizedCollisions } from "../physics/collisions";
-import { activeBounds, isUnlocked, lowestDetailTier, tierOf } from "./sections";
+import {
+  activeBounds,
+  isUnlocked,
+  lowestDetailTier,
+  tierOf,
+  blockScaleRadius,
+} from "./sections";
 import { createBlockVisual, disposeBlockVisual } from "../render/BlockVisual";
 import { CityChunks } from "../world/CityChunks";
 import { SelfPlayer } from "../testing/SelfPlayer";
@@ -178,7 +188,7 @@ export class Game {
       if (this.renderer.chunkVisible(chunk.x, chunk.z, this.chunks.size)) {
         const coarse =
           this.state.world.phase === "city" &&
-          this.state.hole.radius >= 8 &&
+          this.state.hole.radius >= blockScaleRadius &&
           Math.hypot(
             chunk.x - this.state.hole.position.x,
             chunk.z - this.state.hole.position.z,
@@ -322,7 +332,8 @@ export class Game {
       this.budgetKey = budgetKey;
       if (ensureFoodBudget(s).length) this.populate();
     }
-    this.input.refreshTarget();
+    for (const removed of discardSmallScenery(s)) this.removeCompleted(removed);
+    this.input.refreshTarget(s.hole.position);
     const beforeMove = s.hole.position.clone();
     if (this.selfPlayer.enabled)
       moveToward(s.hole, this.selfPlayer.target(s, dt), dt, activeBounds(s));

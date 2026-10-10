@@ -107,14 +107,17 @@ export class Renderer {
   follow(position: Vector3, radius = 1, moving = false, minimumView = 0) {
     for (const edge of this.hole.children)
       edge.position.y =
-        Math.min(0.012, radius * 0.04) + (edge.name === "rim" ? 0.00001 : 0);
+        Math.min(0.00001, radius * 0.001) +
+        (edge.name === "rim" ? 0.000001 : 0);
     const now = performance.now(),
       dt = Math.min(0.1, (now - this.lastZoom) / 1000);
     this.lastZoom = now;
-    this.viewSize +=
-      (Math.max(minimumView, cameraViewSize(radius, moving)) - this.viewSize) *
-      (1 - Math.exp(-cameraConfig.smoothing * dt));
     const rect = this.webgl.domElement.parentElement!.getBoundingClientRect();
+    const framing = rect.width >= 640 ? cameraConfig.desktopFraming : 1;
+    this.viewSize +=
+      (Math.max(minimumView, cameraViewSize(radius, moving) * framing) -
+        this.viewSize) *
+      (1 - Math.exp(-cameraConfig.smoothing * dt));
     resizeCamera(this.camera, rect.width, rect.height, this.viewSize);
     const distanceScale = Math.max(1, this.viewSize / 30);
     this.camera.position.set(
@@ -150,10 +153,10 @@ export class Renderer {
       this.boundaryBounds = bounds;
       this.boundary.geometry.dispose();
       this.boundary.geometry = new BufferGeometry().setFromPoints([
-        new Vector3(-bounds, 0.02, -bounds),
-        new Vector3(bounds, 0.02, -bounds),
-        new Vector3(bounds, 0.02, bounds),
-        new Vector3(-bounds, 0.02, bounds),
+        new Vector3(-bounds, 0, -bounds),
+        new Vector3(bounds, 0, -bounds),
+        new Vector3(bounds, 0, bounds),
+        new Vector3(-bounds, 0, bounds),
       ]);
     }
     for (const child of this.hole.children) {

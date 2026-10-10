@@ -1,6 +1,6 @@
 import { updateBoosts, activateBoost } from "../game/boosts";
 import type { GameState, Hole, SwallowableObject } from "../game/GameState";
-import { lowestDetailTier, tierOf } from "../game/sections";
+import { lowestDetailTier, tierOf, blockScaleRadius } from "../game/sections";
 import { config, stages, blockRewardConfig } from "../game/constants";
 import { growthForPoints, growthPoints } from "../game/progression";
 export function canSwallow(o: SwallowableObject, h: Hole) {
@@ -8,6 +8,7 @@ export function canSwallow(o: SwallowableObject, h: Hole) {
     dz = o.position.z - h.position.z;
   return (
     !o.collisionOnly &&
+    (!o.members || h.radius >= blockScaleRadius) &&
     o.state === "idle" &&
     o.radius <= h.radius * config.swallowFactor &&
     dx * dx + dz * dz <= h.radius * h.radius
@@ -30,7 +31,7 @@ export function complete(
 ) {
   if (o.collisionOnly || o.state !== "falling") return false;
   for (const member of o.members ?? []) {
-    if (member.state === "swallowed") continue;
+    if (member.state === "swallowed" || member.state === "discarded") continue;
     member.state = "falling";
     complete(
       s,
