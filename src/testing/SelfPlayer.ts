@@ -196,15 +196,43 @@ export class SelfPlayer {
   goal: SwallowableObject | null = null;
   private countdown = 0;
   private level = 0;
+  private stalledSeconds = 0;
+  private lastPosition = new Vector3();
+  private lastRemaining = -1;
+  private retryAfter = new Map<string, number>();
+  private elapsed = 0;
+  private goalDeadline = Infinity;
+  private groupOffset = 0;
   reset() {
     this.path = [];
     this.goal = null;
     this.countdown = 0;
     this.level = 0;
+    this.stalledSeconds = 0;
+    this.lastRemaining = -1;
+    this.retryAfter.clear();
+    this.elapsed = 0;
+    this.goalDeadline = Infinity;
+    this.groupOffset = 0;
   }
   target(state: GameState, dt: number): Vector3 | null {
     if (!this.enabled) return null;
     this.countdown -= dt;
+    this.elapsed += dt;
+    const moved = this.lastPosition.distanceToSquared(state.hole.position) > 0.000001;
+    const harvested = this.lastRemaining !== state.score.remainingObjects;
+    this.stalledSeconds = moved || harvested ? 0 : this.stalledSeconds + dt;
+    this.lastPosition.copy(state.hole.position);
+    this.lastRemaining = state.score.remainingObjects;
+    if (this.goal && (this.stalledSeconds >= 2 || this.elapsed >= this.goalDeadline)) {
+      this.retryAfter.set(this.goal.id, this.elapsed + 8);
+      this.goal = null;
+      this.path = [];
+      this.countdown = 0;
+      this.stalledSeconds = 0;
+    }
+    for (const [id, until] of this.retryAfter)
+      if (until <= this.elapsed) this.retryAfter.delete(id);
     if (this.goal && this.goal.state !== "idle") {
       this.path = [];
       this.goal = null;
@@ -232,17 +260,20 @@ export class SelfPlayer {
       const limit = movementLimit(state.hole.radius, activeBounds(state));
       this.path = [];
       this.goal = null;
-      for (const group of edibleClusters(state).slice(
-        0,
-        selfPlayConfig.candidateGroups,
-      )) {
-        const targets = group.objects.sort(
+      const groups = edibleClusters(state);
+      // Keep each search bounded, but rotate past unreachable high-value clusters.
+      const start = this.groupOffset % Math.max(1, groups.length);
+      const candidates = [...groups.slice(start), ...groups.slice(0, start)]
+        .slice(0, selfPlayConfig.candidateGroups);
+      for (const group of candidates) {
+        const targets = group.objects.filter((o) => !this.retryAfter.has(o.id)).sort(
           (a, b) =>
             a.position.distanceToSquared(state.hole.position) -
             b.position.distanceToSquared(state.hole.position),
         );
         for (const target of targets.slice(0, 3)) {
           const destination = target.position.clone();
+          destination.y = 0;
           destination.x = Math.max(-limit, Math.min(limit, destination.x));
           destination.z = Math.max(-limit, Math.min(limit, destination.z));
           const clear = !obstacles.some((o) =>
@@ -254,19 +285,38 @@ export class SelfPlayer {
           if (route.length) {
             this.goal = target;
             this.path = route;
+            let routeLength = 0, previous = state.hole.position;
+            for (const point of route) {
+              routeLength += previous.distanceTo(point);
+              previous = point;
+            }
+            this.goalDeadline = this.elapsed + routeLength / config.moveSpeed * 2 + 8;
             break;
           }
         }
         if (this.goal) break;
       }
+      this.groupOffset = this.goal ? 0 : start + selfPlayConfig.candidateGroups;
+    }
+    const limit = movementLimit(state.hole.radius, activeBounds(state));
+    // Grid cells can round beyond the playable edge; every waypoint must be reachable.
+    for (const point of this.path) {
+      point.y = 0;
+      point.x = Math.max(-limit, Math.min(limit, point.x));
+      point.z = Math.max(-limit, Math.min(limit, point.z));
     }
     while (
       this.path.length > 1 &&
       this.path[0].distanceTo(state.hole.position) < 0.22
     )
       this.path.shift();
-    if (this.path.length === 1 && this.goal)
-      this.path[0].copy(this.goal.position);
+    if (this.path.length === 1 && this.goal) {
+      this.path[0].set(
+        Math.max(-limit, Math.min(limit, this.goal.position.x)),
+        0,
+        Math.max(-limit, Math.min(limit, this.goal.position.z)),
+      );
+    }
     return this.path[0] ?? null;
   }
 }

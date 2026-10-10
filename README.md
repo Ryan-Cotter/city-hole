@@ -70,3 +70,5 @@ Android and iOS Capacitor projects are generated and synced. Android SDK/Android
 Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, fixed-speed hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, section unlocks, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, section minimap and visible small items.
 
 The local Git project is named `city-hole`. GitHub publication remains pending authenticated repository creation; no remote repository or public deployment has been claimed. See `docs/CITY_OBJECTS.md` for the object catalog and `docs/GAME_DESIGN.md` for implementation details.
+
+Self-play keeps routes on the ground and within the unlocked section, retries another target after two seconds without movement or a swallow, and limits fruitless chases. Unreachable clusters are skipped in bounded batches rather than retried forever.

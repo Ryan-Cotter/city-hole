@@ -12,9 +12,38 @@ import {
   cameraConfig,
   config,
 } from "../game/constants";
+import { activeBounds } from "../game/sections";
 import { cameraViewSize } from "../render/Camera";
 
 describe("self play and pacing", () => {
+  it("keeps elevated targets and edge waypoints on reachable ground", () => {
+    const state = freshState(), player = new SelfPlayer();
+    player.enabled = true;
+    const goal = state.level.objects.find(o => o.type === "bottlecap")!;
+    player.target(state, 0.1);
+    player.goal = goal;
+    goal.position.set(2.99, 0.77, 0);
+    player.path = [new Vector3(3.2, 0, 0), goal.position.clone()];
+    state.hole.position.set(3 - state.hole.radius * 0.7, 0, 0);
+    const target = player.target(state, 0.1)!;
+    expect(target.y).toBe(0);
+    expect(target.x).toBeLessThanOrEqual(3 - state.hole.radius * 0.7);
+    expect(player.path).toHaveLength(1);
+    moveToward(state.hole, target, 0.1, 3);
+    expect(state.hole.position.y).toBe(0);
+  });
+  it("abandons a stalled target and chooses another instead of freezing", () => {
+    const state = freshState(), player = new SelfPlayer();
+    player.enabled = true;
+    player.target(state, 0.1);
+    const stuckGoal = player.goal;
+    expect(stuckGoal).not.toBeNull();
+    // Simulate a blocked route: frames continue but the hole cannot advance.
+    for (let i = 0; i < 22; i++) player.target(state, 0.1);
+    expect(player.goal).not.toBeNull();
+    expect(player.goal).not.toBe(stuckGoal);
+    expect(player.path.length).toBeGreaterThan(0);
+  });
   it("routes around oversized footprints without cutting occupied corners", () => {
     const path = findPath(
       new Vector3(-5, 0, 0),
@@ -106,7 +135,7 @@ describe("self play and pacing", () => {
         state.hole,
         player.target(state, 0.1),
         0.1,
-        state.level.bounds,
+        activeBounds(state),
       );
       expect(state.hole.position.distanceTo(before)).toBeLessThanOrEqual(
         0.320001,
