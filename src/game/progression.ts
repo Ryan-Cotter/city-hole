@@ -14,7 +14,7 @@ export function growthForPoints(points: number) {
     );
     // Preserve distinct early sizes; blend large-scale steps without sudden jumps.
     const radius =
-      current.type === "skyscraper" || current.type === "cityBlock"
+      level >= 28
         ? current.radius * Math.pow(next.radius / current.radius, fraction)
         : current.radius;
     return {

@@ -21,6 +21,7 @@ import {
 import type { SwallowableObject } from "../game/GameState";
 import { material } from "../render/Materials";
 const pickupMaterials = {
+  vortex: new MeshBasicMaterial({ color: "#a48aff", side: DoubleSide }),
   speed: new MeshBasicMaterial({ color: "#fff13b", side: DoubleSide }),
   size: new MeshBasicMaterial({ color: "#51ff75", side: DoubleSide }),
 };
@@ -436,7 +437,23 @@ export function createObjectVisual(o: SwallowableObject) {
   if (o.pickup) {
     const r = o.radius;
     const mat = pickupMaterials[o.pickup];
-    if (o.pickup === "speed") {
+    if (o.pickup === "vortex") {
+      for (let i = 0; i < 18; i++) {
+        const a = i * 0.6,
+          radius = r * (0.15 + i * 0.045);
+        const bead = add(
+          sphere,
+          "#a48aff",
+          Math.cos(a) * radius,
+          r * 1.6 + Math.sin(a) * radius,
+          0,
+          r * 0.12,
+          r * 0.12,
+          r * 0.12,
+        );
+        bead.material = mat;
+      }
+    } else if (o.pickup === "speed") {
       const bolt = new Mesh(boltGeometry, mat);
       bolt.scale.setScalar(r * 1.5);
       bolt.position.y = r * 1.9;

@@ -1,4 +1,4 @@
-import { blockScaleRadius, lowestDetailTier, tierOf } from "../game/sections";
+import { blockScaleRadius, lowestRenderTier, tierOf } from "../game/sections";
 import { Vector3 } from "three";
 import { categories, objectDesigns, stages } from "../game/constants";
 import type {
@@ -180,6 +180,7 @@ export function prepareWorld(s: GameState) {
   s.level.objects.push(...expansion.objects, ...landscape.objects);
   s.level.blocks.push(...expansion.blocks);
   s.level.finalBounds = 3400;
+  s.level.bounds = 3400;
   s.world.remainingByRing = { 1: 0, 2: 0, 3: 0 };
   for (const o of s.level.objects)
     if (!o.collisionOnly) s.world.remainingByRing[o.worldRing ?? 1]++;
@@ -210,7 +211,7 @@ export function advanceWorld(s: GameState): boolean {
   )
     return false;
   const from = s.level.bounds;
-  s.level.bounds = ring === 1 ? 540 : 3400;
+  s.level.bounds = s.level.finalBounds ?? 3400;
   s.world.phase = ring === 1 ? "metropolis" : "planet";
   s.world.ringCount = s.level.objects.filter(
     (o) => o.worldRing === ring + 1 && !o.collisionOnly,
@@ -228,7 +229,7 @@ export function discardSmallScenery(s: GameState): SwallowableObject[] {
     s.hole.radius < blockScaleRadius
   )
     return [];
-  const cutoff = lowestDetailTier(s);
+  const cutoff = lowestRenderTier(s);
   const removed = s.level.objects.filter(
     (o) =>
       o.state !== "swallowed" &&

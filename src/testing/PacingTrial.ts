@@ -1,3 +1,4 @@
+import { appendFileSync } from "node:fs";
 import { enablePacing } from "../game/pacing";
 import { isSolidObstacle, obstacleRadius } from "../physics/collisions";
 import { isUnlocked } from "../game/sections";
@@ -72,6 +73,11 @@ export function pacingTrial(
         end: started,
         score: s.score.points,
       });
+      if (process.env.TRIAL_TRACE)
+        appendFileSync(
+          process.env.TRIAL_TRACE,
+          `${s.elapsedSeconds.toFixed(1)} ${key} radius=${s.hole.radius.toFixed(3)} remaining=${s.score.remainingObjects}\n`,
+        );
       previousKey = key;
     }
   };

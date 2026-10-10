@@ -12,8 +12,44 @@ import type { GameState, SwallowableObject } from "../game/GameState";
 import { config, selfPlayConfig } from "../game/constants";
 import { obstacleRadius, isSolidObstacle } from "../physics/collisions";
 
-// A* on an eight-neighbor grid. No diagonal cuts through occupied corners.
+// Rasterize only the route corridor, never the entire unlocked world.
 export function findPath(
+  start: Vector3,
+  end: Vector3,
+  bounds: number,
+  obstacles: Obstacle[],
+  cell = selfPlayConfig.cellSize,
+): Vector3[] {
+  const center = start.clone().add(end).multiplyScalar(0.5);
+  const extent = Math.min(
+    bounds,
+    Math.max(Math.abs(start.x - end.x), Math.abs(start.z - end.z)) * 0.5 +
+      cell * 20,
+  );
+  const nearby = obstacles
+    .filter(
+      (o) =>
+        Math.abs(o.x - center.x) <= extent + o.half &&
+        Math.abs(o.z - center.z) <= extent + o.half,
+    )
+    .map((o) => ({ ...o, x: o.x - center.x, z: o.z - center.z }));
+  const path = findLocalPath(
+    start.clone().sub(center),
+    end.clone().sub(center),
+    extent,
+    nearby,
+    cell,
+  );
+  return path.map((p) => {
+    p.add(center);
+    p.x = Math.max(-bounds, Math.min(bounds, p.x));
+    p.z = Math.max(-bounds, Math.min(bounds, p.z));
+    return p;
+  });
+}
+
+// A* on an eight-neighbor grid. No diagonal cuts through occupied corners.
+function findLocalPath(
   start: Vector3,
   end: Vector3,
   bounds: number,
@@ -30,20 +66,25 @@ export function findPath(
     ez = coord(end.z);
   const source = key(sx, sz),
     goal = key(ex, ez);
-  const blocked = new Set<number>();
-  for (const o of obstacles)
-    for (let z = coord(o.z - o.half); z <= coord(o.z + o.half); z++)
-      for (let x = coord(o.x - o.half); x <= coord(o.x + o.half); x++) {
-        const wx = x * cell - bounds,
-          wz = z * cell - bounds;
-        if (
-          o.round
-            ? Math.hypot(wx - o.x, wz - o.z) <= o.half
-            : Math.abs(wx - o.x) <= o.half + cell * 0.35 &&
-              Math.abs(wz - o.z) <= o.half + cell * 0.35
-        )
-          blocked.add(key(x, z));
-      }
+  const occupancy = new Map<number, boolean>();
+  const blocked = {
+    has(id: number) {
+      if (occupancy.has(id)) return occupancy.get(id)!;
+      const wx = (id % size) * cell - bounds;
+      const wz = Math.floor(id / size) * cell - bounds;
+      const occupied = obstacles.some((o) =>
+        o.round
+          ? Math.hypot(wx - o.x, wz - o.z) <= o.half
+          : Math.abs(wx - o.x) <= o.half + cell * 0.35 &&
+            Math.abs(wz - o.z) <= o.half + cell * 0.35,
+      );
+      occupancy.set(id, occupied);
+      return occupied;
+    },
+    delete(id: number) {
+      occupancy.set(id, false);
+    },
+  };
   blocked.delete(source);
   const goalIsolated =
     blocked.has(goal) &&
@@ -320,7 +361,7 @@ export class SelfPlayer {
                 Math.max(selfPlayConfig.cellSize, state.hole.radius * 0.1),
                 Math.max(
                   0.002,
-                  activeBounds(state) / 100,
+                  state.hole.position.distanceTo(destinations[0]) / 100,
                   state.hole.radius * 0.5,
                 ),
               ),

@@ -41,6 +41,7 @@ export function seedFoodBudget(s: GameState) {
   // original traffic and props at generation, before laying out the food ladder.
   s.level.objects = s.level.objects.filter(
     (o) =>
+      o.pickup ||
       o.collisionOnly ||
       o.members ||
       Math.hypot(o.position.x, o.position.z) > 36,

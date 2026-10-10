@@ -1,3 +1,4 @@
+import { stages } from "../game/constants";
 import { it, expect } from "vitest";
 import { writeFileSync } from "node:fs";
 import { pacingTrial } from "../testing/PacingTrial";
@@ -31,9 +32,15 @@ it.skipIf(!process.env.RUN_PACING)(
         expect(result.seconds).toBeLessThanOrEqual(300);
         expect(result.remaining).toBe(0);
         expect(result.generatedDuringPlay).toBe(0);
-        expect(Math.max(...result.rows.map((row) => row.seconds))).toBeLessThan(
-          17, // Mixed layouts allow up to two extra seconds of route variation.
-        );
+        for (const row of result.rows) {
+          const current = stages[row.level - 1],
+            next = stages[row.level];
+          const budget =
+            row.level >= 28 && current && next
+              ? Math.max(17, Math.log(next.radius / current.radius) / 0.12 + 2)
+              : 17;
+          expect(row.seconds, `Level ${row.level}`).toBeLessThan(budget);
+        }
       }
   },
   180000,

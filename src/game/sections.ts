@@ -9,41 +9,9 @@ export const areaConfig = [
 export const sectionForState = (state: GameState) =>
   areaConfig[state.areaStage - 1];
 export const activeBounds = (state: GameState) =>
-  state.areaStage === 3
-    ? state.level.bounds
-    : Math.min(
-        state.level.bounds,
-        sectionForState(state).bounds,
-        state.areaStage === 1 && state.hole.radius < 0.04
-          ? Math.max(0.12, state.hole.radius * 45)
-          : Infinity,
-      );
-export const isUnlocked = (state: GameState, o: SwallowableObject) => {
-  if (o.unlockStage && o.unlockStage <= state.areaStage) return false;
-  if (
-    (o.worldRing ?? 1) >
-    (state.world.phase === "city"
-      ? 1
-      : state.world.phase === "metropolis"
-        ? 2
-        : 3)
-  )
-    return false;
-  const bounds = activeBounds(state);
-  if (
-    o.members &&
-    (state.areaStage < 3 || state.hole.radius < blockScaleRadius)
-  )
-    return false;
-  return (
-    Math.abs(o.position.x) <= bounds &&
-    Math.abs(o.position.z) <= bounds &&
-    (!o.unlockStage || o.unlockStage <= state.areaStage + 1) &&
-    (state.areaStage > 1 ||
-      o.radius <= categories.mouse.radius ||
-      o.unlockStage === 2)
-  );
-};
+  state.level.finalBounds ?? state.level.bounds;
+export const isUnlocked = (state: GameState, o: SwallowableObject) =>
+  !o.unlockStage && (!o.members || state.hole.radius >= blockScaleRadius);
 function highestEdibleTier(state: GameState) {
   const specs = Object.values(categories);
   let highest = 0;
@@ -64,9 +32,5 @@ const tierIndices = new Map(
 export const tierOf = (o: SwallowableObject) => tierIndices.get(o.type)!;
 
 export function updateAreaUnlocks(state: GameState) {
-  const edibleRadius = state.hole.radius * 0.85;
-  if (state.areaStage === 1 && edibleRadius >= categories.mouse.radius)
-    state.areaStage = 2;
-  if (state.areaStage === 2 && edibleRadius >= categories.sign.radius)
-    state.areaStage = 3;
+  state.areaStage = 3;
 }

@@ -26,7 +26,7 @@ describe("map detail and recognizable small items", () => {
     state.areaStage = 3;
     state.hole.radius = 9;
     HUD.prototype.drawMap.call(hud, state);
-    expect(label).toContain("120 meters wide, block detail");
+    expect(label).toContain("180 meters wide, block detail");
   });
   it("spreads early items across the plaza and keeps cats below people in size", () => {
     const city = freshState().level;

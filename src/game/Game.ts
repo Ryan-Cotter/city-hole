@@ -1,3 +1,5 @@
+import { pullVortex } from "./vortex";
+import { animateLife } from "../render/LifeAnimation";
 import { polishedGameModel } from "../art/GameModels";
 import { reactToHole, animateSpill } from "./interactions";
 import { enablePacing, advanceGrowth } from "./pacing";
@@ -57,7 +59,7 @@ export function freshState(cityIndex = 0): GameState {
     streak: { count: 0, expiresAt: -1, multiplier: 1, best: 0 },
     growthOffset: 0,
     status: "playing",
-    areaStage: 1,
+    areaStage: 3,
     cityIndex,
     boosts: {
       speedUntil: 0,
@@ -379,6 +381,23 @@ export class Game {
         s.hole.radius * 4,
       ),
     );
+    for (const o of pullVortex(
+      s,
+      this.chunks.nearby(
+        s.hole.position.x,
+        s.hole.position.z,
+        s.hole.radius * 4,
+      ),
+      dt,
+    )) {
+      this.chunks.relocate(o);
+      this.renderChunks.relocate(o);
+      const model = this.visuals.get(o.id);
+      if (model) {
+        model.position.copy(o.position);
+        model.userData.poseVersion = (model.userData.poseVersion ?? 0) + 1;
+      }
+    }
     const minimumTier = lowestDetailTier(s);
     this.crowds.step(this.movers, s, dt);
     for (const o of this.supported) {
@@ -457,7 +476,7 @@ export class Game {
               o.position.y +
               ((o.alertedUntil ?? 0) > s.elapsedSeconds ? o.height * 0.08 : 0) +
               Math.abs(Math.sin(phase)) * Math.min(0.015, o.height * 0.025);
-            for (const limb of visual.children) {
+            for (const limb of o.type === "person" ? visual.children : []) {
               const side = limb.userData.walkSide;
               if (side)
                 limb.rotation.x =
@@ -466,6 +485,10 @@ export class Game {
           }
         }
       }
+    }
+    for (const model of this.visuals.values()) {
+      if (model.visible)
+        animateLife(model, model.userData.object, s.elapsedSeconds);
     }
     for (const o of [
       ...this.chunks.nearby(

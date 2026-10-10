@@ -22,11 +22,11 @@ npm run preview
 
 ## Controls
 
-Hold the primary mouse button or a touch to steer toward the pointer. Release to stop. Hovering and keyboard movement do not steer. Tiny holes start at about 0.00675 world units per second, scaling with radius up to the usual 3.2. Escape/Pause pauses. Focus loss pauses manual play; self-play continues in the background. Restart resets the seeded city. Menu contains self play, opt-in sound, a section minimap, and a 390 × 844 phone preview.
+Hold the primary mouse button or a touch to steer toward the pointer. Release to stop. Hovering and keyboard movement do not steer. Tiny holes start at about 0.00675 world units per second, scaling with radius up to the usual 3.2. Escape/Pause pauses. Focus loss pauses manual play; self-play continues in the background. Restart resets the seeded city. Menu contains self play, opt-in sound, a local minimap, and a 390 × 844 phone preview.
 
 ## Progression and world
 
-The starting hole has radius 0.0015 in a magnified micro patch. The camera, movement speed and accessible area scale up through five microscopic tiers into the 6-meter starter yard, then a 20-meter block-sized area and the full 120-meter city. Barriers are collision-only: they cannot be swallowed, award no points, and do not count toward completion. Glowing area borders deactivate automatically at the mouse and street-sign size thresholds. The minimap follows the unlocked area.
+The starting blob has radius 0.0015 in a magnified micro patch. The entire pregenerated world is accessible immediately: there are no starter-yard fences, progression zones, or proximity-triggered item generation. Recursive 3×3 chunks preload the camera region and neighboring tiles. All tiles use the same L−20 lower size cutoff. Barriers remain collision-only and never award points. The local minimap follows the blob and scales with its radius.
 
 Rewards follow ascending Fibonacci values starting 1, 2. Every item contributes independently, including food on tables. Growth uses a log2/categorical base cost multiplied by measured per-size pacing weights. Earned progress fills at a bounded rate (4.5 seconds per size), so large harvests cannot skip several sizes; score is awarded immediately. Beyond the largest geographic tier, growth remains uncapped with logarithmically increasing costs. All balance values live in `src/game/constants.ts`.
 
@@ -36,7 +36,7 @@ The starter plaza uses separated mixed items across its full area, with a loose 
 
 Small piles cluster around medium fixtures and dumpsters. Each block has a small crowd, outdoor restaurant tables with separately scored food, patio covers and animals. Manhole covers and dividers sit on streets. People and animals flee directly away at twice their walking speed; cars swerve within their assigned lanes. Vehicles follow signals, queue spacing and yield to people/animals on crosswalk routes. Building façades use brick, concrete, stone and muted glass colors, with contrasting windows and roofs. Trees occupy parks; vehicles stay on streets or curb parking.
 
-The hole can overhang an edge by 30% of its radius to reach corner objects. Its outline smoothly compresses against section/map edges instead of staying rigidly circular.
+The hole can overhang an edge by 30% of its radius to reach corner objects. Its outline smoothly compresses against map edges instead of staying rigidly circular.
 
 ## Performance
 
@@ -67,11 +67,11 @@ Android and iOS Capacitor projects are generated and synced. Android SDK/Android
 
 ## Validation and repository
 
-Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, size-scaled hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, section unlocks, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, section minimap and visible small items.
+Core tests cover exact-once rewards, deletion/index consistency, obsolete-item containment, size eligibility, full-city completion, size-scaled hold steering, traffic, persistent people, anchored limbs, independent tabletop items, fear speed, open-world access, corner access, deformed edges and A* routes. TypeScript and production build checks are part of `npm run build`. Browser checks cover self play, shrinking active counts, local minimap and visible small items.
 
 The project repository is [Ryan-Cotter/city-hole](https://github.com/Ryan-Cotter/city-hole). See `docs/CITY_OBJECTS.md` for the object catalog and `docs/GAME_DESIGN.md` for implementation details.
 
-Self-play keeps routes on the ground and within the unlocked section, retries another target after 0.75 seconds without movement or a swallow, and limits fruitless chases. It approaches reachable points inside swallowing range, uses scale-aware waypoint tolerances, skips targets outside unlocked areas and avoids chasing faster actors. Unreachable clusters are skipped in bounded batches.
+Self-play keeps routes on the ground and within the world boundary, retries another target after 0.75 seconds without movement or a swallow, and limits fruitless chases. It approaches reachable points inside swallowing range, uses scale-aware waypoint tolerances, searches only the route corridor and avoids chasing faster actors. Unreachable clusters are skipped in bounded batches.
 
 Oversized objects have solid footprints that the hole slides around; self-play plans around those footprints. People and animals wander without needing a threat, nearby traffic stays active at every size tier, and trees sway gently. The rim cycles red, orange, yellow, green, blue, indigo and violet each level, repeating every seven levels in both renderers.
 
@@ -113,7 +113,7 @@ Crowd work is bounded: up to 128 nearby actors update at 20 Hz, with 48 distant 
 
 The current fixed-generation autoplay trials finish in **4:28–4:31** across all four city themes, from microbes through World cleared. No trial generated objects during gameplay. Most early size intervals are about 4.5–8 seconds; some large late intervals take 10–15 seconds. No measured interval reached 15 seconds. Reveals can split one size across two report rows. Manual play can take longer than autoplay.
 
-See the [current fixed-world report](docs/continuous-world/REPORT.html), [density estimates](docs/continuous-world/density.csv), [per-size timings](docs/continuous-world/timings.csv), and [raw trials](docs/continuous-world/trials.json). The earlier `docs/PACING_REPORT.html` records the superseded refill-based tuning. Run `npm run test:pacing` with Node 22.12+ to replay four complete 60 Hz trials and check the 180–300-second target, no population growth, and sub-15-second recorded intervals. The harness uses the real game update loop with drawing disabled. Growth-rate tuning is in `src/game/pacing.ts`; point weights and adaptive swallowing values are in `src/game/constants.ts`.
+See the [current fixed-world report](docs/continuous-world/REPORT.html), [density estimates](docs/continuous-world/density.csv), [per-size timings](docs/continuous-world/timings.csv), and [raw trials](docs/continuous-world/trials.json). The earlier `docs/PACING_REPORT.html` records the superseded refill-based tuning. Run `npm run test:pacing` with Node 22.12+ to replay four complete 60 Hz trials and check the 180–300-second target, no population growth, and radius-aware interval budgets. The harness uses the real game update loop with drawing disabled. Growth-rate tuning is in `src/game/pacing.ts`; point weights and adaptive swallowing values are in `src/game/constants.ts`.
 
 ### Responsive interactions and adaptive presentation
 
@@ -177,3 +177,29 @@ obsolete-item swallowing optimization retain their separate performance settings
 
 Latest streak-enabled full-loop trials finish in 3:42–3:56. See
 `docs/life-and-districts/report.html` for validation and model previews.
+
+
+### Living blob, vortex, and open tiles
+
+The player is a translucent spheroid dome with a stable radius-one ground footprint,
+rainbow tint and a damped absorption jiggle. The software fallback draws a shaded,
+translucent silhouette. Microbe models pulse and ripple; insects scuttle or flutter;
+animal limbs and bodies animate without changing collision positions. Visible life
+poses update at 30 Hz. Preview the animated models at `/models.html?life`.
+
+Purple spiral pickups grant a ten-second vortex. It pulls edible loose items within
+four blob radii; oversized items, barriers, aggregates and supported food stay put.
+Normal swallow completion awards points once. A purple rotating arc and HUD timer
+show when the effect is active.
+
+From level 28, radii interpolate continuously. Growth intervals expand when needed
+to limit radius growth to about 12.75% per second; this prevents the skyscraper-to-
+block jump from expanding more than fifteenfold in one ordinary interval. Score
+still arrives immediately. Late movement scales with physical size, independently
+of zone completion. Explicit size pickups retain their instant level-up behavior.
+
+Four 60 Hz full-loop trials with the open world finished in **241.7, 232.0, 241.7,
+and 245.4 seconds** (3:52–4:05), with zero remaining objects and zero runtime item
+creation. See `docs/blob-and-vortex/trials.json`. These are automated simulation
+runs with drawing disabled, not mobile frame-rate benchmarks. Earlier pacing
+reports describe previous layouts and rules.

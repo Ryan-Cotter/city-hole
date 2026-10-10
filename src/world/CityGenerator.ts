@@ -512,37 +512,11 @@ export function generateCity(
       angle = i * 2.4;
     add("bottlecap", Math.cos(angle) * distance, Math.sin(angle) * distance);
     const pickup = objects[objects.length - 1];
-    pickup.pickup = i % 3 === 2 ? "size" : "speed";
+    pickup.pickup = ["speed", "size", "vortex"][i % 3] as
+      | "speed"
+      | "size"
+      | "vortex";
     pickup.design = `${pickup.pickup} boost`;
-  }
-  // Physical, independently swallowable boundary panels unlock the next area.
-  for (const [bounds, count, radius, unlockStage] of [
-    [2.85, 20, 0.14, 2],
-    [9.5, 24, 0.42, 3],
-  ] as const) {
-    for (let side = 0; side < 4; side++)
-      for (let i = 0; i < count; i++) {
-        const along = -bounds + ((i + 0.5) * bounds * 2) / count;
-        add(
-          "barrier",
-          side % 2 ? (side === 1 ? bounds : -bounds) : along,
-          side % 2 ? along : side === 0 ? -bounds : bounds,
-          side % 2 ? Math.PI / 2 : 0,
-        );
-        const fence = objects[objects.length - 1];
-        Object.assign(fence, {
-          radius,
-          height: radius * 1.5,
-          unlockStage,
-          mass:
-            unlockStage === 2 ? categories.mouse.mass : categories.sign.mass,
-          scoreValue:
-            unlockStage === 2
-              ? categories.mouse.scoreValue
-              : categories.sign.scoreValue,
-          design: "boundary fence",
-        });
-      }
   }
   return {
     seed,

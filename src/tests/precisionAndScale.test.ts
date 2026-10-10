@@ -18,13 +18,14 @@ describe("precise steering and delayed block scale", () => {
     let path: number[][] = [],
       outline: number[][] = [];
     const context: Record<string, unknown> = {
+      createRadialGradient: () => ({ addColorStop: () => {} }),
       beginPath: () => {
         path = [];
       },
       moveTo: (x: number, y: number) => path.push([x, y]),
       lineTo: (x: number, y: number) => path.push([x, y]),
       fill: () => {
-        if (context.fillStyle === "#10122b") outline = [...path];
+        if (context.fillStyle === "rgba(225,125,160,.3)") outline = [...path];
       },
     };
     const ctx = new Proxy(context, {

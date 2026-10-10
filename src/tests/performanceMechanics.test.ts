@@ -51,25 +51,18 @@ describe("performance and scale mechanics", () => {
     expect(consumeObsolete(s, current)).toBe(false);
     expect(capture(current, s.hole)).toBe(true);
   });
-  it("starts in a tiny section and expands in steps", () => {
+  it("allows every map tile from the beginning without progression gates", () => {
     const s = freshState();
-    expect(activeBounds(s)).toBe(0.12);
+    expect(activeBounds(s)).toBe(3400);
+    expect(s.level.objects.some((o) => o.unlockStage)).toBe(false);
     expect(
       s.level.objects
-        .filter((o) => isUnlocked(s, o))
-        .every((o) => o.radius <= categories.mouse.radius),
+        .filter((o) => o.worldRing === 3 && !o.members)
+        .every((o) => isUnlocked(s, o)),
     ).toBe(true);
-    s.hole.level = 30;
-    s.hole.radius = 0.2;
-    expect(activeBounds(s)).toBe(3);
-    const gate = s.level.objects.find((o) => o.unlockStage === 2)!;
-    expect(capture(gate, s.hole)).toBe(false);
+    s.hole.radius = 10;
     updateAreaUnlocks(s);
-    expect(activeBounds(s)).toBe(10);
-    expect(isUnlocked(s, gate)).toBe(false);
-    s.hole.radius = categories.sign.radius / 0.85 + 0.01;
-    updateAreaUnlocks(s);
-    expect(activeBounds(s)).toBe(60);
+    expect(activeBounds(s)).toBe(3400);
   });
   it("allows corner access and keeps the rim softly bounded", () => {
     const s = freshState();

@@ -1,3 +1,4 @@
+import { createBlob, blobHeight } from "./Blob";
 import { bendHoleCoordinate, rimColorForLevel } from "./holeEdge";
 import { cameraConfig, renderChunkConfig } from "../game/constants";
 import { blocksHoleView, fadedMaterial, isBuildingType } from "./occlusion";
@@ -90,7 +91,12 @@ export class Renderer {
     this.scene.add(this.boundary, this.fadingBoundary);
     const disk = new Mesh(
       new CircleGeometry(1, 48),
-      new MeshBasicMaterial({ color: "#10122b" }),
+      new MeshBasicMaterial({
+        color: "#e78594",
+        transparent: true,
+        opacity: 0.25,
+        depthWrite: false,
+      }),
     );
     disk.rotation.x = -Math.PI / 2;
     disk.position.y = 0.012;
@@ -103,6 +109,20 @@ export class Renderer {
     rim.rotation.x = -Math.PI / 2;
     rim.position.y = 0.013;
     this.hole.add(rim);
+    this.hole.add(createBlob());
+    const vortex = new Mesh(
+      new RingGeometry(2.9, 3, 48, 1, 0, Math.PI * 1.55),
+      new MeshBasicMaterial({
+        color: "#b796ff",
+        transparent: true,
+        opacity: 0.45,
+        depthWrite: false,
+      }),
+    );
+    vortex.name = "vortex";
+    vortex.rotation.x = -Math.PI / 2;
+    vortex.visible = false;
+    this.hole.add(vortex);
     this.hole.name = "hole";
     this.scene.add(this.hole);
     new ResizeObserver(() => this.resize()).observe(container);
@@ -116,9 +136,10 @@ export class Renderer {
     if (!moving) this.preloadDirection.multiplyScalar(0.9);
     this.previousFocus.copy(position);
     for (const edge of this.hole.children)
-      edge.position.y =
-        Math.min(0.00001, radius * 0.001) +
-        (edge.name === "rim" ? 0.000001 : 0);
+      if (edge.name !== "blob")
+        edge.position.y =
+          Math.min(0.00001, radius * 0.001) +
+          (edge.name === "rim" ? 0.000001 : 0);
     const now = performance.now(),
       dt = Math.min(0.1, (now - this.lastZoom) / 1000);
     this.lastZoom = now;
@@ -156,6 +177,10 @@ export class Renderer {
     this.hole.userData.rimColor = color;
     const rim = this.hole.getObjectByName("rim") as Mesh;
     (rim.material as MeshBasicMaterial).color.set(color);
+    const blob = this.hole.getObjectByName("blob") as Mesh;
+    (blob.material as MeshStandardMaterial).color
+      .set(color)
+      .lerp(new Color("#ffffff"), 0.35);
   }
   deformHole(position: Vector3, radius: number, bounds: number) {
     this.hole.userData.bounds = bounds;
@@ -176,12 +201,19 @@ export class Renderer {
       const rest = mesh.userData.restPositions as Float32Array;
       for (let i = 0; i < points.count; i++) {
         const x = position.x + rest[i * 3] * radius,
-          z = position.z - rest[i * 3 + 1] * radius;
+          z =
+            position.z +
+            (mesh.name === "blob" ? rest[i * 3 + 2] : -rest[i * 3 + 1]) *
+              radius;
         points.setXYZ(
           i,
           (bendHoleCoordinate(x, bounds, radius) - position.x) / radius,
-          -(bendHoleCoordinate(z, bounds, radius) - position.z) / radius,
-          rest[i * 3 + 2],
+          mesh.name === "blob"
+            ? rest[i * 3 + 1]
+            : -(bendHoleCoordinate(z, bounds, radius) - position.z) / radius,
+          mesh.name === "blob"
+            ? (bendHoleCoordinate(z, bounds, radius) - position.z) / radius
+            : rest[i * 3 + 2],
         );
       }
       points.needsUpdate = true;
@@ -253,6 +285,27 @@ export class Renderer {
       : 0;
     this.hole.userData.reveal = reveal;
     this.hole.userData.time = state.elapsedSeconds;
+    this.hole.userData.vortex =
+      (state.boosts.vortexUntil ?? 0) > state.elapsedSeconds;
+    const vortex = this.hole.getObjectByName("vortex")!;
+    vortex.visible = this.hole.userData.vortex;
+    vortex.rotation.z = state.elapsedSeconds * 3;
+    const count = state.score.swallowedObjects;
+    if (this.hole.userData.absorbed !== count) {
+      if (
+        count > (this.hole.userData.absorbed ?? 0) &&
+        state.elapsedSeconds - (this.hole.userData.lastAbsorption ?? -100) >
+          0.12
+      )
+        this.hole.userData.lastAbsorption = state.elapsedSeconds;
+      this.hole.userData.absorbed = count;
+    }
+    const height = blobHeight(
+      state.elapsedSeconds,
+      this.hole.userData.lastAbsorption ?? -100,
+    );
+    this.hole.userData.blobHeight = height;
+    this.hole.getObjectByName("blob")!.scale.y = height;
     const feedback = state.feedback;
     const rim = this.hole.getObjectByName("rim");
     const pulse = feedback

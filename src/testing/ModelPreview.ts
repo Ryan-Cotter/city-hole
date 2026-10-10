@@ -1,3 +1,5 @@
+import { animateLife } from "../render/LifeAnimation";
+import type { Group } from "three";
 import { districtProfiles, assignDistrict } from "../world/Districts";
 import type { District } from "../game/GameState";
 import { virusDesigns, bacteriaDesigns, bugDesigns } from "../world/MicroLife";
@@ -146,4 +148,14 @@ for (const [label, types, era, view, designs] of panels) {
   };
   new ResizeObserver(draw).observe(section);
   draw();
+  if (life) {
+    const animate = (time: number) => {
+      for (const child of scene.children)
+        if (child.userData.object)
+          animateLife(child as Group, child.userData.object, time / 1000);
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    };
+    requestAnimationFrame(animate);
+  }
 }

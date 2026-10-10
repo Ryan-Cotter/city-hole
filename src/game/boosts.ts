@@ -3,24 +3,20 @@ import type { GameState } from "./GameState";
 import { boostConfig } from "./campaign";
 import { growthForPoints, growthPoints } from "./progression";
 export function updateBoosts(s: GameState) {
+  const growth = growthForPoints(growthPoints(s));
+  // Open-world travel scales with physical size, independently of cleared zones.
   s.hole.speedMultiplier =
     (s.elapsedSeconds < s.boosts.speedUntil ? boostConfig.speedMultiplier : 1) *
-    (s.world.phase === "country"
-      ? 20
-      : s.world.phase === "planet"
-        ? 320
-        : s.world.phase === "metropolis"
-          ? 32
-          : 1);
-  const growth = growthForPoints(growthPoints(s));
+    Math.min(320, Math.max(1, Math.pow(growth.radius / 8, 2)));
   s.hole.radius = growth.radius;
   s.hole.level = growth.level;
   updateAreaUnlocks(s);
 }
-export function activateBoost(s: GameState, kind: "speed" | "size") {
+export function activateBoost(s: GameState, kind: "speed" | "size" | "vortex") {
   if (s.status !== "playing") return false;
   if (kind === "speed")
     s.boosts.speedUntil = s.elapsedSeconds + boostConfig.duration;
+  else if (kind === "vortex") s.boosts.vortexUntil = s.elapsedSeconds + 10;
   else {
     const current = growthForPoints(growthPoints(s));
     const fraction =

@@ -109,9 +109,11 @@ export class HUD {
     );
     text(
       "boost-status",
-      s.boosts.speedUntil > s.elapsedSeconds
-        ? `⚡ Speed · ${Math.ceil(s.boosts.speedUntil - s.elapsedSeconds)}s`
-        : "",
+      (s.boosts.vortexUntil ?? 0) > s.elapsedSeconds
+        ? `🌀 Vortex · ${Math.ceil(s.boosts.vortexUntil! - s.elapsedSeconds)}s`
+        : s.boosts.speedUntil > s.elapsedSeconds
+          ? `⚡ Speed · ${Math.ceil(s.boosts.speedUntil - s.elapsedSeconds)}s`
+          : "",
     );
     text("score", compactPoints(s.score.points));
     this.root
@@ -142,7 +144,7 @@ export class HUD {
     );
     text(
       "remaining",
-      `${s.world.phase === "city" ? `Section ${sectionForState(s).index}/3` : s.world.phase === "metropolis" ? "Expanded city" : s.world.phase === "country" ? "Country map" : "World map"} · ${s.score.remainingObjects.toLocaleString()} left`,
+      `${s.world.phase === "city" ? "Open city" : s.world.phase === "metropolis" ? "Expanded city" : s.world.phase === "country" ? "Country map" : "World map"} · ${s.score.remainingObjects.toLocaleString()} left`,
     );
     (this.root.querySelector("#progress") as HTMLElement).style.width =
       `${Math.min(100, ((growthPoints(s) - growth.threshold) / (growth.nextThreshold - growth.threshold)) * 100)}%`;
@@ -180,12 +182,13 @@ export class HUD {
   drawMap(s: GameState) {
     const canvas = this.root.querySelector("#minimap") as HTMLCanvasElement,
       c = canvas.getContext("2d")!,
-      bounds = activeBounds(s),
+      bounds = Math.min(activeBounds(s), Math.max(0.12, s.hole.radius * 10)),
       scale = 140 / (bounds * 2),
-      p = (n: number) => (n + bounds) * scale;
+      px = (n: number) => (n - s.hole.position.x + bounds) * scale,
+      pz = (n: number) => (n - s.hole.position.z + bounds) * scale;
     canvas.setAttribute(
       "aria-label",
-      `Section ${sectionForState(s).index} map, ${bounds * 2} meters wide, ${s.hole.radius < 0.3 ? "item" : s.hole.radius < 8 ? "building" : "block"} detail`,
+      `Local map, ${bounds * 2} meters wide, ${s.hole.radius < 0.3 ? "item" : s.hole.radius < 8 ? "building" : "block"} detail`,
     );
     c.fillStyle = "#c4ccdb";
     c.fillRect(0, 0, 140, 140);
@@ -197,17 +200,17 @@ export class HUD {
           : b.district === "industrial"
             ? "#9d9b96"
             : "#bc9d77";
-      c.fillRect(p(b.x - 7), p(b.z - 7), 14 * scale, 14 * scale);
+      c.fillRect(px(b.x - 7), pz(b.z - 7), 14 * scale, 14 * scale);
     }
     c.strokeStyle = "#526481";
     c.lineWidth = Math.max(1, 5 * scale);
     if (!s.level.landscape)
       for (let n = -s.level.bounds; n <= s.level.bounds; n += 20) {
         c.beginPath();
-        c.moveTo(p(n), 0);
-        c.lineTo(p(n), 140);
-        c.moveTo(0, p(n));
-        c.lineTo(140, p(n));
+        c.moveTo(px(n), 0);
+        c.lineTo(px(n), 140);
+        c.moveTo(0, pz(n));
+        c.lineTo(140, pz(n));
         c.stroke();
       }
     if (s.hole.radius < 8 || s.level.landscape)
@@ -235,16 +238,16 @@ export class HUD {
           : o.radius;
         const width = Math.max(1.5, half * 2 * scale);
         c.fillRect(
-          p(o.position.x) - width / 2,
-          p(o.position.z) - width / 2,
+          px(o.position.x) - width / 2,
+          pz(o.position.z) - width / 2,
           width,
           width,
         );
       }
     c.beginPath();
     c.arc(
-      p(s.hole.position.x),
-      p(s.hole.position.z),
+      px(s.hole.position.x),
+      pz(s.hole.position.z),
       Math.max(2, s.hole.radius * scale),
       0,
       Math.PI * 2,
@@ -256,6 +259,6 @@ export class HUD {
     c.stroke();
     c.fillStyle = "#203041";
     c.font = "9px system-ui";
-    c.fillText(`Section ${sectionForState(s).index} · ${bounds * 2} m`, 5, 135);
+    c.fillText(`Local · ${bounds * 2} m`, 5, 135);
   }
 }

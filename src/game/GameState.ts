@@ -37,7 +37,7 @@ export interface SwallowableObject {
   wasThreatened?: boolean;
   spill?: { origin: Vector3; target: Vector3; elapsed: number };
   collisionOnly?: boolean;
-  pickup?: "speed" | "size";
+  pickup?: "speed" | "size" | "vortex";
   members?: SwallowableObject[];
   aggregateId?: string;
   cityIndex?: number;
@@ -120,6 +120,7 @@ export interface GameState {
   cityIndex: number;
   boosts: {
     speedUntil: number;
+    vortexUntil?: number;
   };
   areaStage: 1 | 2 | 3;
   status: "playing" | "paused" | "won";

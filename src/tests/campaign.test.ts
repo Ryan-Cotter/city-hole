@@ -46,7 +46,7 @@ describe("campaign and boosts", () => {
     expect(restart).toHaveBeenCalledWith(1);
     const next = freshState(1);
     expect(next.level.seed).not.toBe(s.level.seed);
-    expect(next.areaStage).toBe(1);
+    expect(next.areaStage).toBe(3);
     expect(next.score.points).toBe(0);
     expect(next.boosts.speedUntil).toBe(0);
     expect([0, 1, 2, 3].map((i) => themeForCity(i).name)).toEqual([
@@ -56,7 +56,7 @@ describe("campaign and boosts", () => {
       "Futuristic",
     ]);
   });
-  it("builds distinct era models and replaces fence posts with luminous dashes", () => {
+  it("builds distinct era models and omits progression fences", () => {
     const base = freshState().level.objects.find((o) => o.type === "house")!;
     const signatures = [0, 1, 2, 3].map((cityIndex) => {
       const visual = createObjectVisual({ ...base, cityIndex });
@@ -69,9 +69,6 @@ describe("campaign and boosts", () => {
         .join("|");
     });
     expect(new Set(signatures).size).toBe(4);
-    const gate = freshState().level.objects.find((o) => o.unlockStage === 2)!;
-    const visual = createObjectVisual(gate);
-    expect(visual.getObjectByName("glowing-border")).toBeDefined();
-    expect(visual.children).toHaveLength(2);
+    expect(freshState().level.objects.some((o) => o.unlockStage)).toBe(false);
   });
 });

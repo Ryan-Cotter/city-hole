@@ -51,7 +51,7 @@ describe("city to country progression", () => {
     s.hole.radius = 80;
     expect(advanceWorld(s)).toBe(true);
     expect(s.world.phase).toBe("metropolis");
-    expect(s.level.bounds).toBe(540);
+    expect(s.level.bounds).toBe(3400);
     expect(s.hole.position).toEqual(position);
     expect(s.growthOffset).toBe(offset);
     for (const o of s.level.objects) expect(ids.has(o.id)).toBe(true);

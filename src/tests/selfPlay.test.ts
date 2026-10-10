@@ -24,11 +24,29 @@ import { activeBounds, isUnlocked } from "../game/sections";
 import { cameraViewSize } from "../render/Camera";
 
 describe("self play and pacing", () => {
+  it("routes at microscopic scale without rasterizing distant landscape obstacles", () => {
+    const route = findPath(
+      new Vector3(),
+      new Vector3(0.02, 0, 0),
+      3400,
+      [
+        { x: 0.01, z: 0, half: 0.002, round: true },
+        { x: 3000, z: 3000, half: 250, round: true },
+      ],
+      0.001,
+    );
+    expect(route.length).toBeGreaterThan(0);
+    expect(route.length).toBeLessThan(50);
+    expect(route.at(-1)!.distanceTo(new Vector3(0.02, 0, 0))).toBeLessThan(
+      0.002,
+    );
+  });
   it("keeps elevated targets and edge waypoints on reachable ground", () => {
     const state = freshState(),
       player = new SelfPlayer();
     player.enabled = true;
     state.hole.radius = 0.04;
+    state.level.finalBounds = 3;
     const goal = state.level.objects.find((o) => o.type === "bottlecap")!;
     player.target(state, 0.1);
     player.goal = goal;
@@ -37,7 +55,7 @@ describe("self play and pacing", () => {
     state.hole.position.set(3 - state.hole.radius * 0.7, 0, 0);
     const target = player.target(state, 0.1)!;
     expect(target.y).toBe(0);
-    expect(target.x).toBeLessThanOrEqual(3 - state.hole.radius * 0.7);
+    expect(target.x).toBeLessThanOrEqual(activeBounds(state));
     expect(player.path).toHaveLength(1);
     moveToward(state.hole, target, 0.1, 3);
     expect(state.hole.position.y).toBe(0);
@@ -201,8 +219,8 @@ describe("self play and pacing", () => {
           if (o.state === "falling" && advanceFall(o, 0.1)!.u >= 1)
             complete(state, o);
         }
-        if (!yardSeconds && state.areaStage > 1) yardSeconds = step * 0.1;
-        if (state.areaStage === 3) break;
+        if (!yardSeconds && state.hole.level >= 9) yardSeconds = step * 0.1;
+        if (state.hole.level >= 13) break;
       }
       expect(
         state.areaStage,

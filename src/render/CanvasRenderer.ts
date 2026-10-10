@@ -176,7 +176,7 @@ export class CanvasRenderer {
         else ctx.lineTo(p.x, p.y);
       });
       ctx.closePath();
-      ctx.fillStyle = "#10122b";
+      ctx.fillStyle = "rgba(225,125,160,.3)";
       ctx.fill();
       ctx.lineWidth = Math.max(
         1,
@@ -187,6 +187,54 @@ export class CanvasRenderer {
       );
       ctx.strokeStyle = hole.userData.rimColor ?? "#f44747";
       ctx.stroke();
+      const center = project(
+        new Vector3(
+          hole.position.x,
+          hole.scale.x * (hole.userData.blobHeight ?? 0.72) * 0.4,
+          hole.position.z,
+        ),
+      );
+      const edge = project(
+        new Vector3(
+          hole.position.x + hole.scale.x,
+          0,
+          hole.position.z - hole.scale.x,
+        ),
+      );
+      const rx = Math.max(1, Math.abs(edge.x - center.x) / Math.SQRT2);
+      const ry = rx * (0.65 + (hole.userData.blobHeight ?? 0.72) * 0.3);
+      const glow = ctx.createRadialGradient(
+        center.x - rx * 0.3,
+        center.y - ry * 0.35,
+        rx * 0.03,
+        center.x,
+        center.y,
+        rx,
+      );
+      glow.addColorStop(0, "rgba(255,255,255,.72)");
+      glow.addColorStop(0.3, (hole.userData.rimColor ?? "#f44747") + "88");
+      glow.addColorStop(1, (hole.userData.rimColor ?? "#f44747") + "bb");
+      ctx.beginPath();
+      ctx.ellipse(center.x, center.y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.fillStyle = glow;
+      ctx.fill();
+      if (hole.userData.vortex) {
+        ctx.strokeStyle = "rgba(185,150,255,.65)";
+        ctx.lineWidth = Math.max(1, rx * 0.04);
+        for (const orbit of [2, 3]) {
+          ctx.beginPath();
+          ctx.ellipse(
+            center.x,
+            center.y + ry * 0.25,
+            rx * orbit,
+            ry * orbit * 0.65,
+            0,
+            hole.userData.time * 3 + orbit,
+            hole.userData.time * 3 + orbit + Math.PI * 1.5,
+          );
+          ctx.stroke();
+        }
+      }
     }
     for (const hole of portals) {
       const reveal = hole.userData.reveal;
