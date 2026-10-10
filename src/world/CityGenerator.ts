@@ -7,7 +7,10 @@ import type {
   Motion,
   Block,
 } from "../game/GameState";
-export function generateCity(seed = 814): Level {
+export function generateCity(
+  seed = 814,
+  smallItemMultiplier = cityConfig.smallItemMultiplier,
+): Level {
   let value = seed >>> 0;
   const random = () => {
     value = (Math.imul(value, 1664525) + 1013904223) >>> 0;
@@ -26,7 +29,8 @@ export function generateCity(seed = 814): Level {
     const spec = categories[type];
     const index = designCounts.get(type) ?? 0;
     designCounts.set(type, index + 1);
-    const variant = (index % 4) + Math.floor(random() * 2) * 4;
+    const count = objectDesigns[type].length;
+    const variant = (index % count) + Math.floor(random() * 2) * count;
     objects.push({
       id: `${type}-${objects.length}`,
       type,
@@ -34,7 +38,7 @@ export function generateCity(seed = 814): Level {
       ...spec,
       orientation,
       variant,
-      design: objectDesigns[type][variant % 4],
+      design: objectDesigns[type][variant % count],
       motion,
       state: "idle",
       fall: null,
@@ -113,6 +117,74 @@ export function generateCity(seed = 814): Level {
           random() * Math.PI * 2,
         );
       }
+      // Triple small street props independently, filling free sidewalk and interior pockets.
+      const smallTypes: ObjectType[] = ["litter", "hydrant", "sign", "bench"];
+      const original = objects
+        .slice(start)
+        .filter((o) => smallTypes.includes(o.type));
+      const occupied = objects
+        .slice(start)
+        .filter((o) => !o.motion && o.type !== "car" && o.type !== "van");
+      for (let copy = 1; copy < smallItemMultiplier; copy++)
+        for (const source of original) {
+          const r =
+            source.type === "litter"
+              ? 0.16
+              : source.type === "sign"
+                ? 0.2
+                : source.type === "bench"
+                  ? 0.6
+                  : 0.26;
+          for (let attempt = 0; attempt < 160; attempt++) {
+            let dx = (random() * 2 - 1) * (7.2 - r),
+              dz = (random() * 2 - 1) * (7.2 - r);
+            if (attempt < 12 && r < 0.3) {
+              const side = attempt % 4;
+              if (side < 2) dz = side === 0 ? -7.15 : 7.15;
+              else dx = side === 2 ? -7.15 : 7.15;
+            }
+            if (
+              Math.abs(Math.abs(dx) - 6.6) < r + 0.32 ||
+              Math.abs(Math.abs(dz) - 6.6) < r + 0.32
+            )
+              continue;
+            const px = x + dx,
+              pz = z + dz;
+            if (
+              occupied.some((o) => {
+                if (buildings.includes(o.type)) {
+                  const half =
+                    Math.min(3.2, o.radius * Math.SQRT2 * 0.94) / 2 + 0.1;
+                  return (
+                    Math.hypot(
+                      Math.max(0, Math.abs(px - o.position.x) - half),
+                      Math.max(0, Math.abs(pz - o.position.z) - half),
+                    ) <
+                    r + 0.12
+                  );
+                }
+                const other =
+                  o.type === "litter"
+                    ? 0.16
+                    : o.type === "sign"
+                      ? 0.2
+                      : o.type === "hydrant"
+                        ? 0.26
+                        : o.type === "bench"
+                          ? 0.6
+                          : o.radius;
+                return (
+                  Math.hypot(px - o.position.x, pz - o.position.z) <
+                  r + other + 0.06
+                );
+              })
+            )
+              continue;
+            add(source.type, px, pz, random() * Math.PI * 2);
+            occupied.push(objects.at(-1)!);
+            break;
+          }
+        }
     }
   // Cars remain on the road grid. Some are parked at the curb, others cruise straight lanes.
   for (let street = -80; street <= 80; street += 20)
@@ -154,7 +226,7 @@ export function generateCity(seed = 814): Level {
       objects.at(-1)!.signalAxis = "z";
     }
   // A small sidewalk starter cluster near the central intersection.
-  for (let i = 0; i < 8; i++)
+  for (let i = 0; i < 8 * smallItemMultiplier; i++)
     add(
       "litter",
       3.3 + (i % 4) * 0.6,

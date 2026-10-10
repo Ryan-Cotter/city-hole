@@ -14,6 +14,7 @@ export const cityConfig = {
   blockSize: 20,
   roadWidth: 5,
   blockDensityMultiplier: 3,
+  smallItemMultiplier: 3,
 };
 export const categories = {
   litter: {
@@ -120,11 +121,47 @@ export const stages = (
 }));
 
 export const objectDesigns = {
-  litter: ["can", "bottle", "paper bag", "carton"],
-  hydrant: ["fire hydrant", "traffic cone", "mailbox", "bollard"],
+  litter: [
+    "can",
+    "bottle",
+    "paper bag",
+    "carton",
+    "cup",
+    "newspaper",
+    "wrapper",
+    "takeaway box",
+  ],
+  hydrant: [
+    "fire hydrant",
+    "traffic cone",
+    "mailbox",
+    "bollard",
+    "parking meter",
+    "utility box",
+    "flowerpot",
+    "small crate",
+  ],
   person: ["walker", "backpacker", "shopper", "courier"],
-  sign: ["stop sign", "parking sign", "direction sign", "street lamp"],
-  bench: ["park bench", "waste bin", "picnic table", "bike rack"],
+  sign: [
+    "stop sign",
+    "parking sign",
+    "direction sign",
+    "street lamp",
+    "bus-stop sign",
+    "crossing sign",
+    "advertising board",
+    "construction barrier",
+  ],
+  bench: [
+    "park bench",
+    "waste bin",
+    "picnic table",
+    "bike rack",
+    "bicycle",
+    "scooter",
+    "vending machine",
+    "parcel locker",
+  ],
   tree: ["pine", "broadleaf", "palm", "flower planter"],
   car: ["sedan", "hatchback", "taxi", "police car"],
   van: ["delivery van", "minibus", "pickup", "ambulance"],

@@ -1,3 +1,4 @@
+import type { ObjectType } from "../game/GameState";
 import { Box3, Ray, Vector3, type MeshStandardMaterial } from "three";
 const box = new Box3(),
   ray = new Ray(),
@@ -39,4 +40,10 @@ export function fadedMaterial(original: MeshStandardMaterial) {
     faded.set(original, value);
   }
   return value;
+}
+
+export function isBuildingType(type: ObjectType) {
+  return ["house", "shop", "building", "largeBuilding", "skyscraper"].includes(
+    type,
+  );
 }

@@ -1,4 +1,8 @@
-import { blocksHoleView, fadedMaterial } from "../render/occlusion";
+import {
+  blocksHoleView,
+  fadedMaterial,
+  isBuildingType,
+} from "../render/occlusion";
 import { Vector3, Mesh, RingGeometry } from "three";
 import { clipAboveGround } from "../render/clipping";
 import { createObjectVisual } from "../world/SwallowableObject";
@@ -21,12 +25,45 @@ import { canSwallow, capture, complete } from "../physics/swallowing";
 import { advanceFall } from "../physics/falling";
 import { growthForPoints, extraLevelCost } from "../game/progression";
 import { freshState } from "../game/Game";
-import {
-  PointerHold,
-  type InputManager,
-} from "../input/InputManager";
+import { PointerHold, type InputManager } from "../input/InputManager";
 const litter = () => generateCity().objects.find((o) => o.type === "litter")!;
 describe("city gameplay", () => {
+  it("triples small props and gives every small tier eight designs", () => {
+    const baseline = generateCity(814, 1),
+      dense = generateCity(814, 3);
+    for (const type of ["litter", "hydrant", "sign", "bench"] as const) {
+      const count = (objects: typeof dense.objects) =>
+        objects.filter((o) => o.type === type && !o.signalAxis).length;
+      expect(count(dense.objects)).toBe(count(baseline.objects) * 3);
+      expect(
+        new Set(
+          dense.objects
+            .filter((o) => o.type === type && !o.signalAxis)
+            .map((o) => o.design),
+        ).size,
+      ).toBe(8);
+    }
+    for (const type of [
+      "person",
+      "car",
+      "van",
+      "tree",
+      "litter",
+      "hydrant",
+      "sign",
+      "bench",
+      "kiosk",
+    ] as const)
+      expect(isBuildingType(type)).toBe(false);
+    for (const type of [
+      "house",
+      "shop",
+      "building",
+      "largeBuilding",
+      "skyscraper",
+    ] as const)
+      expect(isBuildingType(type)).toBe(true);
+  });
   it("fades only objects that obstruct the hole sightline", () => {
     const hole = new Vector3(),
       camera = new Vector3(35, 44, 35);

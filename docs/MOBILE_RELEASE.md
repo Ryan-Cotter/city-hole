@@ -4,7 +4,7 @@
 
 - Pointer and touch hold-to-steer controls; release, cancellation, lost pointer capture and focus loss stop steering.
 - Fixed movement speed, visible cursor, touch-action suppression and automatic pause on hidden tabs.
-- Responsive left HUD, safe-area spacing, 44 px controls and a 390 × 844 phone preview in desktop browsers.
+- Compact left HUD with supporting controls inside Menu, safe-area spacing, 44 px controls and a 390 × 844 phone preview in desktop browsers.
 - Installable web manifest, original 192/512 px icons and production-only offline service worker.
 - Offline build cache includes the game, fonts use system fallbacks, and no analytics or advertising SDK is included.
 - Capacitor 8 configuration and generated Android/iOS native projects.

@@ -1,6 +1,6 @@
 # City Hole (`city-hole`)
 
-A playable browser city-swallowing game with TypeScript, Vite, Three.js, and custom physics. Explore a 200×200 city with 100 compact blocks and 7,175 objects, moving cars, walking pedestrians, parks, street furniture, and skyscrapers.
+A playable browser city-swallowing game with TypeScript, Vite, Three.js, and custom physics. Explore a 200×200 city with 100 compact blocks and 15,117 objects, moving cars, walking pedestrians, parks, street furniture, and skyscrapers.
 
 ## Run
 
@@ -25,7 +25,7 @@ Open the localhost URL printed by Vite. No keys or paid assets are required.
 - Click and hold the primary mouse button, or touch and hold the city, to steer toward that location. Move the held pointer to change direction. Hovering and keyboard movement do not move the hole.
 - Release to stop immediately. Cancellation, lost pointer capture and focus loss also stop input.
 - Movement stays at 3.2 world units per second at every size; the cursor remains visible.
-- Use **Phone preview** to fit a 390 × 844 game screen inside your browser; use **Desktop view** to return. Phones automatically use the responsive layout.
+- Use **Menu → Phone preview** to fit a 390 × 844 game screen inside your browser; use **Desktop view** to return. Phones automatically use the responsive layout.
 - Escape or Pause pauses/resumes. Hidden tabs and focus loss pause automatically.
 - Restart creates a fresh run with the same seed.
 - The compact HUD is entirely on the left: score, level/radius, growth progress, remaining objects, pause/restart, and an expandable map. The game UI contains no score-sequence explanation.
@@ -63,7 +63,7 @@ Requirements are cumulative: the first extra level costs 20,000 additional point
 
 ## City and rendering
 
-The map remains 200×200 units, but block spacing is now 20 units instead of 40. Buildings sit in interior lots with varied colors, orientation, gabled/flat/stepped roofs, contrasting window frames, darker glass, entrances, storefronts, and rooftop details. Trees occur only inside designated parks. Cars and vans drive in right-hand lanes or park beside the curb. Intersection signals alternate green, yellow, and all-red clearance phases; cars stop before crossings, accelerate smoothly, maintain queue spacing, and clear intersections they have already entered. Pedestrians remain on sidewalks, turn around rather than wrap at block ends, and maintain separation from other walkers. Arms swing about shoulder pivots and legs about hip pivots. Signs, hydrants, benches, and litter provide smaller targets. Each of the 14 size tiers contains four distinct designs (56 designs total), while retaining the same footprint threshold and score within the tier. The city includes cans/bottles/bags, hydrants/cones/mailboxes, varied people/signs/park furniture/trees, sedans/hatchbacks/taxis, delivery vans/minibuses/pickups, four kiosk/store/house types, and several larger building and skyscraper silhouettes.
+The map remains 200×200 units, but block spacing is now 20 units instead of 40. Buildings sit in interior lots with varied colors, orientation, gabled/flat/stepped roofs, contrasting window frames, darker glass, entrances, storefronts, and rooftop details. Trees occur only inside designated parks. Cars and vans drive in right-hand lanes or park beside the curb. Intersection signals alternate green, yellow, and all-red clearance phases; cars stop before crossings, accelerate smoothly, maintain queue spacing, and clear intersections they have already entered. Pedestrians remain on sidewalks, turn around rather than wrap at block ends, and maintain separation from other walkers. Arms swing about shoulder pivots and legs about hip pivots. Signs, hydrants, benches, and litter provide smaller targets. The four small-prop tiers contain eight designs each; the other ten tiers contain four each (72 designs total), while retaining the same footprint threshold and score within the tier. The city includes cans/bottles/bags, hydrants/cones/mailboxes, varied people/signs/park furniture/trees, sedans/hatchbacks/taxis, delivery vans/minibuses/pickups, four kiosk/store/house types, and several larger building and skyscraper silhouettes.
 
 Roads, sidewalks, crossings, and park paths are baked into one city texture rendered on a single ground plane. This avoids intersecting thin road meshes and unstable depth ordering.
 
@@ -73,7 +73,7 @@ Objects remain full scale while pulled into the hole, then visibly descend. Geom
 
 ## Validation
 
-25 tests cover Fibonacci ordering, swallow boundaries, exact-once rewards, mixed-object progression, uncapped logarithmic growth, deterministic city generation, multiple designs per tier, road/park placement, signal phases, stop lines and queue spacing, pedestrian persistence and separation, anchored walking limbs, vehicle windows, building features, full-city completion, fixed-speed hold-to-steer motion and sightline transparency, restart/victory, highlight removal, and progressive clipping. TypeScript checks and the production build pass.
+26 tests cover Fibonacci ordering, swallow boundaries, exact-once rewards, mixed-object progression, uncapped logarithmic growth, deterministic city generation, multiple designs per tier, road/park placement, signal phases, stop lines and queue spacing, pedestrian persistence and separation, anchored walking limbs, vehicle windows, building features, full-city completion, fixed-speed hold-to-steer motion and sightline transparency, restart/victory, highlight removal, and progressive clipping. TypeScript checks and the production build pass.
 
 Browser smoke checks cover the production city, stable roads, mouse swallowing, moving cars and pedestrians, compact left HUD, pause/resume, expandable map, and visible cursor. The final phone-preview raster smoke test sampled 37–38 FPS after static-geometry caching; comprehensive real-device benchmarking has not been performed. WebGL visual validation remains unperformed because the available verification browser disables WebGL.
 
@@ -87,10 +87,12 @@ Traffic obeys the implemented lane, signal, stop-line, clearance, and queue-spac
 
 Each block contains three times its previous object count and a complete 14-tier size ladder, including a skyscraper. The map remains 200 × 200 with 100 blocks. Mixed-use lots contain compact buildings, pocket parks, sidewalk furniture and pedestrians; cars and vans remain on streets or curb parking. Tall buildings preserve their capture tier while using compact lot widths so the dense layout fits.
 
-Objects obstructing the camera-to-hole sightline become 50% transparent, then return to full opacity when clear. Shared materials are preserved. The software renderer composites a complete object before fading it.
+Buildings obstructing the camera-to-hole sightline become 50% transparent, then return to full opacity when clear. Shared materials are preserved. The software renderer composites a complete object before fading it.
 
 See [the city catalog](docs/CITY_OBJECTS.md) for implemented designs and further common city objects, and [mobile release preparation](docs/MOBILE_RELEASE.md) for native startup commands and remaining launch work.
 
 ## GitHub
 
 The local repository is initialized on `main`, with package name `city-hole` and a GitHub Actions validation workflow. Repository creation requires a signed-in GitHub browser session because the connected GitHub tools expose repository content operations but not repository creation. No GitHub remote is claimed until it is created and verified.
+
+Small props (litter, compact fixtures, signs and sidewalk furniture) are independently tripled relative to the previous dense city, with eight designs in each tier. Placement rejects building footprints, existing props and pedestrian corridors. The mobile HUD shows score, level, growth, pause and a compact menu; supporting controls are tucked into that menu. Only houses, shops, buildings, large buildings and skyscrapers fade on obstruction. Vehicles, people, trees, kiosks and street props stay opaque.

@@ -1,3 +1,4 @@
+import { objectDesigns } from "../game/constants";
 import {
   BoxGeometry,
   CylinderGeometry,
@@ -93,8 +94,94 @@ export function createObjectVisual(o: SwallowableObject) {
     return m;
   };
   const color = bright[o.variant % bright.length];
-  const kind = o.variant % 4;
+  const kind = o.variant % objectDesigns[o.type].length;
   g.name = o.design;
+  if (kind >= 4) {
+    if (o.type === "litter") {
+      if (kind === 4) {
+        add(cone, "#f4e6bf", 0, 0.08, 0, 0.085, 0.16, 0.085);
+        add(cylinder, "#b88855", 0, 0.17, 0, 0.09, 0.025, 0.09);
+      } else if (kind === 5) {
+        add(box, "#ece1c6", 0, 0.02, 0, 0.24, 0.035, 0.2);
+        for (const z of [-0.05, 0, 0.05])
+          add(box, "#4f6072", 0, 0.04, z, 0.17, 0.007, 0.01);
+      } else if (kind === 6) {
+        const m = add(box, color, 0, 0.025, 0, 0.2, 0.04, 0.15);
+        m.rotation.z = 0.15;
+        add(box, "#ebe0c4", 0, 0.05, 0, 0.09, 0.01, 0.11);
+      } else {
+        add(box, "#dcbb86", 0, 0.06, 0, 0.22, 0.12, 0.2);
+        add(box, "#f0dfb9", 0, 0.125, 0, 0.24, 0.025, 0.22);
+      }
+    } else if (o.type === "hydrant") {
+      if (kind === 4) {
+        add(cylinder, "#58687e", 0, 0.2, 0, 0.045, 0.4, 0.045);
+        add(box, "#58687e", 0, 0.5, 0, 0.23, 0.25, 0.15);
+        panel("#a3d6db", 0, 0.53, 0.085, 0.12, 0.07, 0, "meter-display");
+      } else if (kind === 5) {
+        add(box, "#758a8d", 0, 0.3, 0, 0.36, 0.6, 0.32);
+        add(box, "#364b56", 0, 0.3, 0.17, 0.17, 0.035, 0.02);
+      } else if (kind === 6) {
+        add(cylinder, "#be7351", 0, 0.12, 0, 0.18, 0.24, 0.18);
+        add(sphere, "#3b9954", 0, 0.35, 0, 0.19, 0.2, 0.19);
+        add(sphere, "#ef8fa9", 0.08, 0.48, 0, 0.07, 0.07, 0.07);
+      } else {
+        add(box, "#ab8357", 0, 0.16, 0, 0.34, 0.32, 0.34);
+        for (const x of [-0.12, 0.12])
+          add(box, "#e0b579", x, 0.17, 0.18, 0.045, 0.3, 0.025);
+      }
+    } else if (o.type === "sign") {
+      if (kind === 7) {
+        add(box, "#efad41", 0, 0.65, 0, 0.75, 0.23, 0.14);
+        for (const x of [-0.28, 0.28]) {
+          add(box, "#38465c", x, 0.32, 0, 0.07, 0.64, 0.12);
+          add(box, "#38465c", x, 0.04, 0, 0.18, 0.08, 0.35);
+        }
+      } else {
+        add(cylinder, "#d6deeb", 0, 0.6, 0, 0.04, 1.2, 0.04);
+        add(
+          box,
+          kind === 4 ? "#2b84aa" : kind === 5 ? "#e2b546" : color,
+          0,
+          1.32,
+          0,
+          kind === 6 ? 0.7 : 0.45,
+          kind === 6 ? 0.6 : 0.45,
+          0.08,
+        );
+        panel("#fff1c8", 0, 1.32, 0.045, 0.24, 0.1, 0, "sign-mark");
+      }
+    } else if (o.type === "bench") {
+      if (kind === 4 || kind === 5) {
+        for (const z of [-0.42, 0.42]) {
+          const wheel = add(cylinder, "#253347", 0, 0.16, z, 0.15, 0.09, 0.15);
+          wheel.rotation.z = Math.PI / 2;
+        }
+        add(box, color, 0, 0.3, 0, 0.08, 0.06, 0.85);
+        add(box, "#4a5d6d", 0, 0.52, 0.38, 0.05, 0.48, 0.05);
+        add(box, "#4a5d6d", 0, 0.75, 0.38, 0.35, 0.05, 0.06);
+        if (kind === 4) {
+          const frame = add(box, color, 0, 0.39, 0, 0.07, 0.07, 0.5);
+          frame.rotation.x = 0.6;
+          add(box, "#263950", 0, 0.6, -0.15, 0.2, 0.07, 0.2);
+        }
+      } else {
+        add(box, kind === 6 ? color : "#7993ac", 0, 0.4, 0, 0.65, 0.8, 0.45);
+        if (kind === 6) {
+          panel("#213b50", -0.08, 0.48, 0.24, 0.36, 0.45, 0, "display");
+          for (const y of [0.33, 0.48, 0.63])
+            add(box, "#e4cb6d", -0.08, y, 0.27, 0.2, 0.06, 0.02);
+          add(box, "#fff0c9", 0.22, 0.47, 0.25, 0.06, 0.2, 0.025);
+        } else
+          for (const x of [-0.16, 0.16])
+            for (const y of [0.2, 0.45, 0.68]) {
+              panel("#475e74", x, y, 0.24, 0.27, 0.19, 0, "locker-door");
+              add(box, "#d9d7b5", x + 0.07, y, 0.26, 0.035, 0.035, 0.02);
+            }
+      }
+    }
+    return g;
+  }
   if (kind === 3) {
     const extras: Record<string, () => void> = {
       litter: () => {

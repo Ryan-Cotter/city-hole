@@ -1,4 +1,4 @@
-import { blocksHoleView, fadedMaterial } from "./occlusion";
+import { blocksHoleView, fadedMaterial, isBuildingType } from "./occlusion";
 import {
   CanvasTexture,
   PlaneGeometry,
@@ -126,13 +126,15 @@ export class Renderer {
         const width = building
           ? Math.min(3.2, o.radius * Math.SQRT2 * 0.94)
           : o.radius * 2;
-        const obstructed = blocksHoleView(
-          g.position,
-          width,
-          o.height + 0.8,
-          state.hole.position,
-          this.camera.position,
-        );
+        const obstructed =
+          isBuildingType(o.type) &&
+          blocksHoleView(
+            g.position,
+            width,
+            o.height + 0.8,
+            state.hole.position,
+            this.camera.position,
+          );
         if (g.userData.obstructed !== obstructed) {
           g.userData.obstructed = obstructed;
           g.traverse((child) => {

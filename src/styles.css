@@ -291,3 +291,47 @@ summary {
     padding-top: 4px;
   }
 }
+
+.utility-menu {
+  margin-top: 8px;
+  font-size: 11px;
+}
+.utility-menu > summary {
+  cursor: pointer;
+  padding: 12px;
+  border: 1px solid #686580;
+  border-radius: 6px;
+}
+.utility-menu > button {
+  width: 100%;
+  margin-top: 8px;
+}
+@container (max-width: 600px) {
+  .hud-panel {
+    width: 132px;
+    padding: 9px;
+  }
+  .hud-brand,
+  .score-row label,
+  #timer,
+  #radius,
+  #hint,
+  #remaining {
+    display: none;
+  }
+  .score-row {
+    margin-bottom: 5px;
+  }
+  .score-row strong {
+    font-size: 26px;
+  }
+  .hud-actions {
+    margin-top: 8px;
+  }
+  .utility-menu {
+    margin-top: 5px;
+  }
+  .utility-menu > summary {
+    padding: 12px 8px;
+  }
+}
