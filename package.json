@@ -14,7 +14,8 @@
     "mobile:open:android": "cap open android",
     "mobile:open:ios": "cap open ios",
     "desktop:start": "npm run build && electron .",
-    "desktop:package": "npm run build && electron-builder --dir"
+    "desktop:package": "npm run build && electron-builder --dir",
+    "test:pacing": "RUN_PACING=1 VERIFY_PACING=1 TRIAL_CITIES=0,1,2,3 vitest run src/tests/pacingTrial.test.ts"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

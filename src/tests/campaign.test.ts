@@ -9,7 +9,7 @@ import { Mesh } from "three";
 
 describe("campaign and boosts", () => {
   it("does not skip straight to toys after the first level", () => {
-    expect(stages[1].points).toBeGreaterThanOrEqual(16);
+    expect(stages[1].points).toBeGreaterThanOrEqual(5);
     expect(stages[1].radius * 0.85).toBeLessThan(0.095);
   });
   it("keeps the percentage toward the following level on an instant size pickup", () => {

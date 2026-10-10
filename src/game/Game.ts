@@ -1,3 +1,4 @@
+import { enablePacing, advanceGrowth } from "./pacing";
 import { CrowdScheduler } from "../world/CrowdScheduler";
 import { ensureFoodBudget } from "./foodBudget";
 import {
@@ -82,6 +83,7 @@ export class Game {
   input: InputManager;
   hud: HUD;
   constructor(root: HTMLElement) {
+    enablePacing(this.state);
     this.hud = new HUD(
       root,
       () => this.pause(),
@@ -278,6 +280,7 @@ export class Game {
     }
     this.blockVisuals.clear();
     this.state = freshState(cityIndex);
+    enablePacing(this.state);
     this.budgetKey = "";
     this.renderer.setCity(this.state.level);
     this.selfPlayer.reset();
@@ -325,6 +328,7 @@ export class Game {
     const s = this.state;
     if (s.status !== "playing") return;
     s.elapsedSeconds += dt;
+    advanceGrowth(s, dt);
     updateBoosts(s);
     const budgetKey = `${s.cityIndex}:${s.world.phase}:${s.areaStage}:${s.hole.level}`;
     if (

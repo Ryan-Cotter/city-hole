@@ -10,6 +10,7 @@ import {
   categories,
   stages,
   progressionConfig,
+  pacingWeights,
   cameraConfig,
   config,
 } from "../game/constants";
@@ -88,7 +89,10 @@ describe("self play and pacing", () => {
               Object.values(categories)[i - 1].scoreValue,
               Object.values(categories)[i - 1].mass,
             ) * progressionConfig.objectsPerTier,
-          ),
+          ) *
+            (pacingWeights[
+              Object.keys(categories)[i - 1] as keyof typeof categories
+            ] ?? 1),
         ),
       );
     expect(cameraViewSize(config.baseRadius, false)).toBeCloseTo(

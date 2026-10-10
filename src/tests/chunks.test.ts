@@ -44,6 +44,9 @@ describe("unloaded city blocks", () => {
       expect(stage.radius * config.swallowFactor).toBeGreaterThanOrEqual(
         categories[stage.type].radius,
       );
-    expect(progressionConfig.extraRadiusStep).toBe(0.7);
+    expect(progressionConfig.extraRadiusStep).toBeGreaterThan(0);
+    expect(progressionConfig.extraRadiusStep).toBeLessThan(
+      stages.at(-1)!.radius * 0.05,
+    );
   });
 });

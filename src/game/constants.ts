@@ -289,7 +289,43 @@ export const progressionConfig = {
   baseLevelCost: 16,
   objectsPerTier: 3,
   postCityCost: categories.country.scoreValue * (1000 / 610),
-  extraRadiusStep: 0.7,
+  extraRadiusStep: 4,
+};
+// Measured per-size pacing weights; points retain their Fibonacci values.
+export const pacingWeights: Partial<Record<keyof typeof categories, number>> = {
+  bacterium: 0.4,
+  spore: 0.5,
+  dust: 0.8,
+  pollen: 1.6,
+  sand: 2.4,
+  bottlecap: 7,
+  dice: 7,
+  pebble: 3,
+  coin: 3,
+  toy: 2.5,
+  snack: 1.6,
+  mouse: 3.5,
+  litter: 2.5,
+  cat: 6,
+  manhole: 1.2,
+  dog: 2,
+  hydrant: 0.5,
+  person: 0.4,
+  sign: 1,
+  bench: 0.8,
+  table: 1.3,
+  tree: 1.8,
+  barrier: 1,
+  car: 0.7,
+  van: 1.1,
+  patio: 0.4,
+  kiosk: 0.4,
+  house: 0.4,
+  shop: 1.2,
+  building: 0.7,
+  largeBuilding: 1,
+  skyscraper: 1,
+  cityBlock: 1.5,
 };
 // Every incremental growth cost is logarithmic in its level index, with base 2.
 const thresholds = [0];
@@ -303,7 +339,10 @@ for (let i = 1; i < Object.keys(categories).length; i++)
             Object.values(categories)[i - 1].scoreValue,
             Object.values(categories)[i - 1].mass,
           ) * progressionConfig.objectsPerTier,
-        ),
+        ) *
+          (pacingWeights[
+            Object.keys(categories)[i - 1] as keyof typeof categories
+          ] ?? 1),
       ),
   );
 export const stages = (

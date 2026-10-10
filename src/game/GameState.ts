@@ -68,6 +68,7 @@ export interface Level {
   totalScore: number;
 }
 export interface GameState {
+  pacing?: { points: number };
   world: {
     phase: "city" | "metropolis" | "country" | "planet";
     initialCount: number;

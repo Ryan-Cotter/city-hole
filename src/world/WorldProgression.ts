@@ -74,7 +74,7 @@ export function createBuildingExpansion(s: GameState) {
   const blocks: Level["blocks"] = [];
   for (let z = -1; z <= 1; z++)
     for (let x = -1; x <= 1; x++) {
-      if (!x && !z) continue;
+      if (Math.abs(x) + Math.abs(z) !== 1) continue;
       for (const o of tile.objects.filter((o) => isBuildingType(o.type)))
         additions.push({
           ...o,
@@ -98,7 +98,7 @@ export function createBuildingExpansion(s: GameState) {
 }
 export function createLandscape(s: GameState, planet = false): Level {
   const objects: SwallowableObject[] = [],
-    bounds = planet ? 600 : 300;
+    bounds = planet ? 300 : 200;
   let index = 0;
   const add = (type: ObjectType, x: number, z: number) => {
     const o = make(
@@ -113,16 +113,16 @@ export function createLandscape(s: GameState, planet = false): Level {
     return o;
   };
   if (planet) {
-    for (let z = -2; z <= 1; z++)
-      for (let x = -2; x <= 1; x++)
+    for (let z = -1; z <= 0; z++)
+      for (let x = -1; x <= 0; x++)
         add("country", x * 240 + 120, z * 240 + 120);
-    for (let i = 0; i < 12; i++) {
-      const a = (i * Math.PI) / 6;
-      add("wholeCity", Math.cos(a) * 160, Math.sin(a) * 160);
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3;
+      add("wholeCity", Math.cos(a) * 110, Math.sin(a) * 110);
     }
   } else {
-    for (let z = -5; z <= 5; z++)
-      for (let x = -5; x <= 5; x++) {
+    for (let z = -3; z <= 3; z++)
+      for (let x = -3; x <= 3; x++) {
         const river = Math.abs(z - Math.round(Math.sin(x * 0.65) * 2)) < 1;
         const type = river
           ? "river"
@@ -136,8 +136,8 @@ export function createLandscape(s: GameState, planet = false): Level {
           o.radius = 18;
         }
       }
-    for (const x of [-180, 0, 180])
-      for (const z of [-180, 0, 180]) add("wholeCity", x + 18, z + 18);
+    for (const x of [-120, 0, 120])
+      for (const z of [-120, 0, 120]) add("wholeCity", x + 18, z + 18);
   }
   const level: Level = {
     seed: s.level.seed + 811,
@@ -189,8 +189,9 @@ export function advanceWorld(s: GameState): boolean {
     (stage) => stage.type === (planet ? "wholeCity" : "river"),
   )!;
   s.growthOffset = s.score.points - start.points;
+  if (s.pacing) s.pacing.points = start.points;
   s.hole.level = stages.indexOf(start) + 1;
-  s.hole.position.set(planet ? 0 : -270, 0, planet ? 0 : -270);
+  s.hole.position.set(planet ? 0 : -180, 0, planet ? 0 : -180);
   s.hole.velocity.set(0, 0, 0);
   s.status = "playing";
   updateBoosts(s);

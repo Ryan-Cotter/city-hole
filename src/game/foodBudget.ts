@@ -1,3 +1,5 @@
+import { isSolidObstacle, obstacleRadius } from "../physics/collisions";
+import { segmentIntersectsBox } from "../physics/pathGeometry";
 import { Vector3 } from "three";
 import { categories, objectDesigns } from "./constants";
 import type { GameState, ObjectType, SwallowableObject } from "./GameState";
@@ -6,7 +8,7 @@ import { activeBounds, isUnlocked, blockScaleRadius } from "./sections";
 import { isBuildingType } from "../render/occlusion";
 let reserveSerial = 0;
 export const foodBudgetFactor = 1.5;
-export const availableFoodPoints = (s: GameState) =>
+export const availableFoodPoints = (s: GameState, local = false) =>
   s.level.objects.reduce(
     (sum, o) =>
       sum +
@@ -14,6 +16,9 @@ export const availableFoodPoints = (s: GameState) =>
       isUnlocked(s, o) &&
       !o.members &&
       !o.collisionOnly &&
+      (!local ||
+        o.position.distanceTo(s.hole.position) <=
+          Math.max(0.03, s.hole.radius * 6)) &&
       !o.motion &&
       !["person", "mouse", "cat", "dog"].includes(o.type) &&
       o.radius <= s.hole.radius * 0.85
@@ -34,7 +39,7 @@ export function ensureFoodBudget(s: GameState): SwallowableObject[] {
   const growth = growthForPoints(growthPoints(s));
   let deficit =
     Math.ceil(foodBudgetFactor * (growth.nextThreshold - growth.threshold)) -
-    availableFoodPoints(s);
+    availableFoodPoints(s, true);
   if (deficit <= 0) return [];
   const types = (Object.keys(categories) as ObjectType[]).filter((type) => {
     if (["barrier", "person", "mouse", "cat", "dog"].includes(type))
@@ -54,8 +59,7 @@ export function ensureFoodBudget(s: GameState): SwallowableObject[] {
     added: SwallowableObject[] = [],
     bound = activeBounds(s) - spec.radius;
   const solids = s.level.objects.filter(
-    (o) =>
-      o.state === "idle" && isUnlocked(s, o) && o.radius > s.hole.radius * 0.85,
+    (o) => isUnlocked(s, o) && isSolidObstacle(o, s.hole),
   );
   while (deficit > 0) {
     const index = added.length,
@@ -66,7 +70,13 @@ export function ensureFoodBudget(s: GameState): SwallowableObject[] {
         distance =
           s.hole.radius +
           spec.radius * 2 +
-          (attempt % 12) * Math.max(0.08, spec.radius * 2);
+          ((attempt % 12) / 11) *
+            Math.max(
+              0,
+              Math.max(0.03, s.hole.radius * 6) -
+                s.hole.radius -
+                spec.radius * 3,
+            );
       position = new Vector3(
         Math.max(
           -bound,
@@ -80,7 +90,14 @@ export function ensureFoodBudget(s: GameState): SwallowableObject[] {
       );
       if (
         !solids.some(
-          (o) => o.position.distanceTo(position) < o.radius + spec.radius,
+          (o) =>
+            o.position.distanceTo(position) < obstacleRadius(o) + spec.radius ||
+            segmentIntersectsBox(s.hole.position, position, {
+              x: o.position.x,
+              z: o.position.z,
+              half: obstacleRadius(o) + s.hole.radius * 0.45,
+              round: true,
+            }),
         ) &&
         !added.some((o) => o.position.distanceTo(position) < spec.radius * 2)
       )

@@ -62,7 +62,8 @@ export function complete(
   s.hole.level = growth.level;
   s.hole.radius = growth.radius;
   updateBoosts(s);
-  if (o.pickup) activateBoost(s, o.pickup);
+  if (o.pickup && (o.pickup === "speed" || tierOf(o) >= lowestDetailTier(s)))
+    activateBoost(s, o.pickup);
   if (s.score.remainingObjects === 0) s.status = "won";
   return true;
 }

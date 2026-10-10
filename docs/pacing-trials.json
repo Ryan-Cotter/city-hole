@@ -1,0 +1,2431 @@
+{
+  "method": "Real Game.update with drawing disabled; final runs use 1/60-second steps. Each run starts with microbes and ends with World cleared, before optional Next city. Baseline used 1/30-second steps.",
+  "baseline": [
+    {
+      "cityIndex": 0,
+      "completed": true,
+      "seconds": 513.80000000019,
+      "phase": "planet",
+      "radius": 108.76235294117647,
+      "remaining": 0,
+      "position": [
+        -344.39112724516514,
+        0,
+        253.00277859486198
+      ],
+      "rows": [
+        {
+          "phase": "city",
+          "level": 1,
+          "size": "bacterium",
+          "seconds": 16.666666666666654,
+          "start": 0,
+          "end": 16.666666666666654,
+          "score": 0
+        },
+        {
+          "phase": "city",
+          "level": 2,
+          "size": "spore",
+          "seconds": 14.233333333334041,
+          "start": 16.666666666666654,
+          "end": 30.900000000000695,
+          "score": 16
+        },
+        {
+          "phase": "city",
+          "level": 3,
+          "size": "dust",
+          "seconds": 8.566666666666293,
+          "start": 30.900000000000695,
+          "end": 39.46666666666699,
+          "score": 42
+        },
+        {
+          "phase": "city",
+          "level": 4,
+          "size": "pollen",
+          "seconds": 7.466666666666242,
+          "start": 39.46666666666699,
+          "end": 46.93333333333323,
+          "score": 75
+        },
+        {
+          "phase": "city",
+          "level": 5,
+          "size": "sand",
+          "seconds": 2.4666666666665265,
+          "start": 46.93333333333323,
+          "end": 49.39999999999976,
+          "score": 114
+        },
+        {
+          "phase": "city",
+          "level": 6,
+          "size": "bottlecap",
+          "seconds": 1.1666666666666003,
+          "start": 49.39999999999976,
+          "end": 50.56666666666636,
+          "score": 156
+        },
+        {
+          "phase": "city",
+          "level": 7,
+          "size": "dice",
+          "seconds": 0.29999999999998295,
+          "start": 50.56666666666636,
+          "end": 50.86666666666634,
+          "score": 209
+        },
+        {
+          "phase": "city",
+          "level": 8,
+          "size": "pebble",
+          "seconds": 0.7333333333332916,
+          "start": 50.86666666666634,
+          "end": 51.59999999999963,
+          "score": 262
+        },
+        {
+          "phase": "city",
+          "level": 9,
+          "size": "coin",
+          "seconds": 0.7333333333332916,
+          "start": 51.59999999999963,
+          "end": 52.333333333332924,
+          "score": 367
+        },
+        {
+          "phase": "city",
+          "level": 10,
+          "size": "toy",
+          "seconds": 1.066666666666606,
+          "start": 52.333333333332924,
+          "end": 53.39999999999953,
+          "score": 530
+        },
+        {
+          "phase": "city",
+          "level": 11,
+          "size": "snack",
+          "seconds": 3.7666666666664526,
+          "start": 53.39999999999953,
+          "end": 57.16666666666598,
+          "score": 802
+        },
+        {
+          "phase": "city",
+          "level": 12,
+          "size": "mouse",
+          "seconds": 6.4999999999996305,
+          "start": 57.16666666666598,
+          "end": 63.66666666666561,
+          "score": 1232
+        },
+        {
+          "phase": "city",
+          "level": 13,
+          "size": "litter",
+          "seconds": 2.2999999999998764,
+          "start": 63.66666666666561,
+          "end": 65.96666666666549,
+          "score": 2049
+        },
+        {
+          "phase": "city",
+          "level": 14,
+          "size": "cat",
+          "seconds": 0.9999999999999432,
+          "start": 65.96666666666549,
+          "end": 66.96666666666543,
+          "score": 3319
+        },
+        {
+          "phase": "city",
+          "level": 15,
+          "size": "manhole",
+          "seconds": 5.299999999999699,
+          "start": 66.96666666666543,
+          "end": 72.26666666666513,
+          "score": 5052
+        },
+        {
+          "phase": "city",
+          "level": 16,
+          "size": "dog",
+          "seconds": 2.6333333333331836,
+          "start": 72.26666666666513,
+          "end": 74.89999999999831,
+          "score": 8204
+        },
+        {
+          "phase": "city",
+          "level": 17,
+          "size": "hydrant",
+          "seconds": 4.433333333333081,
+          "start": 74.89999999999831,
+          "end": 79.3333333333314,
+          "score": 12728
+        },
+        {
+          "phase": "city",
+          "level": 18,
+          "size": "person",
+          "seconds": 10.066666666666094,
+          "start": 79.3333333333314,
+          "end": 89.39999999999749,
+          "score": 20967
+        },
+        {
+          "phase": "city",
+          "level": 19,
+          "size": "sign",
+          "seconds": 5.233333333333036,
+          "start": 89.39999999999749,
+          "end": 94.63333333333053,
+          "score": 33377
+        },
+        {
+          "phase": "city",
+          "level": 20,
+          "size": "bench",
+          "seconds": 2.433333333333195,
+          "start": 94.63333333333053,
+          "end": 97.06666666666372,
+          "score": 47034
+        },
+        {
+          "phase": "city",
+          "level": 21,
+          "size": "table",
+          "seconds": 2.8333333333331723,
+          "start": 97.06666666666372,
+          "end": 99.8999999999969,
+          "score": 60680
+        },
+        {
+          "phase": "city",
+          "level": 22,
+          "size": "tree",
+          "seconds": 5.299999999999699,
+          "start": 99.8999999999969,
+          "end": 105.19999999999659,
+          "score": 110307
+        },
+        {
+          "phase": "city",
+          "level": 23,
+          "size": "barrier",
+          "seconds": 6.199999999999648,
+          "start": 105.19999999999659,
+          "end": 111.39999999999624,
+          "score": 220979
+        },
+        {
+          "phase": "city",
+          "level": 24,
+          "size": "car",
+          "seconds": 4.433333333333081,
+          "start": 111.39999999999624,
+          "end": 115.83333333332932,
+          "score": 342361
+        },
+        {
+          "phase": "city",
+          "level": 25,
+          "size": "van",
+          "seconds": 7.366666666666248,
+          "start": 115.83333333332932,
+          "end": 123.19999999999557,
+          "score": 618739
+        },
+        {
+          "phase": "city",
+          "level": 26,
+          "size": "patio",
+          "seconds": 8.733333333332851,
+          "start": 123.19999999999557,
+          "end": 131.93333333332842,
+          "score": 928677
+        },
+        {
+          "phase": "city",
+          "level": 27,
+          "size": "kiosk",
+          "seconds": 12.099999999999312,
+          "start": 131.93333333332842,
+          "end": 144.03333333332773,
+          "score": 1516156
+        },
+        {
+          "phase": "city",
+          "level": 28,
+          "size": "house",
+          "seconds": 11.399999999999352,
+          "start": 144.03333333332773,
+          "end": 155.43333333332708,
+          "score": 2682252
+        },
+        {
+          "phase": "city",
+          "level": 29,
+          "size": "shop",
+          "seconds": 8.499999999999517,
+          "start": 155.43333333332708,
+          "end": 163.9333333333266,
+          "score": 4264607
+        },
+        {
+          "phase": "city",
+          "level": 30,
+          "size": "building",
+          "seconds": 5.233333333333036,
+          "start": 163.9333333333266,
+          "end": 169.16666666665964,
+          "score": 6996078
+        },
+        {
+          "phase": "city",
+          "level": 31,
+          "size": "largeBuilding",
+          "seconds": 7.099999999999596,
+          "start": 169.16666666665964,
+          "end": 176.26666666665923,
+          "score": 11223614
+        },
+        {
+          "phase": "city",
+          "level": 32,
+          "size": "skyscraper",
+          "seconds": 8.366666666666191,
+          "start": 176.26666666665923,
+          "end": 184.63333333332542,
+          "score": 18897011
+        },
+        {
+          "phase": "city",
+          "level": 33,
+          "size": "cityBlock",
+          "seconds": 4.199999999999761,
+          "start": 184.63333333332542,
+          "end": 188.83333333332519,
+          "score": 30424895
+        },
+        {
+          "phase": "city",
+          "level": 34,
+          "size": "river",
+          "seconds": 4.333333333333087,
+          "start": 188.83333333332519,
+          "end": 193.16666666665827,
+          "score": 46700105
+        },
+        {
+          "phase": "city",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 0.03333333333333144,
+          "start": 193.16666666665827,
+          "end": 193.1999999999916,
+          "score": 75881712
+        },
+        {
+          "phase": "city",
+          "level": 38,
+          "size": "extra",
+          "seconds": 0.03333333333333144,
+          "start": 193.1999999999916,
+          "end": 193.23333333332494,
+          "score": 130336198
+        },
+        {
+          "phase": "metropolis",
+          "level": 39,
+          "size": "extra",
+          "seconds": 0.03333333333333144,
+          "start": 193.23333333332494,
+          "end": 193.26666666665827,
+          "score": 239037519
+        },
+        {
+          "phase": "metropolis",
+          "level": 40,
+          "size": "extra",
+          "seconds": 1.5333333333332462,
+          "start": 193.26666666665827,
+          "end": 194.7999999999915,
+          "score": 525706845
+        },
+        {
+          "phase": "metropolis",
+          "level": 41,
+          "size": "extra",
+          "seconds": 23.36666666666534,
+          "start": 194.7999999999915,
+          "end": 218.16666666665685,
+          "score": 599713738
+        },
+        {
+          "phase": "metropolis",
+          "level": 42,
+          "size": "extra",
+          "seconds": 30.36666666666494,
+          "start": 218.16666666665685,
+          "end": 248.5333333333218,
+          "score": 828126658
+        },
+        {
+          "phase": "metropolis",
+          "level": 43,
+          "size": "extra",
+          "seconds": 43.33333333336142,
+          "start": 248.5333333333218,
+          "end": 291.8666666666832,
+          "score": 1072508451
+        },
+        {
+          "phase": "metropolis",
+          "level": 44,
+          "size": "extra",
+          "seconds": 92.00000000007321,
+          "start": 291.8666666666832,
+          "end": 383.86666666675643,
+          "score": 1328553403
+        },
+        {
+          "phase": "country",
+          "level": 34,
+          "size": "river",
+          "seconds": 6.600000000005252,
+          "start": 383.86666666675643,
+          "end": 390.4666666667617,
+          "score": 1355978014
+        },
+        {
+          "phase": "country",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 3.7000000000029445,
+          "start": 390.4666666667617,
+          "end": 394.1666666667646,
+          "score": 1383660409
+        },
+        {
+          "phase": "country",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 3.4000000000027057,
+          "start": 394.1666666667646,
+          "end": 397.56666666676733,
+          "score": 1431976043
+        },
+        {
+          "phase": "country",
+          "level": 37,
+          "size": "country",
+          "seconds": 2.43333333333527,
+          "start": 397.56666666676733,
+          "end": 400.0000000001026,
+          "score": 1507974072
+        },
+        {
+          "phase": "country",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.83333333333718,
+          "start": 400.0000000001026,
+          "end": 404.8333333334398,
+          "score": 1633634004
+        },
+        {
+          "phase": "country",
+          "level": 39,
+          "size": "extra",
+          "seconds": 5.533333333337737,
+          "start": 404.8333333334398,
+          "end": 410.3666666667775,
+          "score": 1804084992
+        },
+        {
+          "phase": "country",
+          "level": 40,
+          "size": "extra",
+          "seconds": 10.100000000008038,
+          "start": 410.3666666667775,
+          "end": 420.46666666678556,
+          "score": 1987288023
+        },
+        {
+          "phase": "country",
+          "level": 41,
+          "size": "extra",
+          "seconds": 15.233333333345456,
+          "start": 420.46666666678556,
+          "end": 435.700000000131,
+          "score": 2200351758
+        },
+        {
+          "phase": "country",
+          "level": 42,
+          "size": "extra",
+          "seconds": 8.300000000006605,
+          "start": 435.700000000131,
+          "end": 444.0000000001376,
+          "score": 2431870423
+        },
+        {
+          "phase": "country",
+          "level": 43,
+          "size": "extra",
+          "seconds": 14.733333333345058,
+          "start": 444.0000000001376,
+          "end": 458.7333333334827,
+          "score": 2673962822
+        },
+        {
+          "phase": "planet",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 9.866666666674519,
+          "start": 458.7333333334827,
+          "end": 468.6000000001572,
+          "score": 2792573598
+        },
+        {
+          "phase": "planet",
+          "level": 37,
+          "size": "country",
+          "seconds": 3.133333333335827,
+          "start": 468.6000000001572,
+          "end": 471.733333333493,
+          "score": 2865047049
+        },
+        {
+          "phase": "planet",
+          "level": 38,
+          "size": "extra",
+          "seconds": 3.300000000002626,
+          "start": 471.733333333493,
+          "end": 475.03333333349565,
+          "score": 3015696838
+        },
+        {
+          "phase": "planet",
+          "level": 39,
+          "size": "extra",
+          "seconds": 10.833333333341955,
+          "start": 475.03333333349565,
+          "end": 485.8666666668376,
+          "score": 3166346627
+        },
+        {
+          "phase": "planet",
+          "level": 40,
+          "size": "extra",
+          "seconds": 17.133333333346968,
+          "start": 485.8666666668376,
+          "end": 503.00000000018457,
+          "score": 3371014937
+        },
+        {
+          "phase": "planet",
+          "level": 41,
+          "size": "extra",
+          "seconds": 10.800000000005468,
+          "start": 503.00000000018457,
+          "end": 513.80000000019,
+          "score": 3566455782
+        }
+      ]
+    }
+  ],
+  "final": [
+    {
+      "cityIndex": 0,
+      "completed": true,
+      "seconds": 248.10000000008958,
+      "phase": "planet",
+      "radius": 109.96235294117648,
+      "remaining": 0,
+      "position": [
+        183.44090006684135,
+        0,
+        -91.7254670938313
+      ],
+      "rows": [
+        {
+          "phase": "city",
+          "level": 1,
+          "size": "bacterium",
+          "seconds": 7.24999999999998,
+          "start": 0,
+          "end": 7.24999999999998,
+          "score": 0
+        },
+        {
+          "phase": "city",
+          "level": 2,
+          "size": "spore",
+          "seconds": 6.550000000000286,
+          "start": 7.24999999999998,
+          "end": 13.800000000000265,
+          "score": 7
+        },
+        {
+          "phase": "city",
+          "level": 3,
+          "size": "dust",
+          "seconds": 6.616666666666523,
+          "start": 13.800000000000265,
+          "end": 20.41666666666679,
+          "score": 20
+        },
+        {
+          "phase": "city",
+          "level": 4,
+          "size": "pollen",
+          "seconds": 6.399999999999636,
+          "start": 20.41666666666679,
+          "end": 26.816666666666425,
+          "score": 50
+        },
+        {
+          "phase": "city",
+          "level": 5,
+          "size": "sand",
+          "seconds": 7.199999999999594,
+          "start": 26.816666666666425,
+          "end": 34.01666666666602,
+          "score": 108
+        },
+        {
+          "phase": "city",
+          "level": 6,
+          "size": "bottlecap",
+          "seconds": 5.383333333333027,
+          "start": 34.01666666666602,
+          "end": 39.39999999999905,
+          "score": 213
+        },
+        {
+          "phase": "city",
+          "level": 7,
+          "size": "dice",
+          "seconds": 4.51666666666641,
+          "start": 39.39999999999905,
+          "end": 43.916666666665456,
+          "score": 589
+        },
+        {
+          "phase": "city",
+          "level": 8,
+          "size": "pebble",
+          "seconds": 5.083333333333044,
+          "start": 43.916666666665456,
+          "end": 48.9999999999985,
+          "score": 1010
+        },
+        {
+          "phase": "city",
+          "level": 9,
+          "size": "coin",
+          "seconds": 4.833333333333059,
+          "start": 48.9999999999985,
+          "end": 53.83333333333156,
+          "score": 1364
+        },
+        {
+          "phase": "city",
+          "level": 10,
+          "size": "toy",
+          "seconds": 4.51666666666641,
+          "start": 53.83333333333156,
+          "end": 58.34999999999797,
+          "score": 2026
+        },
+        {
+          "phase": "city",
+          "level": 11,
+          "size": "snack",
+          "seconds": 4.51666666666641,
+          "start": 58.34999999999797,
+          "end": 62.86666666666438,
+          "score": 2790
+        },
+        {
+          "phase": "city",
+          "level": 12,
+          "size": "mouse",
+          "seconds": 6.849999999999618,
+          "start": 62.86666666666438,
+          "end": 69.716666666664,
+          "score": 3960
+        },
+        {
+          "phase": "city",
+          "level": 13,
+          "size": "litter",
+          "seconds": 4.74999999999973,
+          "start": 69.716666666664,
+          "end": 74.46666666666373,
+          "score": 5713
+        },
+        {
+          "phase": "city",
+          "level": 14,
+          "size": "cat",
+          "seconds": 9.799999999999443,
+          "start": 74.46666666666373,
+          "end": 84.26666666666317,
+          "score": 8516
+        },
+        {
+          "phase": "city",
+          "level": 15,
+          "size": "manhole",
+          "seconds": 4.499999999999744,
+          "start": 84.26666666666317,
+          "end": 88.76666666666291,
+          "score": 20472
+        },
+        {
+          "phase": "city",
+          "level": 16,
+          "size": "dog",
+          "seconds": 4.499999999999744,
+          "start": 88.76666666666291,
+          "end": 93.26666666666266,
+          "score": 25710
+        },
+        {
+          "phase": "city",
+          "level": 17,
+          "size": "hydrant",
+          "seconds": 4.499999999999744,
+          "start": 93.26666666666266,
+          "end": 97.7666666666624,
+          "score": 35060
+        },
+        {
+          "phase": "city",
+          "level": 18,
+          "size": "person",
+          "seconds": 4.51666666666641,
+          "start": 97.7666666666624,
+          "end": 102.28333333332881,
+          "score": 47069
+        },
+        {
+          "phase": "city",
+          "level": 19,
+          "size": "sign",
+          "seconds": 4.51666666666641,
+          "start": 102.28333333332881,
+          "end": 106.79999999999522,
+          "score": 58322
+        },
+        {
+          "phase": "city",
+          "level": 20,
+          "size": "bench",
+          "seconds": 4.499999999999744,
+          "start": 106.79999999999522,
+          "end": 111.29999999999497,
+          "score": 80555
+        },
+        {
+          "phase": "city",
+          "level": 21,
+          "size": "table",
+          "seconds": 4.51666666666641,
+          "start": 111.29999999999497,
+          "end": 115.81666666666138,
+          "score": 132302
+        },
+        {
+          "phase": "city",
+          "level": 22,
+          "size": "tree",
+          "seconds": 4.883333333333056,
+          "start": 115.81666666666138,
+          "end": 120.69999999999443,
+          "score": 204130
+        },
+        {
+          "phase": "city",
+          "level": 23,
+          "size": "barrier",
+          "seconds": 4.499999999999744,
+          "start": 120.69999999999443,
+          "end": 125.19999999999418,
+          "score": 350054
+        },
+        {
+          "phase": "city",
+          "level": 24,
+          "size": "car",
+          "seconds": 4.5000000000011795,
+          "start": 125.19999999999418,
+          "end": 129.69999999999536,
+          "score": 551174
+        },
+        {
+          "phase": "city",
+          "level": 25,
+          "size": "van",
+          "seconds": 4.516666666670261,
+          "start": 129.69999999999536,
+          "end": 134.21666666666562,
+          "score": 880541
+        },
+        {
+          "phase": "city",
+          "level": 26,
+          "size": "patio",
+          "seconds": 4.500000000003581,
+          "start": 134.21666666666562,
+          "end": 138.7166666666692,
+          "score": 1259771
+        },
+        {
+          "phase": "city",
+          "level": 27,
+          "size": "kiosk",
+          "seconds": 4.500000000003581,
+          "start": 138.7166666666692,
+          "end": 143.21666666667278,
+          "score": 1906737
+        },
+        {
+          "phase": "city",
+          "level": 28,
+          "size": "house",
+          "seconds": 4.500000000003581,
+          "start": 143.21666666667278,
+          "end": 147.71666666667636,
+          "score": 2860411
+        },
+        {
+          "phase": "city",
+          "level": 29,
+          "size": "shop",
+          "seconds": 4.516666666670261,
+          "start": 147.71666666667636,
+          "end": 152.23333333334662,
+          "score": 4648332
+        },
+        {
+          "phase": "city",
+          "level": 30,
+          "size": "building",
+          "seconds": 4.516666666670261,
+          "start": 152.23333333334662,
+          "end": 156.75000000001688,
+          "score": 6740115
+        },
+        {
+          "phase": "city",
+          "level": 31,
+          "size": "largeBuilding",
+          "seconds": 4.500000000003581,
+          "start": 156.75000000001688,
+          "end": 161.25000000002046,
+          "score": 10810205
+        },
+        {
+          "phase": "city",
+          "level": 32,
+          "size": "skyscraper",
+          "seconds": 7.25000000000577,
+          "start": 161.25000000002046,
+          "end": 168.50000000002623,
+          "score": 16215539
+        },
+        {
+          "phase": "city",
+          "level": 33,
+          "size": "cityBlock",
+          "seconds": 7.566666666672688,
+          "start": 168.50000000002623,
+          "end": 176.06666666669892,
+          "score": 27781188
+        },
+        {
+          "phase": "city",
+          "level": 34,
+          "size": "river",
+          "seconds": 4.500000000003581,
+          "start": 176.06666666669892,
+          "end": 180.5666666667025,
+          "score": 53291481
+        },
+        {
+          "phase": "city",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 180.5666666667025,
+          "end": 185.08333333337276,
+          "score": 98030677
+        },
+        {
+          "phase": "city",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 2.4833333333353096,
+          "start": 185.08333333337276,
+          "end": 187.56666666670807,
+          "score": 201571502
+        },
+        {
+          "phase": "metropolis",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 2.0333333333349515,
+          "start": 187.56666666670807,
+          "end": 189.60000000004302,
+          "score": 240124478
+        },
+        {
+          "phase": "metropolis",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 189.60000000004302,
+          "end": 194.1000000000466,
+          "score": 425127997
+        },
+        {
+          "phase": "metropolis",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 194.1000000000466,
+          "end": 198.6000000000502,
+          "score": 694401996
+        },
+        {
+          "phase": "metropolis",
+          "level": 39,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 198.6000000000502,
+          "end": 203.10000000005377,
+          "score": 827835949
+        },
+        {
+          "phase": "metropolis",
+          "level": 40,
+          "size": "extra",
+          "seconds": 4.516666666670261,
+          "start": 203.10000000005377,
+          "end": 207.61666666672403,
+          "score": 907835447
+        },
+        {
+          "phase": "metropolis",
+          "level": 41,
+          "size": "extra",
+          "seconds": 1.7166666666680328,
+          "start": 207.61666666672403,
+          "end": 209.33333333339206,
+          "score": 909942692
+        },
+        {
+          "phase": "country",
+          "level": 34,
+          "size": "river",
+          "seconds": 5.666666666671176,
+          "start": 209.33333333339206,
+          "end": 215.00000000006324,
+          "score": 911037031
+        },
+        {
+          "phase": "country",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 215.00000000006324,
+          "end": 219.5166666667335,
+          "score": 984856751
+        },
+        {
+          "phase": "country",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 4.516666666670261,
+          "start": 219.5166666667335,
+          "end": 224.03333333340376,
+          "score": 1003311681
+        },
+        {
+          "phase": "country",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 224.03333333340376,
+          "end": 228.53333333340734,
+          "score": 1168059782
+        },
+        {
+          "phase": "country",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 228.53333333340734,
+          "end": 233.03333333341092,
+          "score": 1435142038
+        },
+        {
+          "phase": "country",
+          "level": 39,
+          "size": "extra",
+          "seconds": 0.10000000000007958,
+          "start": 233.03333333341092,
+          "end": 233.133333333411,
+          "score": 1629750843
+        },
+        {
+          "phase": "planet",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 6.933333333338851,
+          "start": 233.133333333411,
+          "end": 240.06666666674985,
+          "score": 1644681195
+        },
+        {
+          "phase": "planet",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 240.06666666674985,
+          "end": 244.56666666675343,
+          "score": 1789628097
+        },
+        {
+          "phase": "planet",
+          "level": 38,
+          "size": "extra",
+          "seconds": 3.533333333336145,
+          "start": 244.56666666675343,
+          "end": 248.10000000008958,
+          "score": 1970138590
+        }
+      ]
+    },
+    {
+      "cityIndex": 1,
+      "completed": true,
+      "seconds": 257.46666666676117,
+      "phase": "planet",
+      "radius": 109.96235294117648,
+      "remaining": 0,
+      "position": [
+        183.44090006684135,
+        0,
+        -91.7254670938313
+      ],
+      "rows": [
+        {
+          "phase": "city",
+          "level": 1,
+          "size": "bacterium",
+          "seconds": 7.24999999999998,
+          "start": 0,
+          "end": 7.24999999999998,
+          "score": 0
+        },
+        {
+          "phase": "city",
+          "level": 2,
+          "size": "spore",
+          "seconds": 6.550000000000286,
+          "start": 7.24999999999998,
+          "end": 13.800000000000265,
+          "score": 7
+        },
+        {
+          "phase": "city",
+          "level": 3,
+          "size": "dust",
+          "seconds": 6.616666666666523,
+          "start": 13.800000000000265,
+          "end": 20.41666666666679,
+          "score": 20
+        },
+        {
+          "phase": "city",
+          "level": 4,
+          "size": "pollen",
+          "seconds": 6.399999999999636,
+          "start": 20.41666666666679,
+          "end": 26.816666666666425,
+          "score": 50
+        },
+        {
+          "phase": "city",
+          "level": 5,
+          "size": "sand",
+          "seconds": 7.199999999999594,
+          "start": 26.816666666666425,
+          "end": 34.01666666666602,
+          "score": 108
+        },
+        {
+          "phase": "city",
+          "level": 6,
+          "size": "bottlecap",
+          "seconds": 5.383333333333027,
+          "start": 34.01666666666602,
+          "end": 39.39999999999905,
+          "score": 213
+        },
+        {
+          "phase": "city",
+          "level": 7,
+          "size": "dice",
+          "seconds": 4.51666666666641,
+          "start": 39.39999999999905,
+          "end": 43.916666666665456,
+          "score": 589
+        },
+        {
+          "phase": "city",
+          "level": 8,
+          "size": "pebble",
+          "seconds": 5.083333333333044,
+          "start": 43.916666666665456,
+          "end": 48.9999999999985,
+          "score": 1010
+        },
+        {
+          "phase": "city",
+          "level": 9,
+          "size": "coin",
+          "seconds": 4.833333333333059,
+          "start": 48.9999999999985,
+          "end": 53.83333333333156,
+          "score": 1364
+        },
+        {
+          "phase": "city",
+          "level": 10,
+          "size": "toy",
+          "seconds": 4.51666666666641,
+          "start": 53.83333333333156,
+          "end": 58.34999999999797,
+          "score": 2026
+        },
+        {
+          "phase": "city",
+          "level": 11,
+          "size": "snack",
+          "seconds": 4.51666666666641,
+          "start": 58.34999999999797,
+          "end": 62.86666666666438,
+          "score": 2790
+        },
+        {
+          "phase": "city",
+          "level": 12,
+          "size": "mouse",
+          "seconds": 6.899999999999615,
+          "start": 62.86666666666438,
+          "end": 69.766666666664,
+          "score": 3960
+        },
+        {
+          "phase": "city",
+          "level": 13,
+          "size": "litter",
+          "seconds": 6.999999999999602,
+          "start": 69.766666666664,
+          "end": 76.7666666666636,
+          "score": 5831
+        },
+        {
+          "phase": "city",
+          "level": 14,
+          "size": "cat",
+          "seconds": 8.933333333332826,
+          "start": 76.7666666666636,
+          "end": 85.69999999999642,
+          "score": 8966
+        },
+        {
+          "phase": "city",
+          "level": 15,
+          "size": "manhole",
+          "seconds": 4.499999999999744,
+          "start": 85.69999999999642,
+          "end": 90.19999999999617,
+          "score": 19748
+        },
+        {
+          "phase": "city",
+          "level": 16,
+          "size": "dog",
+          "seconds": 4.499999999999744,
+          "start": 90.19999999999617,
+          "end": 94.69999999999591,
+          "score": 27337
+        },
+        {
+          "phase": "city",
+          "level": 17,
+          "size": "hydrant",
+          "seconds": 4.499999999999744,
+          "start": 94.69999999999591,
+          "end": 99.19999999999565,
+          "score": 43179
+        },
+        {
+          "phase": "city",
+          "level": 18,
+          "size": "person",
+          "seconds": 4.51666666666641,
+          "start": 99.19999999999565,
+          "end": 103.71666666666206,
+          "score": 55172
+        },
+        {
+          "phase": "city",
+          "level": 19,
+          "size": "sign",
+          "seconds": 4.51666666666641,
+          "start": 103.71666666666206,
+          "end": 108.23333333332847,
+          "score": 66749
+        },
+        {
+          "phase": "city",
+          "level": 20,
+          "size": "bench",
+          "seconds": 5.233333333333036,
+          "start": 108.23333333332847,
+          "end": 113.46666666666151,
+          "score": 66749
+        },
+        {
+          "phase": "city",
+          "level": 21,
+          "size": "table",
+          "seconds": 6.0833333333329875,
+          "start": 113.46666666666151,
+          "end": 119.5499999999945,
+          "score": 89872
+        },
+        {
+          "phase": "city",
+          "level": 22,
+          "size": "tree",
+          "seconds": 4.499999999999744,
+          "start": 119.5499999999945,
+          "end": 124.04999999999424,
+          "score": 196097
+        },
+        {
+          "phase": "city",
+          "level": 23,
+          "size": "barrier",
+          "seconds": 4.500000000000199,
+          "start": 124.04999999999424,
+          "end": 128.54999999999444,
+          "score": 382202
+        },
+        {
+          "phase": "city",
+          "level": 24,
+          "size": "car",
+          "seconds": 4.500000000003581,
+          "start": 128.54999999999444,
+          "end": 133.04999999999802,
+          "score": 591074
+        },
+        {
+          "phase": "city",
+          "level": 25,
+          "size": "van",
+          "seconds": 4.550000000003621,
+          "start": 133.04999999999802,
+          "end": 137.60000000000164,
+          "score": 741124
+        },
+        {
+          "phase": "city",
+          "level": 26,
+          "size": "patio",
+          "seconds": 4.500000000003581,
+          "start": 137.60000000000164,
+          "end": 142.10000000000522,
+          "score": 1235435
+        },
+        {
+          "phase": "city",
+          "level": 27,
+          "size": "kiosk",
+          "seconds": 4.500000000003581,
+          "start": 142.10000000000522,
+          "end": 146.6000000000088,
+          "score": 1972856
+        },
+        {
+          "phase": "city",
+          "level": 28,
+          "size": "house",
+          "seconds": 4.500000000003581,
+          "start": 146.6000000000088,
+          "end": 151.1000000000124,
+          "score": 2947801
+        },
+        {
+          "phase": "city",
+          "level": 29,
+          "size": "shop",
+          "seconds": 4.516666666670261,
+          "start": 151.1000000000124,
+          "end": 155.61666666668265,
+          "score": 4804359
+        },
+        {
+          "phase": "city",
+          "level": 30,
+          "size": "building",
+          "seconds": 6.700000000005332,
+          "start": 155.61666666668265,
+          "end": 162.31666666668798,
+          "score": 5657003
+        },
+        {
+          "phase": "city",
+          "level": 31,
+          "size": "largeBuilding",
+          "seconds": 7.16666666667237,
+          "start": 162.31666666668798,
+          "end": 169.48333333336035,
+          "score": 9354230
+        },
+        {
+          "phase": "city",
+          "level": 32,
+          "size": "skyscraper",
+          "seconds": 7.850000000006247,
+          "start": 169.48333333336035,
+          "end": 177.3333333333666,
+          "score": 17703407
+        },
+        {
+          "phase": "city",
+          "level": 33,
+          "size": "cityBlock",
+          "seconds": 5.900000000004695,
+          "start": 177.3333333333666,
+          "end": 183.2333333333713,
+          "score": 27091812
+        },
+        {
+          "phase": "city",
+          "level": 34,
+          "size": "river",
+          "seconds": 4.85000000000386,
+          "start": 183.2333333333713,
+          "end": 188.08333333337515,
+          "score": 52082699
+        },
+        {
+          "phase": "city",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 188.08333333337515,
+          "end": 192.6000000000454,
+          "score": 101909497
+        },
+        {
+          "phase": "city",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 1.183333333334275,
+          "start": 192.6000000000454,
+          "end": 193.7833333333797,
+          "score": 209108038
+        },
+        {
+          "phase": "metropolis",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 3.333333333335986,
+          "start": 193.7833333333797,
+          "end": 197.11666666671567,
+          "score": 218548686
+        },
+        {
+          "phase": "metropolis",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 197.11666666671567,
+          "end": 201.61666666671925,
+          "score": 490541510
+        },
+        {
+          "phase": "metropolis",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 201.61666666671925,
+          "end": 206.11666666672284,
+          "score": 740371828
+        },
+        {
+          "phase": "metropolis",
+          "level": 39,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 206.11666666672284,
+          "end": 210.61666666672642,
+          "score": 899149743
+        },
+        {
+          "phase": "metropolis",
+          "level": 40,
+          "size": "extra",
+          "seconds": 4.516666666670261,
+          "start": 210.61666666672642,
+          "end": 215.13333333339668,
+          "score": 921523862
+        },
+        {
+          "phase": "metropolis",
+          "level": 41,
+          "size": "extra",
+          "seconds": 3.566666666669505,
+          "start": 215.13333333339668,
+          "end": 218.70000000006618,
+          "score": 922733186
+        },
+        {
+          "phase": "country",
+          "level": 34,
+          "size": "river",
+          "seconds": 5.666666666671176,
+          "start": 218.70000000006618,
+          "end": 224.36666666673736,
+          "score": 924742769
+        },
+        {
+          "phase": "country",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 224.36666666673736,
+          "end": 228.88333333340762,
+          "score": 998562489
+        },
+        {
+          "phase": "country",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 4.516666666670261,
+          "start": 228.88333333340762,
+          "end": 233.40000000007788,
+          "score": 1017017419
+        },
+        {
+          "phase": "country",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 233.40000000007788,
+          "end": 237.90000000008146,
+          "score": 1181765520
+        },
+        {
+          "phase": "country",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 237.90000000008146,
+          "end": 242.40000000008504,
+          "score": 1448847776
+        },
+        {
+          "phase": "country",
+          "level": 39,
+          "size": "extra",
+          "seconds": 0.10000000000007958,
+          "start": 242.40000000008504,
+          "end": 242.50000000008512,
+          "score": 1643456581
+        },
+        {
+          "phase": "planet",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 6.933333333338851,
+          "start": 242.50000000008512,
+          "end": 249.43333333342397,
+          "score": 1658386933
+        },
+        {
+          "phase": "planet",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 249.43333333342397,
+          "end": 253.93333333342756,
+          "score": 1803333835
+        },
+        {
+          "phase": "planet",
+          "level": 38,
+          "size": "extra",
+          "seconds": 3.5333333333336157,
+          "start": 253.93333333342756,
+          "end": 257.46666666676117,
+          "score": 1983844328
+        }
+      ]
+    },
+    {
+      "cityIndex": 2,
+      "completed": true,
+      "seconds": 250.01666666675777,
+      "phase": "planet",
+      "radius": 109.96235294117648,
+      "remaining": 0,
+      "position": [
+        183.44090006684135,
+        0,
+        -91.7254670938313
+      ],
+      "rows": [
+        {
+          "phase": "city",
+          "level": 1,
+          "size": "bacterium",
+          "seconds": 7.24999999999998,
+          "start": 0,
+          "end": 7.24999999999998,
+          "score": 0
+        },
+        {
+          "phase": "city",
+          "level": 2,
+          "size": "spore",
+          "seconds": 6.550000000000286,
+          "start": 7.24999999999998,
+          "end": 13.800000000000265,
+          "score": 7
+        },
+        {
+          "phase": "city",
+          "level": 3,
+          "size": "dust",
+          "seconds": 6.616666666666523,
+          "start": 13.800000000000265,
+          "end": 20.41666666666679,
+          "score": 20
+        },
+        {
+          "phase": "city",
+          "level": 4,
+          "size": "pollen",
+          "seconds": 6.399999999999636,
+          "start": 20.41666666666679,
+          "end": 26.816666666666425,
+          "score": 50
+        },
+        {
+          "phase": "city",
+          "level": 5,
+          "size": "sand",
+          "seconds": 7.199999999999594,
+          "start": 26.816666666666425,
+          "end": 34.01666666666602,
+          "score": 108
+        },
+        {
+          "phase": "city",
+          "level": 6,
+          "size": "bottlecap",
+          "seconds": 5.383333333333027,
+          "start": 34.01666666666602,
+          "end": 39.39999999999905,
+          "score": 213
+        },
+        {
+          "phase": "city",
+          "level": 7,
+          "size": "dice",
+          "seconds": 4.51666666666641,
+          "start": 39.39999999999905,
+          "end": 43.916666666665456,
+          "score": 589
+        },
+        {
+          "phase": "city",
+          "level": 8,
+          "size": "pebble",
+          "seconds": 5.083333333333044,
+          "start": 43.916666666665456,
+          "end": 48.9999999999985,
+          "score": 1010
+        },
+        {
+          "phase": "city",
+          "level": 9,
+          "size": "coin",
+          "seconds": 4.833333333333059,
+          "start": 48.9999999999985,
+          "end": 53.83333333333156,
+          "score": 1364
+        },
+        {
+          "phase": "city",
+          "level": 10,
+          "size": "toy",
+          "seconds": 4.51666666666641,
+          "start": 53.83333333333156,
+          "end": 58.34999999999797,
+          "score": 2026
+        },
+        {
+          "phase": "city",
+          "level": 11,
+          "size": "snack",
+          "seconds": 4.51666666666641,
+          "start": 58.34999999999797,
+          "end": 62.86666666666438,
+          "score": 2790
+        },
+        {
+          "phase": "city",
+          "level": 12,
+          "size": "mouse",
+          "seconds": 6.21666666666632,
+          "start": 62.86666666666438,
+          "end": 69.0833333333307,
+          "score": 3960
+        },
+        {
+          "phase": "city",
+          "level": 13,
+          "size": "litter",
+          "seconds": 6.633333333332956,
+          "start": 69.0833333333307,
+          "end": 75.71666666666366,
+          "score": 5794
+        },
+        {
+          "phase": "city",
+          "level": 14,
+          "size": "cat",
+          "seconds": 6.833333333332945,
+          "start": 75.71666666666366,
+          "end": 82.5499999999966,
+          "score": 8718
+        },
+        {
+          "phase": "city",
+          "level": 15,
+          "size": "manhole",
+          "seconds": 4.499999999999744,
+          "start": 82.5499999999966,
+          "end": 87.04999999999634,
+          "score": 21986
+        },
+        {
+          "phase": "city",
+          "level": 16,
+          "size": "dog",
+          "seconds": 4.499999999999744,
+          "start": 87.04999999999634,
+          "end": 91.54999999999609,
+          "score": 28395
+        },
+        {
+          "phase": "city",
+          "level": 17,
+          "size": "hydrant",
+          "seconds": 4.499999999999744,
+          "start": 91.54999999999609,
+          "end": 96.04999999999583,
+          "score": 41425
+        },
+        {
+          "phase": "city",
+          "level": 18,
+          "size": "person",
+          "seconds": 4.51666666666641,
+          "start": 96.04999999999583,
+          "end": 100.56666666666224,
+          "score": 47112
+        },
+        {
+          "phase": "city",
+          "level": 19,
+          "size": "sign",
+          "seconds": 4.51666666666641,
+          "start": 100.56666666666224,
+          "end": 105.08333333332865,
+          "score": 52497
+        },
+        {
+          "phase": "city",
+          "level": 20,
+          "size": "bench",
+          "seconds": 4.499999999999744,
+          "start": 105.08333333332865,
+          "end": 109.5833333333284,
+          "score": 82981
+        },
+        {
+          "phase": "city",
+          "level": 21,
+          "size": "table",
+          "seconds": 4.51666666666641,
+          "start": 109.5833333333284,
+          "end": 114.09999999999481,
+          "score": 206028
+        },
+        {
+          "phase": "city",
+          "level": 22,
+          "size": "tree",
+          "seconds": 4.499999999999744,
+          "start": 114.09999999999481,
+          "end": 118.59999999999455,
+          "score": 330382
+        },
+        {
+          "phase": "city",
+          "level": 23,
+          "size": "barrier",
+          "seconds": 4.499999999999744,
+          "start": 118.59999999999455,
+          "end": 123.0999999999943,
+          "score": 473667
+        },
+        {
+          "phase": "city",
+          "level": 24,
+          "size": "car",
+          "seconds": 4.499999999999744,
+          "start": 123.0999999999943,
+          "end": 127.59999999999404,
+          "score": 652282
+        },
+        {
+          "phase": "city",
+          "level": 25,
+          "size": "van",
+          "seconds": 4.516666666669906,
+          "start": 127.59999999999404,
+          "end": 132.11666666666395,
+          "score": 780118
+        },
+        {
+          "phase": "city",
+          "level": 26,
+          "size": "patio",
+          "seconds": 4.500000000003581,
+          "start": 132.11666666666395,
+          "end": 136.61666666666753,
+          "score": 1309762
+        },
+        {
+          "phase": "city",
+          "level": 27,
+          "size": "kiosk",
+          "seconds": 4.500000000003581,
+          "start": 136.61666666666753,
+          "end": 141.1166666666711,
+          "score": 1415928
+        },
+        {
+          "phase": "city",
+          "level": 28,
+          "size": "house",
+          "seconds": 4.500000000003581,
+          "start": 141.1166666666711,
+          "end": 145.6166666666747,
+          "score": 2353378
+        },
+        {
+          "phase": "city",
+          "level": 29,
+          "size": "shop",
+          "seconds": 4.516666666670261,
+          "start": 145.6166666666747,
+          "end": 150.13333333334495,
+          "score": 3477554
+        },
+        {
+          "phase": "city",
+          "level": 30,
+          "size": "building",
+          "seconds": 4.516666666670261,
+          "start": 150.13333333334495,
+          "end": 154.6500000000152,
+          "score": 6017322
+        },
+        {
+          "phase": "city",
+          "level": 31,
+          "size": "largeBuilding",
+          "seconds": 9.68333333334104,
+          "start": 154.6500000000152,
+          "end": 164.33333333335625,
+          "score": 9111668
+        },
+        {
+          "phase": "city",
+          "level": 32,
+          "size": "skyscraper",
+          "seconds": 5.883333333338015,
+          "start": 164.33333333335625,
+          "end": 170.21666666669427,
+          "score": 15214454
+        },
+        {
+          "phase": "city",
+          "level": 33,
+          "size": "cityBlock",
+          "seconds": 7.783333333339527,
+          "start": 170.21666666669427,
+          "end": 178.0000000000338,
+          "score": 26413534
+        },
+        {
+          "phase": "city",
+          "level": 34,
+          "size": "river",
+          "seconds": 4.500000000003581,
+          "start": 178.0000000000338,
+          "end": 182.50000000003737,
+          "score": 53635613
+        },
+        {
+          "phase": "city",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 182.50000000003737,
+          "end": 187.01666666670764,
+          "score": 94696758
+        },
+        {
+          "phase": "city",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 2.40000000000191,
+          "start": 187.01666666670764,
+          "end": 189.41666666670955,
+          "score": 211768300
+        },
+        {
+          "phase": "metropolis",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 2.116666666668351,
+          "start": 189.41666666670955,
+          "end": 191.5333333333779,
+          "score": 248896524
+        },
+        {
+          "phase": "metropolis",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 191.5333333333779,
+          "end": 196.03333333338148,
+          "score": 414090886
+        },
+        {
+          "phase": "metropolis",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 196.03333333338148,
+          "end": 200.53333333338506,
+          "score": 673705042
+        },
+        {
+          "phase": "metropolis",
+          "level": 39,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 200.53333333338506,
+          "end": 205.03333333338864,
+          "score": 801204914
+        },
+        {
+          "phase": "metropolis",
+          "level": 40,
+          "size": "extra",
+          "seconds": 4.516666666670261,
+          "start": 205.03333333338864,
+          "end": 209.5500000000589,
+          "score": 898405680
+        },
+        {
+          "phase": "metropolis",
+          "level": 41,
+          "size": "extra",
+          "seconds": 1.7000000000013529,
+          "start": 209.5500000000589,
+          "end": 211.25000000006025,
+          "score": 899732308
+        },
+        {
+          "phase": "country",
+          "level": 34,
+          "size": "river",
+          "seconds": 5.666666666671176,
+          "start": 211.25000000006025,
+          "end": 216.91666666673143,
+          "score": 901741891
+        },
+        {
+          "phase": "country",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 216.91666666673143,
+          "end": 221.4333333334017,
+          "score": 975561611
+        },
+        {
+          "phase": "country",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 4.516666666670261,
+          "start": 221.4333333334017,
+          "end": 225.95000000007195,
+          "score": 994016541
+        },
+        {
+          "phase": "country",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 225.95000000007195,
+          "end": 230.45000000007553,
+          "score": 1158764642
+        },
+        {
+          "phase": "country",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 230.45000000007553,
+          "end": 234.95000000007911,
+          "score": 1425846898
+        },
+        {
+          "phase": "country",
+          "level": 39,
+          "size": "extra",
+          "seconds": 0.10000000000007958,
+          "start": 234.95000000007911,
+          "end": 235.0500000000792,
+          "score": 1620455703
+        },
+        {
+          "phase": "planet",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 6.933333333338851,
+          "start": 235.0500000000792,
+          "end": 241.98333333341805,
+          "score": 1635386055
+        },
+        {
+          "phase": "planet",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 241.98333333341805,
+          "end": 246.48333333342163,
+          "score": 1780332957
+        },
+        {
+          "phase": "planet",
+          "level": 38,
+          "size": "extra",
+          "seconds": 3.533333333336145,
+          "start": 246.48333333342163,
+          "end": 250.01666666675777,
+          "score": 1960843450
+        }
+      ]
+    },
+    {
+      "cityIndex": 3,
+      "completed": true,
+      "seconds": 250.21666666675793,
+      "phase": "planet",
+      "radius": 109.96235294117648,
+      "remaining": 0,
+      "position": [
+        183.44090006684135,
+        0,
+        -91.7254670938313
+      ],
+      "rows": [
+        {
+          "phase": "city",
+          "level": 1,
+          "size": "bacterium",
+          "seconds": 7.24999999999998,
+          "start": 0,
+          "end": 7.24999999999998,
+          "score": 0
+        },
+        {
+          "phase": "city",
+          "level": 2,
+          "size": "spore",
+          "seconds": 6.550000000000286,
+          "start": 7.24999999999998,
+          "end": 13.800000000000265,
+          "score": 7
+        },
+        {
+          "phase": "city",
+          "level": 3,
+          "size": "dust",
+          "seconds": 6.616666666666523,
+          "start": 13.800000000000265,
+          "end": 20.41666666666679,
+          "score": 20
+        },
+        {
+          "phase": "city",
+          "level": 4,
+          "size": "pollen",
+          "seconds": 6.399999999999636,
+          "start": 20.41666666666679,
+          "end": 26.816666666666425,
+          "score": 50
+        },
+        {
+          "phase": "city",
+          "level": 5,
+          "size": "sand",
+          "seconds": 7.199999999999594,
+          "start": 26.816666666666425,
+          "end": 34.01666666666602,
+          "score": 108
+        },
+        {
+          "phase": "city",
+          "level": 6,
+          "size": "bottlecap",
+          "seconds": 5.383333333333027,
+          "start": 34.01666666666602,
+          "end": 39.39999999999905,
+          "score": 213
+        },
+        {
+          "phase": "city",
+          "level": 7,
+          "size": "dice",
+          "seconds": 4.51666666666641,
+          "start": 39.39999999999905,
+          "end": 43.916666666665456,
+          "score": 589
+        },
+        {
+          "phase": "city",
+          "level": 8,
+          "size": "pebble",
+          "seconds": 5.083333333333044,
+          "start": 43.916666666665456,
+          "end": 48.9999999999985,
+          "score": 1010
+        },
+        {
+          "phase": "city",
+          "level": 9,
+          "size": "coin",
+          "seconds": 4.833333333333059,
+          "start": 48.9999999999985,
+          "end": 53.83333333333156,
+          "score": 1364
+        },
+        {
+          "phase": "city",
+          "level": 10,
+          "size": "toy",
+          "seconds": 4.51666666666641,
+          "start": 53.83333333333156,
+          "end": 58.34999999999797,
+          "score": 2026
+        },
+        {
+          "phase": "city",
+          "level": 11,
+          "size": "snack",
+          "seconds": 4.51666666666641,
+          "start": 58.34999999999797,
+          "end": 62.86666666666438,
+          "score": 2790
+        },
+        {
+          "phase": "city",
+          "level": 12,
+          "size": "mouse",
+          "seconds": 6.09999999999966,
+          "start": 62.86666666666438,
+          "end": 68.96666666666404,
+          "score": 3960
+        },
+        {
+          "phase": "city",
+          "level": 13,
+          "size": "litter",
+          "seconds": 6.6166666666662906,
+          "start": 68.96666666666404,
+          "end": 75.58333333333033,
+          "score": 5794
+        },
+        {
+          "phase": "city",
+          "level": 14,
+          "size": "cat",
+          "seconds": 6.833333333332945,
+          "start": 75.58333333333033,
+          "end": 82.41666666666328,
+          "score": 8718
+        },
+        {
+          "phase": "city",
+          "level": 15,
+          "size": "manhole",
+          "seconds": 4.499999999999744,
+          "start": 82.41666666666328,
+          "end": 86.91666666666302,
+          "score": 20855
+        },
+        {
+          "phase": "city",
+          "level": 16,
+          "size": "dog",
+          "seconds": 4.499999999999744,
+          "start": 86.91666666666302,
+          "end": 91.41666666666276,
+          "score": 31788
+        },
+        {
+          "phase": "city",
+          "level": 17,
+          "size": "hydrant",
+          "seconds": 4.499999999999744,
+          "start": 91.41666666666276,
+          "end": 95.91666666666251,
+          "score": 44729
+        },
+        {
+          "phase": "city",
+          "level": 18,
+          "size": "person",
+          "seconds": 4.51666666666641,
+          "start": 95.91666666666251,
+          "end": 100.43333333332892,
+          "score": 45872
+        },
+        {
+          "phase": "city",
+          "level": 19,
+          "size": "sign",
+          "seconds": 4.51666666666641,
+          "start": 100.43333333332892,
+          "end": 104.94999999999533,
+          "score": 52377
+        },
+        {
+          "phase": "city",
+          "level": 20,
+          "size": "bench",
+          "seconds": 4.499999999999744,
+          "start": 104.94999999999533,
+          "end": 109.44999999999507,
+          "score": 90830
+        },
+        {
+          "phase": "city",
+          "level": 21,
+          "size": "table",
+          "seconds": 4.51666666666641,
+          "start": 109.44999999999507,
+          "end": 113.96666666666148,
+          "score": 196541
+        },
+        {
+          "phase": "city",
+          "level": 22,
+          "size": "tree",
+          "seconds": 4.499999999999744,
+          "start": 113.96666666666148,
+          "end": 118.46666666666123,
+          "score": 317201
+        },
+        {
+          "phase": "city",
+          "level": 23,
+          "size": "barrier",
+          "seconds": 4.499999999999744,
+          "start": 118.46666666666123,
+          "end": 122.96666666666097,
+          "score": 503427
+        },
+        {
+          "phase": "city",
+          "level": 24,
+          "size": "car",
+          "seconds": 4.499999999999744,
+          "start": 122.96666666666097,
+          "end": 127.46666666666071,
+          "score": 561728
+        },
+        {
+          "phase": "city",
+          "level": 25,
+          "size": "van",
+          "seconds": 4.516666666669792,
+          "start": 127.46666666666071,
+          "end": 131.9833333333305,
+          "score": 769325
+        },
+        {
+          "phase": "city",
+          "level": 26,
+          "size": "patio",
+          "seconds": 4.500000000003581,
+          "start": 131.9833333333305,
+          "end": 136.4833333333341,
+          "score": 1049609
+        },
+        {
+          "phase": "city",
+          "level": 27,
+          "size": "kiosk",
+          "seconds": 4.6500000000037005,
+          "start": 136.4833333333341,
+          "end": 141.1333333333378,
+          "score": 1319711
+        },
+        {
+          "phase": "city",
+          "level": 28,
+          "size": "house",
+          "seconds": 4.500000000003581,
+          "start": 141.1333333333378,
+          "end": 145.63333333334137,
+          "score": 2241288
+        },
+        {
+          "phase": "city",
+          "level": 29,
+          "size": "shop",
+          "seconds": 5.3666666666709375,
+          "start": 145.63333333334137,
+          "end": 151.0000000000123,
+          "score": 3427281
+        },
+        {
+          "phase": "city",
+          "level": 30,
+          "size": "building",
+          "seconds": 5.883333333338015,
+          "start": 151.0000000000123,
+          "end": 156.88333333335032,
+          "score": 5245799
+        },
+        {
+          "phase": "city",
+          "level": 31,
+          "size": "largeBuilding",
+          "seconds": 7.25000000000577,
+          "start": 156.88333333335032,
+          "end": 164.1333333333561,
+          "score": 9002691
+        },
+        {
+          "phase": "city",
+          "level": 32,
+          "size": "skyscraper",
+          "seconds": 5.416666666670977,
+          "start": 164.1333333333561,
+          "end": 169.55000000002707,
+          "score": 14969086
+        },
+        {
+          "phase": "city",
+          "level": 33,
+          "size": "cityBlock",
+          "seconds": 8.000000000006366,
+          "start": 169.55000000002707,
+          "end": 177.55000000003344,
+          "score": 29910483
+        },
+        {
+          "phase": "city",
+          "level": 34,
+          "size": "river",
+          "seconds": 4.7333333333371,
+          "start": 177.55000000003344,
+          "end": 182.28333333337054,
+          "score": 56625013
+        },
+        {
+          "phase": "city",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 182.28333333337054,
+          "end": 186.8000000000408,
+          "score": 95289750
+        },
+        {
+          "phase": "city",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 3.5000000000027853,
+          "start": 186.8000000000408,
+          "end": 190.30000000004358,
+          "score": 186138349
+        },
+        {
+          "phase": "metropolis",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 1.0166666666674757,
+          "start": 190.30000000004358,
+          "end": 191.31666666671106,
+          "score": 241774596
+        },
+        {
+          "phase": "metropolis",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 191.31666666671106,
+          "end": 195.81666666671464,
+          "score": 439235948
+        },
+        {
+          "phase": "metropolis",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 195.81666666671464,
+          "end": 200.31666666671822,
+          "score": 720046266
+        },
+        {
+          "phase": "metropolis",
+          "level": 39,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 200.31666666671822,
+          "end": 204.8166666667218,
+          "score": 855471674
+        },
+        {
+          "phase": "metropolis",
+          "level": 40,
+          "size": "extra",
+          "seconds": 6.633333333338612,
+          "start": 204.8166666667218,
+          "end": 211.4500000000604,
+          "score": 877571356
+        },
+        {
+          "phase": "country",
+          "level": 34,
+          "size": "river",
+          "seconds": 5.666666666671176,
+          "start": 211.4500000000604,
+          "end": 217.1166666667316,
+          "score": 894852159
+        },
+        {
+          "phase": "country",
+          "level": 35,
+          "size": "mountain",
+          "seconds": 4.516666666670261,
+          "start": 217.1166666667316,
+          "end": 221.63333333340185,
+          "score": 968671879
+        },
+        {
+          "phase": "country",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 4.516666666670261,
+          "start": 221.63333333340185,
+          "end": 226.1500000000721,
+          "score": 987126809
+        },
+        {
+          "phase": "country",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 226.1500000000721,
+          "end": 230.6500000000757,
+          "score": 1151874910
+        },
+        {
+          "phase": "country",
+          "level": 38,
+          "size": "extra",
+          "seconds": 4.500000000003581,
+          "start": 230.6500000000757,
+          "end": 235.15000000007927,
+          "score": 1418957166
+        },
+        {
+          "phase": "country",
+          "level": 39,
+          "size": "extra",
+          "seconds": 0.10000000000007958,
+          "start": 235.15000000007927,
+          "end": 235.25000000007935,
+          "score": 1613565971
+        },
+        {
+          "phase": "planet",
+          "level": 36,
+          "size": "wholeCity",
+          "seconds": 6.933333333338851,
+          "start": 235.25000000007935,
+          "end": 242.1833333334182,
+          "score": 1628496323
+        },
+        {
+          "phase": "planet",
+          "level": 37,
+          "size": "country",
+          "seconds": 4.500000000003581,
+          "start": 242.1833333334182,
+          "end": 246.68333333342179,
+          "score": 1773443225
+        },
+        {
+          "phase": "planet",
+          "level": 38,
+          "size": "extra",
+          "seconds": 3.533333333336145,
+          "start": 246.68333333342179,
+          "end": 250.21666666675793,
+          "score": 1953953718
+        }
+      ]
+    }
+  ]
+}

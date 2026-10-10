@@ -40,4 +40,4 @@ export function growthForPoints(points: number) {
 export const levelForPoints = (points: number) => growthForPoints(points).level;
 
 export const growthPoints = (s: import("./GameState").GameState) =>
-  s.score.points - s.growthOffset;
+  s.pacing?.points ?? s.score.points - s.growthOffset;

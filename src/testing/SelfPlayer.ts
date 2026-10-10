@@ -1,3 +1,5 @@
+import { segmentIntersectsBox, type Obstacle } from "../physics/pathGeometry";
+export { segmentIntersectsBox, type Obstacle } from "../physics/pathGeometry";
 import {
   activeBounds,
   isUnlocked,
@@ -10,12 +12,6 @@ import type { GameState, SwallowableObject } from "../game/GameState";
 import { config, selfPlayConfig } from "../game/constants";
 import { obstacleRadius, isSolidObstacle } from "../physics/collisions";
 
-export interface Obstacle {
-  x: number;
-  z: number;
-  half: number;
-  round?: boolean;
-}
 // A* on an eight-neighbor grid. No diagonal cuts through occupied corners.
 export function findPath(
   start: Vector3,
@@ -178,47 +174,6 @@ export function edibleClusters(state: GameState) {
     })
     .sort((a, b) => b.utility - a.utility);
 }
-export function segmentIntersectsBox(
-  a: Vector3,
-  b: Vector3,
-  obstacle: Obstacle,
-) {
-  if (obstacle.round) {
-    const dx = b.x - a.x,
-      dz = b.z - a.z;
-    const lengthSquared = dx * dx + dz * dz;
-    const t = lengthSquared
-      ? Math.max(
-          0,
-          Math.min(
-            1,
-            ((obstacle.x - a.x) * dx + (obstacle.z - a.z) * dz) / lengthSquared,
-          ),
-        )
-      : 0;
-    return (
-      Math.hypot(a.x + t * dx - obstacle.x, a.z + t * dz - obstacle.z) <
-      obstacle.half
-    );
-  }
-  let entry = 0,
-    exit = 1;
-  for (const axis of ["x", "z"] as const) {
-    const delta = b[axis] - a[axis],
-      low = obstacle[axis] - obstacle.half,
-      high = obstacle[axis] + obstacle.half;
-    if (Math.abs(delta) < 1e-8) {
-      if (a[axis] < low || a[axis] > high) return false;
-    } else {
-      const t1 = (low - a[axis]) / delta,
-        t2 = (high - a[axis]) / delta;
-      entry = Math.max(entry, Math.min(t1, t2));
-      exit = Math.min(exit, Math.max(t1, t2));
-      if (entry > exit) return false;
-    }
-  }
-  return exit > 0 && entry < 1;
-}
 export class SelfPlayer {
   enabled = false;
   path: Vector3[] = [];
@@ -324,18 +279,20 @@ export class SelfPlayer {
         for (const target of targets.slice(0, 3)) {
           const towardHole = state.hole.position.clone().sub(target.position);
           towardHole.y = 0;
-          const reach = state.hole.radius * 0.6;
           const heading = Math.atan2(towardHole.x, towardHole.z);
-          const destinations = [0, 0.8, -0.8, 1.6, -1.6, Math.PI]
-            .map((offset) => {
-              const p = target.position.clone();
-              p.y = 0;
-              p.x += Math.sin(heading + offset) * reach;
-              p.z += Math.cos(heading + offset) * reach;
-              p.x = Math.max(-limit, Math.min(limit, p.x));
-              p.z = Math.max(-limit, Math.min(limit, p.z));
-              return p;
-            })
+          const destinations = (state.level.landscape ? [0.6, 0.92] : [0.6])
+            .flatMap((fraction) =>
+              [0, 0.8, -0.8, 1.6, -1.6, Math.PI].map((offset) => {
+                const reach = state.hole.radius * fraction;
+                const p = target.position.clone();
+                p.y = 0;
+                p.x += Math.sin(heading + offset) * reach;
+                p.z += Math.cos(heading + offset) * reach;
+                p.x = Math.max(-limit, Math.min(limit, p.x));
+                p.z = Math.max(-limit, Math.min(limit, p.z));
+                return p;
+              }),
+            )
             .filter(
               (p) =>
                 !obstacles.some(

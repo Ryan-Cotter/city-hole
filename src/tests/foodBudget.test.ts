@@ -34,7 +34,7 @@ describe("growth food reserves and scurrying bugs", () => {
       );
       if (s.world.phase !== "city")
         expect(added.every((o) => o.radius >= 18)).toBe(true);
-      expect(ensureFoodBudget(s)).toHaveLength(0);
+      expect(ensureFoodBudget(s), stage.type).toHaveLength(0);
     }
   });
   it("makes bugs change direction and scurry on both ground axes", () => {

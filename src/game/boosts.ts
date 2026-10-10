@@ -6,11 +6,11 @@ export function updateBoosts(s: GameState) {
   s.hole.speedMultiplier =
     (s.elapsedSeconds < s.boosts.speedUntil ? boostConfig.speedMultiplier : 1) *
     (s.world.phase === "country"
-      ? 10
+      ? 20
       : s.world.phase === "planet"
-        ? 20
+        ? 40
         : s.world.phase === "metropolis"
-          ? 2
+          ? 8
           : 1);
   const growth = growthForPoints(growthPoints(s));
   s.hole.radius = growth.radius;
@@ -30,6 +30,7 @@ export function activateBoost(s: GameState, kind: "speed" | "size") {
     const target =
       next.threshold + fraction * (next.nextThreshold - next.threshold);
     s.growthOffset = s.score.points - target;
+    if (s.pacing) s.pacing.points = target;
   }
   updateBoosts(s);
   return true;

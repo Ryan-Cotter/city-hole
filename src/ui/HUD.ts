@@ -81,7 +81,9 @@ export class HUD {
         ? `Micro world · Eat ${stages[s.hole.level - 1].name}`
         : s.areaStage < 3
           ? `${sectionForState(s).name} · Grow to unlock ${s.areaStage === 1 ? "the block" : "the city"}`
-          : `${(growth.nextThreshold - growthPoints(s)).toLocaleString()} points to grow`,
+          : s.pacing && s.score.points - s.growthOffset >= growth.nextThreshold
+            ? "Growing · keep eating"
+            : `${Math.ceil(growth.nextThreshold - (s.score.points - s.growthOffset)).toLocaleString()} points to grow`,
     );
     text(
       "remaining",
